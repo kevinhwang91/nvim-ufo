@@ -1,0 +1,16 @@
+{
+	"name": "coc-ufo",
+	"version": "0.0.1",
+	"description": "handle fold in coc.nvim",
+	"author": "kevinhwang91 <kevin.hwang@live.com>",
+	"license": "MIT",
+	"main": "coc-extension/index.js",
+	"type": "commonjs",
+	"engines": {
+		"coc": "^0.0.81"
+	},
+	"activationEvents": [
+		"*"
+	],
+	"contributes": {}
+}
