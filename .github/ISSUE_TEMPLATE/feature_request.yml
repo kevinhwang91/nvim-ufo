@@ -1,0 +1,23 @@
+name: Feature request
+description: Request an enhancement for nvim-ufo
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before requesting: search [existing issues](https://github.com/kevinhwang91/nvim-ufo/labels/enhancement).
+  - type: textarea
+    attributes:
+      label: "Feature description"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Describe the solution you'd like"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Additional context"
+    validations:
+      required: false

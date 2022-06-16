@@ -40,7 +40,7 @@ use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 
 vim.wo.foldcolumn = '1'
-vim.wo.foldlevel = 99 -- free feel to decrease the value
+vim.wo.foldlevel = 99 -- feel free to decrease the value
 vim.wo.foldenable = true
 
 -- option 1: coc.nvim as LSP client
@@ -71,6 +71,8 @@ the folds, the request strategy formed by the main and the fallback. The default
 
 Changing the text in a buffer will request the providers for folds.
 
+> `foldmethod` option will finally become `manual` if ufo are working.
+
 ### Setup and description
 
 ```lua
@@ -83,6 +85,10 @@ Changing the text in a buffer will request the providers for folds.
     provider_selector = {
         description = [[a function as a selector for fold providers, TODO]],
         default = nil
+    },
+    fold_virt_text_handler = {
+        description = [[a function customize fold virt text, TODO]],
+        default = nil
     }
 }
 ```
@@ -93,11 +99,69 @@ Changing the text in a buffer will request the providers for folds.
 hi default link UfoFoldedEllipsis Comment
 ```
 
-- `UfoFoldedEllipsis`: highlight ellipsis as the end of folded line
+- `UfoFoldedEllipsis`: highlight ellipsis at the end of folded line
 
 ## Advanced configuration
 
-### Customize configuration
+### Customize provider selector
+
+```lua
+local ftMap = {
+    vim = 'indent',
+    c = 'indent',
+    python = {'indent'},
+    git = ''
+}
+require('ufo').setup({
+    provider_selector = function(bufnr, filetype)
+        -- return a string type use a built-in provider
+        -- return a string in a table like a string type
+        -- return empty string '' will disable any providers
+        -- return `nil` will use default value {'lsp', 'indent'}
+        return ftMap[filetype]
+    end
+})
+```
+
+### Customize fold text
+
+<p align="center">
+    <img width="864px" src=https://user-images.githubusercontent.com/17562139/174121926-e90a962d-9fc9-428a-bd53-274ed392c68d.png>
+</p>
+
+```lua
+local handler = function(virtText, lnum, endLnum, width)
+    local newVirtText = {}
+    local endText = ('  %d '):format(endLnum - lnum)
+    local limitedWidth = width - vim.api.nvim_strwidth(endText)
+    local pos = 0
+    for _, chunk in ipairs(virtText) do
+        local chunkText = chunk[1]
+        local nextPos = pos + #chunkText
+        if limitedWidth > nextPos then
+            table.insert(newVirtText, chunk)
+        else
+            chunkText = chunkText:sub(1, limitedWidth - pos)
+            local hlGroup = chunk[2]
+            table.insert(newVirtText, {chunkText, hlGroup})
+            break
+        end
+        pos = nextPos
+    end
+    table.insert(newVirtText, {endText, 'MoreMsg'})
+    return newVirtText
+end
+
+-- global handler
+require('ufo').setup({
+    fold_virt_text_handler = handler
+}
+
+-- buffer scope handler
+-- will override global handler if it is existed
+local bufnr = vim.api.nvim_get_current_buf()
+require('ufo').setVirtTextHandler(bufnr, handler)
+```
 
 ## Feedback
 

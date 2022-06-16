@@ -34,4 +34,14 @@ function M.detach(bufnr)
     require('ufo.main').detach(bufnr)
 end
 
+function M.provider(name)
+    local ok, res = pcall(require, 'ufo.provider.' .. name)
+    assert(ok, ([[Can't find %s provider]]):format(name))
+    return res
+end
+
+function M.setFoldVirtTextHandler(bufnr, handler)
+    require('ufo.decorator').setVirtTextHandler(bufnr, handler)
+end
+
 return M

@@ -1,8 +1,9 @@
 local api = vim.api
 local fn  = vim.fn
 
-local utils = require('ufo.utils')
-local log   = require('ufo.log')
+local utils  = require('ufo.utils')
+local log    = require('ufo.log')
+local config = require('ufo.config')
 
 local foldbuffer = require('ufo.fold.buffer')
 local highlight = require('ufo.highlight')
@@ -11,10 +12,12 @@ local treesitter = require('ufo.treesitter')
 local initialized
 local hlGroups
 
+
 ---@class UfoDecorator
----@field ns number
+---@field namespace number
+---@field virtTextHandler? function[]
+---@field disposables table
 local Decorator = {}
-local ns
 
 local collection
 local redrawType
@@ -154,23 +157,37 @@ local function onEnd(name, tick)
                     return
                 end
                 local textoff = utils.textoff(winid)
-                local width = api.nvim_win_get_width(winid) - textoff - 3
+                local width = api.nvim_win_get_width(winid) - textoff
                 local syntax = vim.bo[bufnr].syntax ~= ''
                 if not nss then
                     nss = {}
                     for _, namespace in pairs(api.nvim_get_namespaces()) do
-                        if ns ~= namespace then
+                        if Decorator.namespace ~= namespace then
                             table.insert(nss, namespace)
                         end
                     end
                 end
                 for i = 1, len do
                     local lnum = folded[i]
-                    local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
-                    text = utils.textLimitedByWidth(text, width)
-                    local virtText = getVirtText(bufnr, text, lnum, syntax, nss)
-                    table.insert(virtText, {' ⋯ ', 'UfoFoldedEllipsis'})
                     local endLnum = utils.foldClosedEnd(0, lnum)
+                    local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
+                    local virtText
+                    local handler = Decorator.getVirtTextHandler(bufnr)
+                    if not handler then
+                        width = width - 3
+                    end
+                    text = utils.textLimitedByWidth(text, width)
+                    virtText = getVirtText(bufnr, text, lnum, syntax, nss)
+                    if handler then
+                        virtText = handler(virtText, lnum, endLnum, width, {
+                            tick = tick,
+                            bufnr = bufnr,
+                            winid = winid,
+                            text = text
+                        })
+                    else
+                        table.insert(virtText, {' ⋯ ', 'UfoFoldedEllipsis'})
+                    end
                     fb:closeFold(lnum, endLnum, virtText)
                 end
             end)
@@ -178,9 +195,7 @@ local function onEnd(name, tick)
         local lnum = api.nvim_win_get_cursor(winid)[1]
         if redrawType == 40 then
             if winid == fb.winid and lnum == fb.lnum then
-                if not mode then
-                    mode = utils.mode()
-                end
+                mode = mode and mode or utils.mode()
                 if mode == 'n' then
                     fb:synchronize(winid)
                 end
@@ -192,24 +207,56 @@ local function onEnd(name, tick)
     collection = nil
 end
 
+function Decorator.setVirtTextHandler(bufnr, handler)
+    if not Decorator.virtTextHandlers then
+        Decorator.virtTextHandlers = setmetatable({}, {__mode = 'v'})
+    end
+    Decorator.virtTextHandlers[bufnr] = handler
+end
+
+function Decorator.getVirtTextHandler(bufnr)
+    local handler
+    if Decorator.virtTextHandlers then
+        handler = Decorator.virtTextHandlers[bufnr]
+    end
+    return handler
+end
+
 function Decorator.initialize(namespace)
     if initialized then
         return
     end
-    ns = namespace
-    api.nvim_set_decoration_provider(ns, {
+    local disposables = {}
+    api.nvim_set_decoration_provider(namespace, {
         on_start = onStart,
         on_win = onWin,
         on_line = onLine,
         on_end = onEnd
     })
-    Decorator.ns = ns
-    initialized = true
+    Decorator.namespace = namespace
+    table.insert(disposables, function()
+        api.nvim_set_decoration_provider(namespace, {})
+    end)
+    local virtTextHandler = config.fold_virt_text_handler
+    if type(virtTextHandler) == 'function' then
+        -- TODO
+        -- how to clean up the wipeouted buffer, need refactor
+        Decorator.virtTextHandlers = setmetatable({}, {
+            __index = function(tbl, bufnr)
+                rawset(tbl, bufnr, virtTextHandler)
+                return virtTextHandler
+            end
+        })
+    end
     hlGroups = highlight.hlGroups()
+    Decorator.disposables = disposables
+    initialized = true
 end
 
 function Decorator.dispose()
-    api.nvim_set_decoration_provider(ns, {})
+    for _, item in ipairs(Decorator.disposables) do
+        item.dispose()
+    end
     initialized = false
 end
 

@@ -21,7 +21,7 @@ function Provider.requestFoldingRange(providers, bufnr)
     return promise.resolve(mainFunc(bufnr)):thenCall(function(value)
         return {main, value}
     end, function(reason)
-        if reason:match('fallback') then
+        if reason == 'UfoFallbackException' then
             local fallbackFunc = getFunction(fallback)
             if fallbackFunc then
                 return {fallback, fallbackFunc(bufnr)}

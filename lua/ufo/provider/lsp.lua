@@ -15,7 +15,7 @@ local function hasInitialized()
 end
 
 local function initialize()
-    return utils.wait(1000):thenCall(function()
+    return utils.wait(1500):thenCall(function()
         local cocInitlized = vim.g.coc_service_initialized
         local module
         if _G.package.loaded['vim.lsp'] and (not cocInitlized or cocInitlized ~= 1) then
@@ -56,13 +56,13 @@ local function request(bufnr)
         end
         return provider.requestFoldingRange(bufnr):thenCall(resolve, function(reason)
             if reason:match('No provider') then
-                return promise.reject('fallback')
+                return promise.reject('UfoFallbackException')
             else
                 error(reason)
             end
         end)
     else
-        return promise.reject('fallback')
+        return promise.reject('UfoFallbackException')
     end
 end
 

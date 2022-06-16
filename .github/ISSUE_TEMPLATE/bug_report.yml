@@ -1,0 +1,43 @@
+name: Bug Report
+description: File a bug report
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    attributes:
+      label: 'Neovim version (nvim -v | head -n1)'
+      placeholder: 'NVIM v0.7.0'
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: 'Operating system/version'
+      placeholder: 'macOS 11.5'
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 'How to reproduce the issue'
+      description: 'How do you trigger this bug? Please walk us through it step by step.'
+      value: |
+        1.
+        2.
+        3.
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 'Expected behavior'
+      description: 'Describe the behavior you expect. May include logs, images, or videos.'
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 'Actual behavior'
+    validations:
+      required: true

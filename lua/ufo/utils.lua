@@ -38,10 +38,16 @@ M.jitEnabled = (function()
     end
 end)()
 
+---
+---@return string
 function M.mode()
     return api.nvim_get_mode().mode
 end
 
+---
+---@param winid number
+---@param f fun(): any
+---@return any
 function M.winCall(winid, f)
     if winid == 0 or winid == api.nvim_get_current_win() then
         return f()
@@ -50,12 +56,20 @@ function M.winCall(winid, f)
     end
 end
 
+---
+---@param winid number
+---@param lnum number
+---@return number
 function M.foldClosed(winid, lnum)
     return M.winCall(winid, function()
         return fn.foldclosed(lnum)
     end)
 end
 
+---
+---@param winid number
+---@param lnum number
+---@return number
 function M.foldClosedEnd(winid, lnum)
     return M.winCall(winid, function()
         return fn.foldclosedend(lnum)
@@ -255,7 +269,7 @@ M.highlightTimeout = (function()
     ---@param hlGoup string
     ---@param start number
     ---@param finish number
-    ---@param opt table
+    ---@param opt? table
     ---@param delay? number
     ---@return Promise
     return function(bufnr, ns, hlGoup, start, finish, opt, delay)

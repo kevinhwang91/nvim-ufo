@@ -43,7 +43,7 @@ end
 ---@return Promise
 function CocClient.requestFoldingRange(bufnr, kind)
     if not CocClient.initialized or not CocClient.enabled then
-        return promise.reject('fallback')
+        return promise.reject('UfoFallbackException')
     end
     return CocClient.runCommand('ufo.foldingRange', bufnr, kind)
 end
