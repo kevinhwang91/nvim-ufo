@@ -35,7 +35,8 @@ local function fillSlots(col, endCol, hlGroup, priority, hlGroupSlots, priorityS
     end
 end
 
-local function getVirtText(bufnr, text, lnum, syntax, namespaces)
+local function getVirtText(bufnr, text, width, lnum, syntax, namespaces)
+    text = utils.truncateStrByWidth(text, width)
     local len = #text
     if len == 0 then
         return {{'', 'UfoFoldedFg'}}
@@ -171,16 +172,13 @@ local function onEnd(name, tick)
                     local lnum = folded[i]
                     local endLnum = utils.foldClosedEnd(0, lnum)
                     local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
-                    local virtText
                     local handler = Decorator.getVirtTextHandler(bufnr)
                     if not handler then
                         width = width - 3
                     end
-                    text = utils.textLimitedByWidth(text, width)
-                    virtText = getVirtText(bufnr, text, lnum, syntax, nss)
+                    local virtText = getVirtText(bufnr, text, width, lnum, syntax, nss)
                     if handler then
-                        virtText = handler(virtText, lnum, endLnum, width, {
-                            tick = tick,
+                        virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
                             winid = winid,
                             text = text
@@ -209,7 +207,7 @@ end
 
 function Decorator.setVirtTextHandler(bufnr, handler)
     if not Decorator.virtTextHandlers then
-        Decorator.virtTextHandlers = setmetatable({}, {__mode = 'v'})
+        Decorator.virtTextHandlers = {}
     end
     Decorator.virtTextHandlers[bufnr] = handler
 end

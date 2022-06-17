@@ -170,34 +170,24 @@ function M.getWinInfo(winid)
     return winfos[1]
 end
 
----
----@param text string
+---@param str string
 ---@param targetWidth number
 ---@return string
-function M.textLimitedByWidth(text, targetWidth)
+function M.truncateStrByWidth(str, targetWidth)
+    if fn.strdisplaywidth(str) <= targetWidth then
+        return str
+    end
     local width = 0
-    local i = 1
-    while i < #text do
-        local step = math.floor((targetWidth - width) * 0.75)
-        local s = text:sub(i, i + math.max(1, step) - 1)
-        width = width + fn.strdisplaywidth(s)
-        if width >= targetWidth then
-            local pos = #s
-            i = i + pos - 1
-            if width > targetWidth then
-                while width > targetWidth do
-                    local c = s:sub(pos, pos)
-                    width = width - fn.strdisplaywidth(c)
-                    i = i - 1
-                    pos = pos - 1
-                end
-            end
-            text = text:sub(1, i)
+    local byteOff = 0
+    while true do
+        local part = fn.strpart(str, byteOff, 1, true)
+        width = width + fn.strdisplaywidth(part)
+        if width > targetWidth then
             break
         end
-        i = i + step
+        byteOff = byteOff + #part
     end
-    return text
+    return str:sub(1, byteOff)
 end
 
 ---
