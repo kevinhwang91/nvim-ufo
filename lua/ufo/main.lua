@@ -58,10 +58,9 @@ function M.disable()
 end
 
 function M.inspectBuf(bufnr)
-    bufnr = api.nvim_get_current_buf()
+    bufnr = bufnr or api.nvim_get_current_buf()
     local fb = fold.get(bufnr)
     if not fb then
-        vim.notify(('Buffer %d has not been attached.'):format(bufnr), vim.log.levels.ERROR)
         return
     end
     local msg = {}
@@ -71,7 +70,7 @@ function M.inspectBuf(bufnr)
         table.insert(msg, 'Fallback provider: ' .. fb.providers[2])
     end
     table.insert(msg, 'Target provider: ' .. fb.targetProvider)
-    vim.notify(table.concat(msg, '\n'), vim.log.levels.INFO)
+    return msg
 end
 
 function M.attach(bufnr)

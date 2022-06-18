@@ -27,17 +27,6 @@ M.isWindows = (function()
     end
 end)()
 
----@return fun(): boolean
-M.jitEnabled = (function()
-    local enabled
-    return function()
-        if enabled == nil then
-            enabled = jit ~= nil
-        end
-        return enabled
-    end
-end)()
-
 ---
 ---@return string
 function M.mode()

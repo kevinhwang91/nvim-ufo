@@ -44,8 +44,7 @@ local function getVirtText(bufnr, text, width, lnum, syntax, namespaces)
     local prioritySlots = {}
     local hlGroupSlots = {}
     for _, n in pairs(namespaces) do
-        local marks = api.nvim_buf_get_extmarks(bufnr, n,
-                                                {lnum - 1, 0}, {lnum - 1, -1},
+        local marks = api.nvim_buf_get_extmarks(bufnr, n, {lnum - 1, 0}, {lnum - 1, len - 1},
                                                 {details = true})
         for _, m in ipairs(marks) do
             local col, details = m[3], m[4]
@@ -95,12 +94,11 @@ local function unHandledFoldedLnums(fb, rows)
     local folded = {}
     for i = 2, #rows do
         local lnum = lastRow + 1
-        local closed = fb:hasClosed(lnum)
         if rows[i] > lnum then
-            if not closed and utils.foldClosed(0, lnum) == lnum then
+            if utils.foldClosed(0, lnum) == lnum then
                 table.insert(folded, lnum)
             end
-        elseif closed then
+        elseif fb:hasClosed(lnum) then
             fb:openFold(lnum)
         end
         lastRow = rows[i]
@@ -108,12 +106,9 @@ local function unHandledFoldedLnums(fb, rows)
     end
 
     local lnum = lastRow + 1
-    local closed = fb:hasClosed(lnum)
     if utils.foldClosed(0, lnum) == lnum then
-        if not closed then
-            table.insert(folded, lnum)
-        end
-    elseif closed then
+        table.insert(folded, lnum)
+    elseif fb:hasClosed(lnum) then
         fb:openFold(lnum)
     end
     return folded
@@ -153,8 +148,8 @@ local function onEnd(name, tick)
         if #data.rows > 0 then
             utils.winCall(winid, function()
                 local folded = unHandledFoldedLnums(fb, data.rows)
-                local len = #folded
-                if len == 0 then
+                log.debug('folded:', folded)
+                if #folded == 0 then
                     return
                 end
                 local textoff = utils.textoff(winid)
@@ -168,26 +163,23 @@ local function onEnd(name, tick)
                         end
                     end
                 end
-                for i = 1, len do
+                for i = 1, #folded do
                     local lnum = folded[i]
-                    local endLnum = utils.foldClosedEnd(0, lnum)
-                    local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
-                    local handler = Decorator.getVirtTextHandler(bufnr)
-                    if not handler then
-                        width = width - 3
-                    end
-                    local virtText = getVirtText(bufnr, text, width, lnum, syntax, nss)
-                    if handler then
+                    if not fb:hasClosed(lnum) or fb:foldedLineWidthChanged(lnum, width) then
+                        log.debug('need add/update folded:', lnum)
+                        local endLnum = utils.foldClosedEnd(0, lnum)
+                        local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
+                        local handler = Decorator.getVirtTextHandler(bufnr)
+                        local virtText = getVirtText(bufnr, text, width, lnum, syntax, nss)
                         virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
                             winid = winid,
                             text = text
                         })
-                    else
-                        table.insert(virtText, {' ⋯ ', 'UfoFoldedEllipsis'})
+                        fb:closeFold(lnum, endLnum, virtText, width)
                     end
-                    fb:closeFold(lnum, endLnum, virtText)
                 end
+                fb.width = width
             end)
         end
         local lnum = api.nvim_win_get_cursor(winid)[1]
@@ -205,19 +197,43 @@ local function onEnd(name, tick)
     collection = nil
 end
 
-function Decorator.setVirtTextHandler(bufnr, handler)
-    if not Decorator.virtTextHandlers then
-        Decorator.virtTextHandlers = {}
+---@diagnostic disable-next-line: unused-local
+function Decorator.defaultVirtTextHandler(virtText, lnum, endLnum, width, truncate, ctx)
+    local newVirtText = {}
+    local suffix = ' ⋯ '
+    local sufWidth = fn.strdisplaywidth(suffix)
+    local targetWidth = width - sufWidth
+    local curWidth = 0
+    for _, chunk in ipairs(virtText) do
+        local chunkText = chunk[1]
+        local chunkWidth = fn.strdisplaywidth(chunkText)
+        if targetWidth > curWidth + chunkWidth then
+            table.insert(newVirtText, chunk)
+        else
+            chunkText = truncate(chunkText, targetWidth - curWidth)
+            local hlGroup = chunk[2]
+            table.insert(newVirtText, {chunkText, hlGroup})
+            chunkWidth = fn.strdisplaywidth(chunkText)
+            -- text length returned from truncate() may less than 2rd argument, need padding
+            if curWidth + chunkWidth < targetWidth then
+                suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth)
+            end
+            break
+        end
+        curWidth = curWidth + chunkWidth
     end
+    table.insert(newVirtText, {suffix, 'UfoFoldedEllipsis'})
+    return newVirtText
+end
+
+function Decorator.setVirtTextHandler(bufnr, handler)
+    bufnr = bufnr or api.nvim_get_current_buf()
     Decorator.virtTextHandlers[bufnr] = handler
 end
 
 function Decorator.getVirtTextHandler(bufnr)
-    local handler
-    if Decorator.virtTextHandlers then
-        handler = Decorator.virtTextHandlers[bufnr]
-    end
-    return handler
+    bufnr = bufnr or api.nvim_get_current_buf()
+    return Decorator.virtTextHandlers[bufnr]
 end
 
 function Decorator.initialize(namespace)
@@ -235,17 +251,15 @@ function Decorator.initialize(namespace)
     table.insert(disposables, function()
         api.nvim_set_decoration_provider(namespace, {})
     end)
-    local virtTextHandler = config.fold_virt_text_handler
-    if type(virtTextHandler) == 'function' then
-        -- TODO
-        -- how to clean up the wipeouted buffer, need refactor
-        Decorator.virtTextHandlers = setmetatable({}, {
-            __index = function(tbl, bufnr)
-                rawset(tbl, bufnr, virtTextHandler)
-                return virtTextHandler
-            end
-        })
-    end
+    local virtTextHandler = config.fold_virt_text_handler or Decorator.defaultVirtTextHandler
+    -- TODO
+    -- how to clean up the wipeouted buffer, need refactor
+    Decorator.virtTextHandlers = setmetatable({}, {
+        __index = function(tbl, bufnr)
+            rawset(tbl, bufnr, virtTextHandler)
+            return virtTextHandler
+        end
+    })
     hlGroups = highlight.hlGroups()
     Decorator.disposables = disposables
     initialized = true

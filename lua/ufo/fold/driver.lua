@@ -1,7 +1,7 @@
 local cmd = vim.cmd
 local fn  = vim.fn
 
-local utils = require 'ufo.utils'
+local utils = require('ufo.utils')
 
 local FoldDriver
 
@@ -18,11 +18,7 @@ end
 function FoldDriverFFI:createFolds(winid, ranges, rowPairs)
     utils.winCall(winid, function()
         local foldRanges = {}
-        local cmds = {}
         local foldLevel = vim.wo.foldlevel
-        table.insert(cmds, 'setl foldmethod=manual')
-        table.insert(cmds, 'setl foldenable')
-        table.insert(cmds, 'setl foldlevel=' .. foldLevel)
         self._wffi.clearFolds(winid)
         for _, f in ipairs(ranges) do
             local startLine, endLine = f.startLine, f.endLine
@@ -31,7 +27,9 @@ function FoldDriverFFI:createFolds(winid, ranges, rowPairs)
             end
         end
         self._wffi.createFolds(winid, foldRanges)
-        cmd(table.concat(cmds, '|'))
+        vim.wo.foldmethod = 'manual'
+        vim.wo.foldenable = true
+        vim.wo.foldlevel = foldLevel
         foldRanges = {}
         for row, endRow in pairs(rowPairs) do
             table.insert(foldRanges, {row + 1, endRow + 1})
@@ -79,7 +77,7 @@ function FoldDriverNonFFI:createFolds(winid, ranges, rowPairs)
 end
 
 local function init()
-    if utils.jitEnabled() then
+    if jit ~= nil then
         FoldDriver = FoldDriverFFI:new(require('ufo.wffi'))
     else
         FoldDriver = FoldDriverNonFFI:new()

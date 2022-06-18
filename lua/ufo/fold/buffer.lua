@@ -22,16 +22,18 @@ local FoldBuffer = {
 }
 
 ---@class UfoFoldedLine
----@field lnum number
 ---@field id number
+---@field lnum number
+---@field width number
 ---@field virtText string
 local FoldedLine = {}
 
-function FoldedLine:new(lnum)
+function FoldedLine:new(lnum, width)
     local obj = setmetatable({}, self)
     self.__index = self
-    obj.lnum = lnum
     obj.id = nil
+    obj.lnum = lnum
+    obj.width = width
     obj.virtText = nil
     return obj
 end
@@ -123,6 +125,18 @@ end
 
 ---
 ---@param lnum number
+---@param width number
+---@return boolean
+function FoldBuffer:foldedLineWidthChanged(lnum, width)
+    local fl = self.foldedLines[lnum]
+    if fl then
+        return fl.width ~= width
+    end
+    return false
+end
+
+---
+---@param lnum number
 function FoldBuffer:openFold(lnum)
     local fl = self.foldedLines[lnum]
     if self.openFoldHlTimeout > 0 then
@@ -142,16 +156,27 @@ end
 ---@param lnum number
 ---@param endLnum number
 ---@param virtText string
-function FoldBuffer:closeFold(lnum, endLnum, virtText)
-    local fl = FoldedLine:new(lnum)
-    fl.virtText = virtText
+---@param width number
+function FoldBuffer:closeFold(lnum, endLnum, virtText, width)
+    local fl = self.foldedLines[lnum]
+    if fl then
+        if self:foldedLineWidthChanged(lnum, width) then
+            fl.width = width
+        else
+            return
+        end
+    else
+        fl = FoldedLine:new(lnum, width)
+    end
     fl.id = api.nvim_buf_set_extmark(self.bufnr, self.ns, lnum - 1, 0, {
+        id = fl.id,
         end_row = endLnum - 1,
         end_col = 0,
         virt_text = virtText,
         virt_text_win_col = 0,
         hl_mode = 'combine'
     })
+    fl.virtText = virtText
     self.foldedLines[lnum] = fl
 end
 
