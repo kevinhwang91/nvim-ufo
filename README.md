@@ -4,8 +4,6 @@ Not UFO in the sky, but an ultra fold in Neovim.
 
 The goal of nvim-ufo is to make Neovim's fold look modern and keep high performance.
 
-**WIP this week**, setup may change.
-
 <https://user-images.githubusercontent.com/17562139/173796287-9842fb3a-37c2-47fb-8968-6e7600c0fcef.mp4>
 
 > [setup foldcolumn like demo](https://github.com/kevinhwang91/nvim-ufo/issues/4)
@@ -13,6 +11,25 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 ---
 
 ## Table of contents
+
+- [Table of contents](#table-of-contents)
+- [Features](#features)
+- [Quickstart](#quickstart)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Minimal configuration](#minimal-configuration)
+  - [Usage](#usage)
+- [Documentation](#documentation)
+  - [How does nvim-ufo get the folds?](#how-does-nvim-ufo-get-the-folds?)
+  - [Setup and description](#setup-and-description)
+  - [Commands](#commands)
+  - [API](#api)
+  - [Highlight groups](#highlight-groups)
+- [Advanced configuration](#advanced-configuration)
+  - [Customize provider selector](#customize-provider-selector)
+  - [Customize fold text](#customize-fold-text)
+- [Feedback](#feedback)
+- [License](#license)
 
 ## Features
 
@@ -87,8 +104,8 @@ Changing the text in a buffer will request the providers for folds.
         default = 400
     },
     provider_selector = {
-        description = [[a function as a selector for fold providers. For now, there are 'lsp' and 'indent'
-                    providers]],
+        description = [[a function as a selector for fold providers. For now, there are
+                    'lsp' and 'indent' providers]],
         default = nil
     },
     fold_virt_text_handler = {
@@ -98,6 +115,14 @@ Changing the text in a buffer will request the providers for folds.
 }
 ```
 
+### Commands
+
+TODO [main.lua](./lua/ufo/main.lua)
+
+### API
+
+TODO [ufo.lua](./lua/ufo.lua)
+
 ### Highlight groups
 
 ```vim
@@ -105,7 +130,7 @@ hi default link UfoFoldedEllipsis Comment
 ```
 
 - `UfoFoldedEllipsis`: highlight ellipsis at the end of folded line, invalid if
-    `fold_virt_text_handler` is set.
+  `fold_virt_text_handler` is set.
 
 ## Advanced configuration
 
@@ -153,7 +178,7 @@ local handler = function(virtText, lnum, endLnum, width, truncate)
             local hlGroup = chunk[2]
             table.insert(newVirtText, {chunkText, hlGroup})
             chunkWidth = vim.fn.strdisplaywidth(chunkText)
-            -- text length returned from truncate() may less than 2rd argument, need padding
+            -- str width returned from truncate() may less than 2rd argument, need padding
             if curWidth + chunkWidth < targetWidth then
                 suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth)
             end

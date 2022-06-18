@@ -1,4 +1,4 @@
----@diagnostic disable: unused-local, unused-function
+---@diagnostic disable: unused-local, unused-function, undefined-field
 
 local function selectProviderWithFt()
     local ftMap = {
@@ -46,7 +46,7 @@ local handler = function(virtText, lnum, endLnum, width, truncate)
             local hlGroup = chunk[2]
             table.insert(newVirtText, {chunkText, hlGroup})
             chunkWidth = vim.fn.strdisplaywidth(chunkText)
-            -- text length returned from truncate() may less than 2rd argument, need padding
+            -- str width returned from truncate() may less than 2rd argument, need padding
             if curWidth + chunkWidth < targetWidth then
                 suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth)
             end
@@ -62,7 +62,7 @@ local function customizeFoldText()
     -- global handler
     require('ufo').setup({
         fold_virt_text_handler = handler
-    }
+    })
 end
 
 local function customizeBufFoldText()

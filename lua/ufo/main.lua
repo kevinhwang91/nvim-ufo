@@ -1,6 +1,5 @@
 local M = {}
 local cmd = vim.cmd
-local fn = vim.fn
 local api = vim.api
 
 local utils     = require('ufo.utils')
@@ -32,12 +31,31 @@ local function destroyEvents()
     ]])
 end
 
+local function createCommand()
+    -- TODO
+    -- no completion and args
+    cmd([[
+        com! UfoEnable lua require('ufo').enable()
+        com! UfoDisable lua require('ufo').disable()
+        com! UfoInspect lua require('ufo').inspect()
+        com! UfoAttach lua require('ufo').attach()
+        com! UfoDetach lua require('ufo').detach()
+        com! UfoEnableFold lua require('ufo').enableFold()
+        com! UfoDisableFold lua require('ufo').disableFold()
+    ]])
+end
+
+local function deleteCommand()
+
+end
+
 function M.enable()
     if enabled then
         return false
     end
     local ns = api.nvim_create_namespace('ufo')
     initEvents()
+    createCommand()
     highlight.initialize()
     fold.initialize(ns)
     decorator.initialize(ns)
@@ -50,6 +68,7 @@ function M.disable()
         return false
     end
     destroyEvents()
+    deleteCommand()
     highlight.dispose()
     fold.dispose()
     decorator.dispose()
@@ -65,12 +84,13 @@ function M.inspectBuf(bufnr)
     end
     local msg = {}
     table.insert(msg, 'Buffer: ' .. bufnr)
+    table.insert(msg, 'Fold Status: ' .. fb.status)
     local main = fb.providers[1]
     table.insert(msg, 'Main provider: ' .. (type(main) == 'function' and 'external' or main))
     if fb.providers[2] then
         table.insert(msg, 'Fallback provider: ' .. fb.providers[2])
     end
-    table.insert(msg, 'Selected provider: ' .. fb.selectedProvider)
+    table.insert(msg, 'Selected provider: ' .. (fb.selectedProvider or 'nil'))
     return msg
 end
 
