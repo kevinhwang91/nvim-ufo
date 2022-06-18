@@ -42,16 +42,30 @@ function M.hasAttached(bufnr)
     return require('ufo.main').inspectBuf(bufnr) ~= nil
 end
 
----Attach bufnr to enable ufo features
+---Attach bufnr to enable all features
 ---@param bufnr? number current buffer default
 function M.attach(bufnr)
     require('ufo.main').attach(bufnr)
 end
 
----Detach bufnr to disable ufo features
+---Detach bufnr to disable all features
 ---@param bufnr? number current buffer default
 function M.detach(bufnr)
     require('ufo.main').detach(bufnr)
+end
+
+---Enable to get folds and update them at once
+---@param bufnr? number current buffer default
+---@return string|'start'|'pending'|'stop' status
+function M.enableFold(bufnr)
+    return require('ufo.main').enableFold(bufnr)
+end
+
+---Disable to get folds
+---@param bufnr? number current buffer default
+---@return string|'start'|'pending'|'stop' status
+function M.disableFold(bufnr)
+    return require('ufo.main').disableFold(bufnr)
 end
 
 ---Get foldingRange from the ufo internal providers by name

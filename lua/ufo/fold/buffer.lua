@@ -9,12 +9,12 @@ local log   = require('ufo.log')
 ---@field bufnr number
 ---@field winid? number
 ---@field lnum? number
----@field pending boolean
+---@field status string|'start'|'pending'|'stop'
 ---@field version number
 ---@field foldRanges table
 ---@field foldedLines UfoFoldedLine[]
 ---@field providers table
----@field targetProvider string
+---@field selectedProvider string
 local FoldBuffer = {
     ns = nil,
     openFoldHlTimeout = 0,
@@ -46,9 +46,9 @@ function FoldBuffer:new(bufnr)
     obj.bufnr = bufnr
     obj.winid = nil
     obj.lnum = nil
-    obj.pending = false
+    obj.status ='start'
     obj.providers = nil
-    obj.targetProvider = nil
+    obj.selectedProvider = nil
     obj.version = 0
     obj.foldRanges = {}
     obj.foldedLines = {}

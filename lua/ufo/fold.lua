@@ -34,66 +34,6 @@ local function applyFoldRanges(bufnr, winid, ranges, ns)
     return true
 end
 
-local function updateFold(bufnr)
-    bufnr = bufnr or api.nvim_get_current_buf()
-    local fb = foldbuffer:get(bufnr)
-    local winid = fn.bufwinid(bufnr)
-    if not fb or fb:isFoldMethodsDisabled() then
-        return promise.resolve()
-    elseif winid == -1 then
-        fb.pending = true
-        return promise.resolve()
-    elseif utils.isDiffOrMarkerFold(winid) then
-        return promise.resolve()
-    end
-    local changedtick = api.nvim_buf_get_changedtick(bufnr)
-    if changedtick == fb.version and fb.foldRanges then
-        fb.pending = not applyFoldRanges(bufnr, winid, fb.foldRanges, fb.ns)
-        return promise.resolve()
-    end
-
-    local s
-    if log.isEnabled('debug') then
-        s = uv.hrtime()
-    end
-    return provider.requestFoldingRange(fb.providers, bufnr):thenCall(function(res)
-        if log.isEnabled('debug') then
-            log.debug(('requestFoldingRange(%s, %d) has elapsed: %dms')
-                :format(vim.inspect(fb.providers, {indent = '', newline = ' '}),
-                        bufnr, (uv.hrtime() - s) / 1e6))
-        end
-        local p, ranges = res[1], res[2]
-        fb.targetProvider = type(p) == 'string' and p or 'external'
-        if not ranges or #ranges == 0 or not utils.isBufLoaded(bufnr) then
-            return
-        end
-        winid = fn.bufwinid(bufnr)
-        local newChangedtick = api.nvim_buf_get_changedtick(bufnr)
-        fb.version = newChangedtick
-        fb.foldRanges = ranges
-        if winid == -1 then
-            fb.pending = true
-        elseif changedtick == newChangedtick and not utils.isDiffOrMarkerFold(winid) then
-            fb.pending = not applyFoldRanges(bufnr, winid, ranges, fb.ns)
-        end
-    end)
-end
-
-local updateFoldDebounced = (function()
-    local lastBufnr
-    local debounced = require('ufo.debounce')(updateFold, 500)
-    return function(bufnr, flush)
-        if lastBufnr ~= bufnr then
-            debounced:flush()
-        end
-        lastBufnr = bufnr
-        debounced(bufnr)
-        if flush then
-            debounced:flush()
-        end
-    end
-end)()
-
 ---@param bufnr number
 ---@return Promise
 local function tryUpdateFold(bufnr)
@@ -108,7 +48,56 @@ local function tryUpdateFold(bufnr)
         if not fb or not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) then
             return
         end
-        await(updateFold(bufnr))
+        await(Fold.update(bufnr))
+    end)
+end
+
+function Fold.update(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    local fb = foldbuffer:get(bufnr)
+    local winid = fn.bufwinid(bufnr)
+    if not fb or fb:isFoldMethodsDisabled() then
+        return promise.resolve()
+    elseif winid == -1 then
+        fb.status = 'pending'
+        return promise.resolve()
+    elseif utils.isDiffOrMarkerFold(winid) then
+        return promise.resolve()
+    end
+    local changedtick = api.nvim_buf_get_changedtick(bufnr)
+    if changedtick == fb.version and fb.foldRanges then
+        if not applyFoldRanges(bufnr, winid, fb.foldRanges, fb.ns) then
+            fb.status = 'pending'
+        end
+        return promise.resolve()
+    end
+
+    local s
+    if log.isEnabled('debug') then
+        s = uv.hrtime()
+    end
+    return provider.requestFoldingRange(fb.providers, bufnr):thenCall(function(res)
+        if log.isEnabled('debug') then
+            log.debug(('requestFoldingRange(%s, %d) has elapsed: %dms')
+                :format(vim.inspect(fb.providers, {indent = '', newline = ' '}),
+                        bufnr, (uv.hrtime() - s) / 1e6))
+        end
+        local p, ranges = res[1], res[2]
+        fb.selectedProvider = type(p) == 'string' and p or 'external'
+        if not ranges or #ranges == 0 or not utils.isBufLoaded(bufnr) then
+            return
+        end
+        winid = fn.bufwinid(bufnr)
+        local newChangedtick = api.nvim_buf_get_changedtick(bufnr)
+        fb.version = newChangedtick
+        fb.foldRanges = ranges
+        if winid == -1 then
+            fb.status = 'pending'
+        elseif changedtick == newChangedtick and not utils.isDiffOrMarkerFold(winid) then
+            if not applyFoldRanges(bufnr, winid, ranges, fb.ns) then
+                fb.status = 'pending'
+            end
+        end
     end)
 end
 
@@ -118,18 +107,43 @@ function Fold.get(bufnr)
     return foldbuffer:get(bufnr)
 end
 
+function Fold.setStatus(bufnr, status)
+    local fb = foldbuffer:get(bufnr)
+    local old = ''
+    if fb then
+        old = fb.status
+        fb.status = status
+    end
+    return old
+end
+
+local updateFoldDebounced = (function()
+    local lastBufnr
+    local debounced = require('ufo.debounce')(Fold.update, 500)
+    return function(bufnr, flush)
+        if lastBufnr ~= bufnr then
+            debounced:flush()
+        end
+        lastBufnr = bufnr
+        debounced(bufnr)
+        if flush then
+            debounced:flush()
+        end
+    end
+end)()
+
 local function attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     log.debug('attach bufnr:', bufnr)
     local fb = foldbuffer:get(bufnr)
     if fb then
-        if fb.pending then
-            fb.pending = false
+        if fb.status == 'pending' then
+            fb.status = 'start'
             log.debug('handle the pending ranges for bufnr:', bufnr)
-            updateFold(bufnr):thenCall(function()
-                if fb.pending then
-                    fb.pending = false
-                    updateFold(bufnr)
+            Fold.update(bufnr):thenCall(function()
+                if fb.status == 'pending' then
+                    fb.status = 'start'
+                    Fold.update(bufnr)
                 end
             end)
         end
@@ -160,7 +174,7 @@ local function attach(bufnr)
             end
             -- TODO
             -- can't skip select mode
-            if utils.mode() == 'n' then
+            if fb.status == 'start' and utils.mode() == 'n' then
                 updateFoldDebounced(bufnr)
             end
         end,
@@ -186,10 +200,12 @@ local function updateFoldFlush(bufnr)
     end
     promise.resolve():thenCall(function()
         if utils.mode() == 'n' then
-            if fb.pending then
-                fb.pending = false
+            if fb.status == 'pending' then
+                fb.status = 'start'
             end
-            updateFoldDebounced(bufnr, true)
+            if fb.status == 'start' then
+                updateFoldDebounced(bufnr, true)
+            end
         end
     end)
 end

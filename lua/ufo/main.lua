@@ -70,7 +70,7 @@ function M.inspectBuf(bufnr)
     if fb.providers[2] then
         table.insert(msg, 'Fallback provider: ' .. fb.providers[2])
     end
-    table.insert(msg, 'Target provider: ' .. fb.targetProvider)
+    table.insert(msg, 'Selected provider: ' .. fb.selectedProvider)
     return msg
 end
 
@@ -85,6 +85,18 @@ function M.detach(bufnr)
     if fb then
         fb:dispose()
     end
+end
+
+function M.enableFold(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    local old = fold.setStatus(bufnr, 'start')
+    fold.update(bufnr)
+    return old
+end
+
+function M.disableFold(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    return fold.setStatus(bufnr, 'stop')
 end
 
 function M.foldtext()
