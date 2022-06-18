@@ -179,7 +179,6 @@ local function onEnd(name, tick)
                         fb:closeFold(lnum, endLnum, virtText, width)
                     end
                 end
-                fb.width = width
             end)
         end
         local lnum = api.nvim_win_get_cursor(winid)[1]
@@ -214,7 +213,7 @@ function Decorator.defaultVirtTextHandler(virtText, lnum, endLnum, width, trunca
             local hlGroup = chunk[2]
             table.insert(newVirtText, {chunkText, hlGroup})
             chunkWidth = fn.strdisplaywidth(chunkText)
-            -- text length returned from truncate() may less than 2rd argument, need padding
+            -- str width returned from truncate() may less than 2rd argument, need padding
             if curWidth + chunkWidth < targetWidth then
                 suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth)
             end

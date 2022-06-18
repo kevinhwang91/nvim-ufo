@@ -1,9 +1,9 @@
+---Export methods to the users, `require('ufo').method(...)`
+---@class Ufo
 local M = {}
-local cmd = vim.cmd
-local fn = vim.fn
-local api = vim.api
 
-
+---Setup configuration and enable ufo
+---@param opts? UfoConfig
 function M.setup(opts)
     opts = opts or {}
     M._config = opts
@@ -14,6 +14,8 @@ function M.goPreviousStartFold()
     return require('ufo.action').goPreviousStartFold()
 end
 
+---Inspect ufo information by bufnr
+---@param bufnr? number current buffer default
 function M.inspect(bufnr)
     local msg = require('ufo.main').inspectBuf(bufnr)
     if not msg then
@@ -23,32 +25,48 @@ function M.inspect(bufnr)
     end
 end
 
+---Enable ufo
 function M.enable()
     require('ufo.main').enable()
 end
 
+---Disable ufo
 function M.disable()
     require('ufo.main').disable()
 end
 
+---Check whether the buffer has been attached
+---@param bufnr? number current buffer default
+---@return boolean
 function M.hasAttached(bufnr)
     return require('ufo.main').inspectBuf(bufnr) ~= nil
 end
 
+---Attach bufnr to enable ufo features
+---@param bufnr? number current buffer default
 function M.attach(bufnr)
     require('ufo.main').attach(bufnr)
 end
 
+---Detach bufnr to disable ufo features
+---@param bufnr? number current buffer default
 function M.detach(bufnr)
     require('ufo.main').detach(bufnr)
 end
 
-function M.getFoldingRange(providerName, bufnr)
+---Get foldingRange from the ufo internal providers by name
+---@param providerName string
+---@param bufnr number
+---@return UfoFoldingRange|Promise
+function M.getFolds(providerName, bufnr)
     local ok, res = pcall(require, 'ufo.provider.' .. providerName)
     assert(ok, ([[Can't find %s provider]]):format(providerName))
     return res.getFolds(bufnr)
 end
 
+---Set a fold virtual text handler for a buffer, will override global handler if it's existed
+---@param bufnr number
+---@param handler UfoFoldVirtTextHandler reference to `config.fold_virt_text_handler`
 function M.setFoldVirtTextHandler(bufnr, handler)
     require('ufo.decorator').setVirtTextHandler(bufnr, handler)
 end

@@ -8,6 +8,8 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 
 <https://user-images.githubusercontent.com/17562139/173796287-9842fb3a-37c2-47fb-8968-6e7600c0fcef.mp4>
 
+> [setup foldcolumn like demo](https://github.com/kevinhwang91/nvim-ufo/issues/4)
+
 ---
 
 ## Table of contents
@@ -45,6 +47,7 @@ vim.wo.foldenable = true
 
 -- option 1: coc.nvim as LSP client
 use {'neoclide/coc.nvim', branch = 'master', run = 'yarn install --frozen-lockfile'}
+--
 
 -- option 2: nvim lsp as LSP client
 -- tell the sever the capability of foldingRange
@@ -53,6 +56,7 @@ capabilities.textDocument.foldingRange = {
     dynamicRegistration = false,
     lineFoldingOnly = true
 }
+--
 
 require('ufo').setup()
 ```
@@ -66,7 +70,7 @@ Use fold as usual.
 ### How does nvim-ufo get the folds?
 
 If ufo detect `foldmethod` option is not `diff` or `marker`, it will request the providers to get
-the folds, the request strategy formed by the main and the fallback. The default value of main is
+the folds, the request strategy is formed by the main and the fallback. The default value of main is
 `lsp` and the default value of fallback is `indent` which implemented by ufo.
 
 Changing the text in a buffer will request the providers for folds.
@@ -83,11 +87,12 @@ Changing the text in a buffer will request the providers for folds.
         default = 400
     },
     provider_selector = {
-        description = [[a function as a selector for fold providers, TODO]],
+        description = [[a function as a selector for fold providers. For now, there are 'lsp' and 'indent'
+                    providers]],
         default = nil
     },
     fold_virt_text_handler = {
-        description = [[a function customize fold virt text, TODO]],
+        description = [[a function customize fold virt text, see ### Customize fold text]],
         default = nil
     }
 }
@@ -99,22 +104,24 @@ Changing the text in a buffer will request the providers for folds.
 hi default link UfoFoldedEllipsis Comment
 ```
 
-- `UfoFoldedEllipsis`: highlight ellipsis at the end of folded line
+- `UfoFoldedEllipsis`: highlight ellipsis at the end of folded line, invalid if
+    `fold_virt_text_handler` is set.
 
 ## Advanced configuration
+
+Configuration can be found at [example.lua](./doc/example.lua)
 
 ### Customize provider selector
 
 ```lua
 local ftMap = {
     vim = 'indent',
-    c = 'indent',
     python = {'indent'},
     git = ''
 }
 require('ufo').setup({
     provider_selector = function(bufnr, filetype)
-        -- return a string type use a built-in provider
+        -- return a string type use internal providers
         -- return a string in a table like a string type
         -- return empty string '' will disable any providers
         -- return `nil` will use default value {'lsp', 'indent'}

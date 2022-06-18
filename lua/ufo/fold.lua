@@ -63,10 +63,10 @@ local function updateFold(bufnr)
                         bufnr, (uv.hrtime() - s) / 1e6))
         end
         local p, ranges = res[1], res[2]
+        fb.targetProvider = type(p) == 'string' and p or 'external'
         if not ranges or #ranges == 0 or not utils.isBufLoaded(bufnr) then
             return
         end
-        fb.targetProvider = type(p) == 'string' and p or 'external'
         winid = fn.bufwinid(bufnr)
         local newChangedtick = api.nvim_buf_get_changedtick(bufnr)
         fb.version = newChangedtick

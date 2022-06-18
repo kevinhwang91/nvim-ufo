@@ -1,0 +1,17 @@
+*ufo.txt*
+*nvimufo.txt*
+*nvim-ufo.txt*
+
+type `gf` or `CTRL-W gf` under the PATH value :)
+
+`URL`: https://github.com/kevinhwang91/nvim-ufo
+
+`PATH`: ../README.md
+
+`PATH`: ../lua/ufo/config.lua |nvim-ufo-default-config|
+
+`PATH`: ../lua/ufo.lua |nvim-ufo-api|
+
+`PATH`: ../doc/example.lua |nvim-ufo-example|
+
+vim:ft=help

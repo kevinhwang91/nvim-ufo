@@ -65,7 +65,8 @@ function M.inspectBuf(bufnr)
     end
     local msg = {}
     table.insert(msg, 'Buffer: ' .. bufnr)
-    table.insert(msg, 'Main provider: ' .. fb.providers[1])
+    local main = fb.providers[1]
+    table.insert(msg, 'Main provider: ' .. (type(main) == 'function' and 'external' or main))
     if fb.providers[2] then
         table.insert(msg, 'Fallback provider: ' .. fb.providers[2])
     end
@@ -91,6 +92,5 @@ function M.foldtext()
     local text = api.nvim_buf_get_lines(0, fs - 1, fs, false)[1]
     return utils.expandTab(text, vim.bo.ts)
 end
-
 
 return M

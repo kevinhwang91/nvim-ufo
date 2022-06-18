@@ -15,6 +15,22 @@ local function getFunction(m)
     return type(m) == 'string' and modules[m].getFolds or m
 end
 
+---@alias UfoFoldingRangeKind
+---| 'comment'
+---| 'imports'
+---| 'region'
+
+---@class UfoFoldingRange
+---@field startLine number
+---@field startCharacter? number
+---@field endLine number
+---@field endCharacter? number
+---@field kind? UfoFoldingRangeKind
+
+---
+---@param providers table
+---@param bufnr number
+---@return Promise
 function Provider.requestFoldingRange(providers, bufnr)
     local main, fallback = providers[1], providers[2]
     local mainFunc = getFunction(main)
