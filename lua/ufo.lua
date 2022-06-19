@@ -14,6 +14,14 @@ function M.goPreviousStartFold()
     return require('ufo.action').goPreviousStartFold()
 end
 
+function M.closeAllFolds()
+    return require('ufo.action').closeAllFolds()
+end
+
+function M.openAllFolds()
+    return require('ufo.action').openAllFolds()
+end
+
 ---Inspect ufo information by bufnr
 ---@param bufnr? number current buffer default
 function M.inspect(bufnr)
