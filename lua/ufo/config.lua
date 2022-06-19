@@ -38,7 +38,7 @@ function Config.provider_selector(bufnr, filetype) end
 ---@param endLnum number last line of closed fold, like `v:foldend in foldtext()`
 ---@param width number text area width, exclude the foldcolumn, signcolumn and numberwidth
 ---@param truncate fun(str: string, width: number): string truncate the str to become specific width,
----return width of string is equal or less than str's width.
+---return width of string is equal or less than width (2rd argument).
 ---For example: '1': 1 cell, '你': 2 cells, '2': 1 cell, '好': 2 cells
 ---truncate('1你2好', 1) return '1'
 ---truncate('1你2好', 2) return '1'
@@ -62,6 +62,11 @@ local function init()
         fold_virt_text_handler = nil,
     }
     Config = vim.tbl_deep_extend('keep', ufo._config or {}, def)
+    vim.validate({
+        open_fold_hl_timeout = {Config.open_fold_hl_timeout, 'number'},
+        provider_selector = {Config.provider_selector, 'function', true},
+        fold_virt_text_handler = {Config.fold_virt_text_handler, 'function', true}
+    })
     ufo._config = nil
 end
 
