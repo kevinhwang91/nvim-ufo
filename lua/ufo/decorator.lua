@@ -213,7 +213,7 @@ function Decorator.defaultVirtTextHandler(virtText, lnum, endLnum, width, trunca
             local hlGroup = chunk[2]
             table.insert(newVirtText, {chunkText, hlGroup})
             chunkWidth = fn.strdisplaywidth(chunkText)
-            -- str width returned from truncate() may less than 2rd argument, need padding
+            -- str width returned from truncate() may less than 2nd argument, need padding
             if curWidth + chunkWidth < targetWidth then
                 suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth)
             end
