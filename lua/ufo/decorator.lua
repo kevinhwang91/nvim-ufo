@@ -247,9 +247,11 @@ function Decorator.initialize(namespace)
         on_end = onEnd
     })
     Decorator.namespace = namespace
-    table.insert(disposables, function()
-        api.nvim_set_decoration_provider(namespace, {})
-    end)
+    table.insert(disposables, {
+        dispose = function()
+            api.nvim_set_decoration_provider(namespace, {})
+        end
+    })
     local virtTextHandler = config.fold_virt_text_handler or Decorator.defaultVirtTextHandler
     -- TODO
     -- how to clean up the wipeouted buffer, need refactor
