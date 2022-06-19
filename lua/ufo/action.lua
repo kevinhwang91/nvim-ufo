@@ -77,7 +77,7 @@ local function iterFolds(doClose)
         end
     end
     while lnum <= lineCount do
-        if fn.foldlevel(lnum) ~= 0 then
+        if fn.foldlevel(lnum) > 0 then
             api.nvim_win_set_cursor(0, {lnum, 0})
             lnum = f(lnum)
         else
