@@ -59,27 +59,15 @@ function M.goPreviousStartFold()
     end
 end
 
-local function iterFolds(doClose)
+function M.closeAllFolds()
     local lineCount = api.nvim_buf_line_count(0)
     local winView = fn.winsaveview()
     local lnum = 1
-    local f
-    if doClose then
-        f = function(l)
-            cmd('norm! zC')
-            return utils.foldClosedEnd(0, l) + 1
-        end
-    else
-        f = function(l)
-            local el = utils.foldClosedEnd(0, l)
-            cmd('norm! zO')
-            return el == -1 and (l + 1) or el
-        end
-    end
     while lnum <= lineCount do
         if fn.foldlevel(lnum) > 0 then
             api.nvim_win_set_cursor(0, {lnum, 0})
-            lnum = f(lnum)
+            cmd('norm! zC')
+            lnum = utils.foldClosedEnd(0, lnum) + 1
         else
             lnum = lnum + 1
         end
@@ -87,12 +75,21 @@ local function iterFolds(doClose)
     fn.winrestview(winView)
 end
 
-function M.closeAllFolds()
-    iterFolds(true)
-end
-
 function M.openAllFolds()
-    iterFolds(false)
+    local lineCount = api.nvim_buf_line_count(0)
+    local winView = fn.winsaveview()
+    local lnum = 1
+    while lnum <= lineCount do
+        local endLnum = utils.foldClosedEnd(0, lnum)
+        if endLnum > 0 then
+            api.nvim_win_set_cursor(0, {lnum, 0})
+            cmd('norm! zO')
+            lnum = endLnum + 1
+        else
+            lnum = lnum + 1
+        end
+    end
+    fn.winrestview(winView)
 end
 
 return M
