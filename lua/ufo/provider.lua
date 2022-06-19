@@ -41,6 +41,8 @@ function Provider.requestFoldingRange(providers, bufnr)
             local fallbackFunc = getFunction(fallback)
             if fallbackFunc then
                 return {fallback, fallbackFunc(bufnr)}
+            else
+                return {main, nil}
             end
         else
             error(reason)
