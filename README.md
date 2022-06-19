@@ -1,7 +1,5 @@
 # nvim-ufo
 
-Not UFO in the sky, but an ultra fold in Neovim.
-
 The goal of nvim-ufo is to make Neovim's fold look modern and keep high performance.
 
 <https://user-images.githubusercontent.com/17562139/173796287-9842fb3a-37c2-47fb-8968-6e7600c0fcef.mp4>
@@ -193,7 +191,7 @@ end
 -- global handler
 require('ufo').setup({
     fold_virt_text_handler = handler
-}
+})
 
 -- buffer scope handler
 -- will override global handler if it is existed
