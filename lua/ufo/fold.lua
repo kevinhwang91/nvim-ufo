@@ -151,7 +151,7 @@ local function attach(bufnr)
     end
 
     local bt = vim.bo[bufnr].bt
-    if bt == 'nofile' or bt == 'terminal' or bt == 'prompt' then
+    if bt == 'terminal' or bt == 'prompt' then
         return
     end
 
