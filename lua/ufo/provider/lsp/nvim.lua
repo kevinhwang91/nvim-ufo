@@ -48,6 +48,9 @@ function NvimClient.requestFoldingRange(bufnr, kind)
         local params = {textDocument = util.make_text_document_params(bufnr)}
         return NvimClient.request(client, 'textDocument/foldingRange',
                                   params, bufnr):thenCall(function(ranges)
+            if not ranges then
+                return {}
+            end
             ranges = vim.tbl_filter(function(o)
                 return (not kind or kind == o.kind) and o.startLine < o.endLine
             end, ranges)
