@@ -55,7 +55,7 @@ local function request(bufnr)
             end
         end
         return provider.requestFoldingRange(bufnr):thenCall(resolve, function(reason)
-            if reason:match('No provider') then
+            if type(reason) == 'string' and reason:match('No provider') then
                 return promise.reject('UfoFallbackException')
             else
                 error(reason)
