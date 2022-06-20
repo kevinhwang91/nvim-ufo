@@ -106,7 +106,8 @@ function M.closeAllFolds()
         if fn.foldlevel(lnum) > 0 then
             api.nvim_win_set_cursor(0, {lnum, 0})
             cmd('norm! zC')
-            lnum = utils.foldClosedEnd(0, lnum) + 1
+            local endLnum = utils.foldClosedEnd(0, lnum)
+            lnum = endLnum > 0 and (endLnum + 1) or (lnum + 1)
         else
             lnum = lnum + 1
         end
