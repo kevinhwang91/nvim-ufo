@@ -160,9 +160,6 @@ local function attach(bufnr)
         setl foldtext=v:lua.require'ufo.main'.foldtext()
         setl fillchars+=fold:\ ]])
 
-    if fb:isFoldMethodsDisabled() then
-        return
-    end
     ---@diagnostic disable: redefined-local, unused-local
     api.nvim_buf_attach(bufnr, false, {
         on_lines = function(name, bufnr, changedtick, firstLine, lastLine,
