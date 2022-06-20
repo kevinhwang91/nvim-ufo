@@ -61,7 +61,7 @@ function Fold.update(bufnr)
     elseif winid == -1 then
         fb.status = 'pending'
         return promise.resolve()
-    elseif utils.isDiffOrMarkerFold(winid) then
+    elseif not vim.wo[winid].foldenable or utils.isDiffOrMarkerFold(winid) then
         return promise.resolve()
     end
     local changedtick = api.nvim_buf_get_changedtick(bufnr)
