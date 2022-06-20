@@ -234,6 +234,7 @@ function Fold.initialize(ns)
     event.on('BufEnter', attach, disposables)
     event.on('InsertLeave', updateFoldFlush, disposables)
     event.on('BufWritePost', updateFoldFlush, disposables)
+    event.on('CmdlineLeave', updateFoldFlush, disposables)
     event.on('WinClosed', diffWinClosed, disposables)
     foldbuffer.initialize(ns, config.open_fold_hl_timeout, config.provider_selector)
     for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do

@@ -19,6 +19,7 @@ local function initEvents()
             au InsertLeave * lua require('ufo.event').emit('InsertLeave')
             au BufWritePost * lua require('ufo.event').emit('BufWritePost')
             au WinClosed * lua require('ufo.event').emit('WinClosed')
+            au CmdlineLeave * lua require('ufo.event').emit('CmdlineLeave')
             au ColorScheme * lua require('ufo.event').emit('ColorScheme')
         aug END
     ]])
