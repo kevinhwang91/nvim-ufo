@@ -34,6 +34,9 @@ end
 
 function NvimClient.requestFoldingRange(bufnr, kind)
     return async(function()
+        if not utils.isBufLoaded(bufnr) then
+            return
+        end
         local clients = getClients(bufnr)
         if #clients == 0 then
             await(utils.wait(500))
