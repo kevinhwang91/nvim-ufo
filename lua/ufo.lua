@@ -14,6 +14,14 @@ function M.goPreviousStartFold()
     return require('ufo.action').goPreviousStartFold()
 end
 
+function M.goPreviousClosedFold()
+    return require('ufo.action').goPreviousClosedFold()
+end
+
+function M.goNextClosedFold()
+    return require('ufo.action').goNextClosedFold()
+end
+
 function M.closeAllFolds()
     return require('ufo.action').closeAllFolds()
 end

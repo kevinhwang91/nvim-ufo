@@ -59,6 +59,45 @@ function M.goPreviousStartFold()
     end
 end
 
+function M.goPreviousClosedFold()
+    local count = vim.v.count1
+    local curLnum = api.nvim_win_get_cursor(0)[1]
+    local cnt = 0
+    local lnum
+    for i = curLnum - 1, 1, -1 do
+        if utils.foldClosed(0, i) == i then
+            cnt = cnt + 1
+            lnum = i
+            if cnt == count then
+                break
+            end
+        end
+    end
+    if lnum then
+        api.nvim_win_set_cursor(0, {lnum, 0})
+    end
+end
+
+function M.goNextClosedFold()
+    local count = vim.v.count1
+    local curLnum = api.nvim_win_get_cursor(0)[1]
+    local lineCount = api.nvim_buf_line_count(0)
+    local cnt = 0
+    local lnum
+    for i = curLnum + 1, lineCount do
+        if utils.foldClosed(0, i) == i then
+            cnt = cnt + 1
+            lnum = i
+            if cnt == count then
+                break
+            end
+        end
+    end
+    if lnum then
+        api.nvim_win_set_cursor(0, {lnum, 0})
+    end
+end
+
 function M.closeAllFolds()
     local lineCount = api.nvim_buf_line_count(0)
     local winView = fn.winsaveview()
