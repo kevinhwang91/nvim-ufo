@@ -174,6 +174,7 @@ function FoldBuffer:closeFold(lnum, endLnum, virtText, width)
         end_col = 0,
         virt_text = virtText,
         virt_text_win_col = 0,
+        priority = 10,
         hl_mode = 'combine'
     })
     fl.virtText = virtText
