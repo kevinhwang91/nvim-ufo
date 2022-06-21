@@ -37,6 +37,11 @@ function NvimClient.requestFoldingRange(bufnr, kind)
         if not utils.isBufLoaded(bufnr) then
             return
         end
+        local bt = vim.bo[bufnr].bt
+        -- same behavior with coc.nvim
+        if bt ~= '' and bt ~= 'acwrite' then
+            return
+        end
         local clients = getClients(bufnr)
         if #clients == 0 then
             await(utils.wait(500))
