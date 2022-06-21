@@ -5,6 +5,7 @@ local log   = require('ufo.log')
 
 ---@class UfoFoldBuffer
 ---@field ns number
+---@field hlNs number
 ---@field openFoldHlTimeout number
 ---@field bufnr number
 ---@field winid? number
@@ -17,6 +18,7 @@ local log   = require('ufo.log')
 ---@field selectedProvider string
 local FoldBuffer = {
     ns = nil,
+    hlNs = nil,
     openFoldHlTimeout = 0,
     pool = {}
 }
@@ -144,7 +146,7 @@ function FoldBuffer:openFold(lnum)
         local row, details = mark[1], mark[3]
         if row and lnum == row + 1 then
             local endRow = details.end_row
-            utils.highlightTimeout(self.bufnr, self.ns, 'UfoFoldedBg', row, endRow + 1,
+            utils.highlightTimeout(self.bufnr, self.hlNs, 'UfoFoldedBg', row, endRow + 1,
                                    nil, self.openFoldHlTimeout)
         end
     end
@@ -220,6 +222,7 @@ end
 ---@param selector function
 function FoldBuffer.initialize(namespace, openFoldHlTimeout, selector)
     FoldBuffer.ns = namespace
+    FoldBuffer.hlNs = api.nvim_create_namespace('ufo-hl')
     FoldBuffer.openFoldHlTimeout = openFoldHlTimeout
     FoldBuffer.providerSelector = selector
 end
