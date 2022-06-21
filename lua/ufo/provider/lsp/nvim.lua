@@ -2,6 +2,7 @@ local util    = require('vim.lsp.util')
 local promise = require('promise')
 local utils   = require('ufo.utils')
 local async   = require('async')
+local log     = require('ufo.log')
 
 ---@class UfoLspNvimClient
 ---@field initialized boolean
@@ -13,6 +14,7 @@ function NvimClient.request(client, method, params, bufnr)
     return promise(function(resolve, reject)
         client.request(method, params, function(err, res)
             if err then
+                log.info('Received error in callback. clent:', client)
                 reject(err)
             else
                 resolve(res)
@@ -47,6 +49,7 @@ function NvimClient.requestFoldingRange(bufnr, kind)
             await(utils.wait(500))
             clients = getClients(bufnr)
         end
+        log.info('All clients:', clients)
         -- TODO
         -- How to get the highest priority for the client?
         local _, client = next(clients)

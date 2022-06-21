@@ -33,12 +33,12 @@ function Config.provider_selector(bufnr, filetype) end
 ---@class UfoFoldVirtTextHandler
 ---Ufo actually uses a virtual text with `nvim_buf_set_extmark` to overlap the first line of
 ---closed fold
----@param virtText ExtmarkVirtText contained text and highlight captured by Ufo, reused by caller
+---@param virtText ExtmarkVirtText[] contained text and highlight captured by Ufo, reused by caller
 ---@param lnum number first line of closed fold, like `v:foldstart in foldtext()`
 ---@param endLnum number last line of closed fold, like `v:foldend in foldtext()`
 ---@param width number text area width, exclude the foldcolumn, signcolumn and numberwidth
 ---@param truncate fun(str: string, width: number): string truncate the str to become specific width,
----return width of string is equal or less than width (2rd argument).
+---return width of string is equal or less than width (2nd argument).
 ---For example: '1': 1 cell, '你': 2 cells, '2': 1 cell, '好': 2 cells
 ---truncate('1你2好', 1) return '1'
 ---truncate('1你2好', 2) return '1'
