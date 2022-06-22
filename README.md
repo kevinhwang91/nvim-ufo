@@ -65,12 +65,19 @@ use {'neoclide/coc.nvim', branch = 'master', run = 'yarn install --frozen-lockfi
 --
 
 -- option 2: nvim lsp as LSP client
--- tell the sever the capability of foldingRange
+-- tell the server the capability of foldingRange
+-- nvim hasn't added foldingRange to default capabilities, users must add it manually
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities.textDocument.foldingRange = {
     dynamicRegistration = false,
     lineFoldingOnly = true
 }
+for _, lsp in ipairs({your_servers}) do
+    require('lspconfig').setup({
+        capabilities = capabilities,
+        others_fields = ...
+    })
+end
 --
 
 require('ufo').setup()

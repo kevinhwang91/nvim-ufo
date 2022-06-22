@@ -14,7 +14,9 @@ function NvimClient.request(client, method, params, bufnr)
     return promise(function(resolve, reject)
         client.request(method, params, function(err, res)
             if err then
-                log.info('Received error in callback. clent:', client)
+                log.error('Received error in callback', err)
+                log.error('Client:', client)
+                log.error('All clients:', vim.lsp.get_active_clients({bufnr = bufnr}))
                 reject(err)
             else
                 resolve(res)
@@ -49,7 +51,6 @@ function NvimClient.requestFoldingRange(bufnr, kind)
             await(utils.wait(500))
             clients = getClients(bufnr)
         end
-        log.info('All clients:', clients)
         -- TODO
         -- How to get the highest priority for the client?
         local _, client = next(clients)
