@@ -119,8 +119,13 @@ end
 
 local updateFoldDebounced = (function()
     local lastBufnr
-    local debounced = require('ufo.debounce')(Fold.update, 500)
+    local debounced = require('ufo.debounce')(Fold.update, 300)
     return function(bufnr, flush)
+        bufnr = bufnr or api.nvim_get_current_buf()
+        local fb = foldbuffer:get(bufnr)
+        if not fb then
+            return
+        end
         if lastBufnr ~= bufnr then
             debounced:flush()
         end
@@ -168,11 +173,6 @@ local function attach(bufnr)
             if not fb then
                 log.debug('bufnr:', bufnr, 'has detached')
                 return true
-            end
-            -- TODO
-            -- can't skip select mode
-            if fb.status == 'start' and utils.mode() == 'n' then
-                updateFoldDebounced(bufnr)
             end
         end,
         on_detach = function(name, bufnr)
@@ -230,6 +230,7 @@ function Fold.initialize(ns)
     local disposables = {}
     event.on('BufEnter', attach, disposables)
     event.on('InsertLeave', updateFoldFlush, disposables)
+    event.on('TextChanged', updateFoldDebounced, disposables)
     event.on('BufWritePost', updateFoldFlush, disposables)
     event.on('CmdlineLeave', updateFoldFlush, disposables)
     event.on('WinClosed', diffWinClosed, disposables)
