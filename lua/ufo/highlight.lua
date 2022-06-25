@@ -23,28 +23,24 @@ local function resetHighlightGroup()
             return hl
         end})
     local ok, hl = pcall(api.nvim_get_hl_by_name, 'Folded', termguicolors)
-    if ok then
-        if hl.foreground then
-            if termguicolors then
-                cmd(('hi UfoFoldedFg guifg=#%x'):format(hl.foreground))
-            else
-                cmd(('hi UfoFoldedFg ctermfg=%d'):format(hl.foreground))
-            end
+    if ok and hl.background then
+        if termguicolors then
+            cmd(('hi UfoFoldedBg guibg=#%x'):format(hl.background))
         else
-            cmd('hi default link UfoFoldedFg Normal')
-        end
-        if hl.background then
-            if termguicolors then
-                cmd(('hi UfoFoldedBg guibg=#%x'):format(hl.background))
-            else
-                cmd(('hi UfoFoldedBg ctermbg=%d'):format(hl.background))
-            end
-        else
-            cmd('hi default link UfoFoldedBg Visual')
+            cmd(('hi UfoFoldedBg ctermbg=%d'):format(hl.background))
         end
     else
-        cmd('hi default link UfoFoldedFg Normal')
         cmd('hi default link UfoFoldedBg Visual')
+    end
+    ok, hl = pcall(api.nvim_get_hl_by_name, 'Normal', termguicolors)
+    if ok and hl.foreground then
+        if termguicolors then
+            cmd(('hi UfoFoldedFg guifg=#%x'):format(hl.foreground))
+        else
+            cmd(('hi UfoFoldedFg ctermfg=%d'):format(hl.foreground))
+        end
+    else
+        cmd('hi default UfoFoldedFg ctermfg=None guifg=None')
     end
     cmd('hi default link UfoFoldedEllipsis Comment')
 end
