@@ -1,5 +1,6 @@
 local api = vim.api
 local fn  = vim.fn
+local cmd = vim.cmd
 
 local utils  = require('ufo.utils')
 local log    = require('ufo.log')
@@ -142,6 +143,7 @@ end
 ---@diagnostic disable-next-line: unused-local
 local function onEnd(name, tick)
     local nss, mode
+    local needRedraw = nil
     for winid, data in pairs(collection or {}) do
         local bufnr = data.bufnr
         local fb = foldbuffer:get(bufnr)
@@ -166,6 +168,7 @@ local function onEnd(name, tick)
                 for i = 1, #folded do
                     local lnum = folded[i]
                     if not fb:hasClosed(lnum) or fb:foldedLineWidthChanged(lnum, width) then
+                        needRedraw = 1
                         log.debug('need add/update folded:', lnum)
                         local endLnum = utils.foldClosedEnd(0, lnum)
                         local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
@@ -187,11 +190,16 @@ local function onEnd(name, tick)
                 mode = mode and mode or utils.mode()
                 if mode == 'n' then
                     fb:synchronize(winid)
+                    needRedraw = needRedraw and 3 or 2
                 end
             end
         end
         fb.lnum = lnum
         fb.winid = winid
+    end
+    if needRedraw then
+        log.debug('need redraw, type:', needRedraw)
+        cmd('redraw')
     end
     collection = nil
 end
