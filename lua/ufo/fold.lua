@@ -21,7 +21,7 @@ local initialized
 local Fold = {}
 
 local function applyFoldRanges(bufnr, winid, ranges, ns)
-    if utils.mode() ~= 'n' or vim.wo[winid].foldmethod ~= 'manual' then
+    if utils.mode() ~= 'n' or utils.isDiffOrMarkerFold(winid) then
         return false
     end
     local marks = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
