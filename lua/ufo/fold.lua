@@ -48,6 +48,14 @@ local function tryUpdateFold(bufnr)
         if not fb or not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) then
             return
         end
+        -- TODO
+        -- buffer go back normal mode from diff mode will disable `foldenable` if the foldmethod was
+        -- `manual` before entering diff mode. Unfortunately, foldmethod will always be `manual` if
+        -- enable ufo, `foldenable` will be disabled.
+        -- version will be `0` if never update folds for the buffer
+        if fb.version > 0 then
+            vim.wo[winid].foldenable = true
+        end
         await(Fold.update(bufnr))
     end)
 end
