@@ -1,3 +1,5 @@
+local disposable = require('ufo.lib.disposable')
+
 ---@class UfoEvent
 local Event = {
     _collection = {}
@@ -5,8 +7,8 @@ local Event = {
 
 ---@param name string
 ---@param listener function
-function Event.off(name, listener)
-    local listeners = Event._collection[name]
+function Event:off(name, listener)
+    local listeners = self._collection[name]
     if not listeners then
         return
     end
@@ -17,34 +19,32 @@ function Event.off(name, listener)
         end
     end
     if #listeners == 0 then
-        Event._collection[name] = nil
+        self._collection[name] = nil
     end
 end
 
 ---@param name string
 ---@param listener function
----@param disposables table
----@return table
-function Event.on(name, listener, disposables)
-    if not Event._collection[name] then
-        Event._collection[name] = {}
+---@param disposables? UfoDisposable[]
+---@return UfoDisposable
+function Event:on(name, listener, disposables)
+    if not self._collection[name] then
+        self._collection[name] = {}
     end
-    table.insert(Event._collection[name], listener)
-    local disposable = {
-            dispose = function()
-                Event.off(name, listener)
-            end
-    }
+    table.insert(self._collection[name], listener)
+    local d = disposable:create(function()
+        self:off(name, listener)
+    end)
     if type(disposables) == 'table' then
-        table.insert(disposables, disposable)
+        table.insert(disposables, d)
     end
-    return disposable
+    return d
 end
 
 ---@param name string
 ---@vararg any
-function Event.emit(name, ...)
-    local listeners = Event._collection[name]
+function Event:emit(name, ...)
+    local listeners = self._collection[name]
     if not listeners then
         return
     end

@@ -1,7 +1,7 @@
 local api = vim.api
 
 local utils = require('ufo.utils')
-local log   = require('ufo.log')
+local disposable = require('ufo.lib.disposable')
 
 ---@class UfoFoldBuffer
 ---@field ns number
@@ -48,7 +48,7 @@ function FoldBuffer:new(bufnr)
     obj.bufnr = bufnr
     obj.winid = nil
     obj.lnum = nil
-    obj.status ='start'
+    obj.status = 'start'
     obj.providers = nil
     obj.selectedProvider = nil
     obj.version = 0
@@ -220,17 +220,17 @@ end
 ---@param namespace number
 ---@param openFoldHlTimeout number
 ---@param selector function
-function FoldBuffer.initialize(namespace, openFoldHlTimeout, selector)
-    FoldBuffer.ns = namespace
-    FoldBuffer.hlNs = api.nvim_create_namespace('ufo-hl')
-    FoldBuffer.openFoldHlTimeout = openFoldHlTimeout
-    FoldBuffer.providerSelector = selector
-end
-
-function FoldBuffer.disposeAll()
-    for _, fb in pairs(FoldBuffer.pool) do
-        fb:dispose()
-    end
+---@return UfoDisposable
+function FoldBuffer:initialize(namespace, openFoldHlTimeout, selector)
+    self.ns = namespace
+    self.hlNs = api.nvim_create_namespace('ufo-hl')
+    self.openFoldHlTimeout = openFoldHlTimeout
+    self.providerSelector = selector
+    return disposable:create(function()
+        for _, fb in pairs(self.pool) do
+            fb:dispose()
+        end
+    end)
 end
 
 return FoldBuffer

@@ -98,7 +98,7 @@ end
 ---@param bufnr number
 ---@param handler UfoFoldVirtTextHandler reference to `config.fold_virt_text_handler`
 function M.setFoldVirtTextHandler(bufnr, handler)
-    require('ufo.decorator').setVirtTextHandler(bufnr, handler)
+    require('ufo.decorator'):setVirtTextHandler(bufnr, handler)
 end
 
 return M

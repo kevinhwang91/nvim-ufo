@@ -10,14 +10,14 @@ local utils      = require('ufo.utils')
 local foldbuffer = require('ufo.fold.buffer')
 local driver     = require('ufo.fold.driver')
 local provider   = require('ufo.provider')
-local log        = require('ufo.log')
-local event      = require('ufo.event')
+local log        = require('ufo.lib.log')
+local event      = require('ufo.lib.event')
 
 local initialized
 
 ---@class UfoFold
 ---@field ns number
----@field disposables table
+---@field disposables UfoDisposable[]
 local Fold = {}
 
 local function applyFoldRanges(bufnr, winid, ranges, ns)
@@ -127,7 +127,7 @@ end
 
 local updateFoldDebounced = (function()
     local lastBufnr
-    local debounced = require('ufo.debounce')(Fold.update, 300)
+    local debounced = require('ufo.lib.debounce')(Fold.update, 300)
     return function(bufnr, flush)
         bufnr = bufnr or api.nvim_get_current_buf()
         local fb = foldbuffer:get(bufnr)
@@ -231,30 +231,34 @@ local function diffWinClosed()
     end
 end
 
-function Fold.initialize(ns)
+---
+---@param ns number
+---@return UfoFold
+function Fold:initialize(ns)
     if initialized then
         return
     end
     local disposables = {}
-    event.on('BufEnter', attach, disposables)
-    event.on('InsertLeave', updateFoldFlush, disposables)
-    event.on('TextChanged', updateFoldDebounced, disposables)
-    event.on('BufWritePost', updateFoldFlush, disposables)
-    event.on('CmdlineLeave', updateFoldFlush, disposables)
-    event.on('WinClosed', diffWinClosed, disposables)
-    foldbuffer.initialize(ns, config.open_fold_hl_timeout, config.provider_selector)
+    event:on('BufEnter', attach, disposables)
+    event:on('InsertLeave', updateFoldFlush, disposables)
+    event:on('TextChanged', updateFoldDebounced, disposables)
+    event:on('BufWritePost', updateFoldFlush, disposables)
+    event:on('CmdlineLeave', updateFoldFlush, disposables)
+    event:on('WinClosed', diffWinClosed, disposables)
+    local d = foldbuffer:initialize(ns, config.open_fold_hl_timeout, config.provider_selector)
+    table.insert(disposables, d)
     for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do
         attach(api.nvim_win_get_buf(winid))
     end
-    Fold.ns = ns
-    Fold.disposables = disposables
+    self.ns = ns
+    self.disposables = disposables
     initialized = true
+    return self
 end
 
-function Fold.dispose()
-    foldbuffer.disposeAll()
-    for _, item in ipairs(Fold.disposables) do
-        item.dispose()
+function Fold:dispose()
+    for _, item in ipairs(self.disposables) do
+        item:dispose()
     end
     initialized = false
 end

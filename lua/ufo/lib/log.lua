@@ -5,7 +5,7 @@
 ---@field info fun(...)
 ---@field warn fun(...)
 ---@field error fun(...)
-local M = {}
+local Log = {}
 local fn = vim.fn
 local uv = vim.loop
 
@@ -27,20 +27,20 @@ end
 
 ---
 ---@param l number|string
-function M.setLevel(l)
+function Log.setLevel(l)
     levelNr = getLevelNr(l)
 end
 
 ---
 ---@param l number|string
 ---@return boolean
-function M.isEnabled(l)
+function Log.isEnabled(l)
     return getLevelNr(l) >= levelNr
 end
 
 ---
 ---@return string|'trace'|'debug'|'info'|'warn'|'error'
-function M.level()
+function Log.level()
     for l, nr in pairs(levelMap) do
         if nr == levelNr then
             return l
@@ -74,10 +74,10 @@ local function init()
     fn.mkdir(logDir, 'p')
     levelMap = {TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4}
     defaultLevel = 3
-    M.setLevel(vim.env.UFO_LOG)
+    Log.setLevel(vim.env.UFO_LOG)
 
     for l in pairs(levelMap) do
-        M[l:lower()] = function(...)
+        Log[l:lower()] = function(...)
             local argc = select('#', ...)
             if argc == 0 or levelMap[l] < levelNr then
                 return
@@ -101,4 +101,4 @@ end
 
 init()
 
-return M
+return Log

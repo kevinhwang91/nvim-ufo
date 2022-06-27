@@ -2,9 +2,10 @@ local api = vim.api
 local fn  = vim.fn
 local cmd = vim.cmd
 
-local utils  = require('ufo.utils')
-local log    = require('ufo.log')
-local config = require('ufo.config')
+local utils      = require('ufo.utils')
+local config     = require('ufo.config')
+local log        = require('ufo.lib.log')
+local disposable = require('ufo.lib.disposable')
 
 local foldbuffer = require('ufo.fold.buffer')
 local highlight = require('ufo.highlight')
@@ -15,7 +16,7 @@ local hlGroups
 
 
 ---@class UfoDecorator
----@field namespace number
+---@field ns number
 ---@field virtTextHandler? function[]
 ---@field disposables table
 local Decorator = {}
@@ -159,9 +160,9 @@ local function onEnd(name, tick)
                 local syntax = vim.bo[bufnr].syntax ~= ''
                 if not nss then
                     nss = {}
-                    for _, namespace in pairs(api.nvim_get_namespaces()) do
-                        if Decorator.namespace ~= namespace then
-                            table.insert(nss, namespace)
+                    for _, ns in pairs(api.nvim_get_namespaces()) do
+                        if Decorator.ns ~= ns then
+                            table.insert(nss, ns)
                         end
                     end
                 end
@@ -172,7 +173,7 @@ local function onEnd(name, tick)
                         log.debug('need add/update folded:', lnum)
                         local endLnum = utils.foldClosedEnd(0, lnum)
                         local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
-                        local handler = Decorator.getVirtTextHandler(bufnr)
+                        local handler = Decorator:getVirtTextHandler(bufnr)
                         local virtText = getVirtText(bufnr, text, width, lnum, syntax, nss)
                         virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
@@ -233,17 +234,20 @@ function Decorator.defaultVirtTextHandler(virtText, lnum, endLnum, width, trunca
     return newVirtText
 end
 
-function Decorator.setVirtTextHandler(bufnr, handler)
+function Decorator:setVirtTextHandler(bufnr, handler)
     bufnr = bufnr or api.nvim_get_current_buf()
-    Decorator.virtTextHandlers[bufnr] = handler
+    self.virtTextHandlers[bufnr] = handler
 end
 
-function Decorator.getVirtTextHandler(bufnr)
+function Decorator:getVirtTextHandler(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
-    return Decorator.virtTextHandlers[bufnr]
+    return self.virtTextHandlers[bufnr]
 end
 
-function Decorator.initialize(namespace)
+---
+---@param namespace number
+---@return UfoDecorator
+function Decorator:initialize(namespace)
     if initialized then
         return
     end
@@ -254,29 +258,29 @@ function Decorator.initialize(namespace)
         on_line = onLine,
         on_end = onEnd
     })
-    Decorator.namespace = namespace
-    table.insert(disposables, {
-        dispose = function()
-            api.nvim_set_decoration_provider(namespace, {})
-        end
-    })
-    local virtTextHandler = config.fold_virt_text_handler or Decorator.defaultVirtTextHandler
+    self.ns = namespace
+
+    table.insert(disposables, disposable:create(function()
+        api.nvim_set_decoration_provider(namespace, {})
+    end))
+    local virtTextHandler = config.fold_virt_text_handler or self.defaultVirtTextHandler
     -- TODO
     -- how to clean up the wipeouted buffer, need refactor
-    Decorator.virtTextHandlers = setmetatable({}, {
+    self.virtTextHandlers = setmetatable({}, {
         __index = function(tbl, bufnr)
             rawset(tbl, bufnr, virtTextHandler)
             return virtTextHandler
         end
     })
     hlGroups = highlight.hlGroups()
-    Decorator.disposables = disposables
+    self.disposables = disposables
     initialized = true
+    return self
 end
 
-function Decorator.dispose()
-    for _, item in ipairs(Decorator.disposables) do
-        item.dispose()
+function Decorator:dispose()
+    for _, item in ipairs(self.disposables) do
+        item:dispose()
     end
     initialized = false
 end

@@ -2,7 +2,7 @@ local util    = require('vim.lsp.util')
 local promise = require('promise')
 local utils   = require('ufo.utils')
 local async   = require('async')
-local log     = require('ufo.log')
+local log     = require('ufo.lib.log')
 
 ---@class UfoLspNvimClient
 ---@field initialized boolean

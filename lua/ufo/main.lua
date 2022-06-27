@@ -2,35 +2,35 @@ local M = {}
 local cmd = vim.cmd
 local api = vim.api
 
-local utils     = require('ufo.utils')
-local log       = require('ufo.log')
-local fold      = require('ufo.fold')
-local decorator = require('ufo.decorator')
-local highlight = require('ufo.highlight')
-local event     = require('ufo.event')
+local utils      = require('ufo.utils')
+local fold       = require('ufo.fold')
+local decorator  = require('ufo.decorator')
+local highlight  = require('ufo.highlight')
+local event      = require('ufo.lib.event')
+local disposable = require('ufo.lib.disposable')
 
 local enabled
+local disposables = {}
 
-local function initEvents()
+local function createEvents()
     cmd([[
         aug Ufo
             au!
-            au BufEnter * lua require('ufo.event').emit('BufEnter')
-            au InsertLeave * lua require('ufo.event').emit('InsertLeave')
-            au TextChanged * lua require('ufo.event').emit('TextChanged')
-            au BufWritePost * lua require('ufo.event').emit('BufWritePost')
-            au WinClosed * lua require('ufo.event').emit('WinClosed')
-            au CmdlineLeave * lua require('ufo.event').emit('CmdlineLeave')
-            au ColorScheme * lua require('ufo.event').emit('ColorScheme')
+            au BufEnter * lua require('ufo.lib.event'):emit('BufEnter')
+            au InsertLeave * lua require('ufo.lib.event'):emit('InsertLeave')
+            au TextChanged * lua require('ufo.lib.event'):emit('TextChanged')
+            au BufWritePost * lua require('ufo.lib.event'):emit('BufWritePost')
+            au WinClosed * lua require('ufo.lib.event'):emit('WinClosed')
+            au CmdlineLeave * lua require('ufo.lib.event'):emit('CmdlineLeave')
+            au ColorScheme * lua require('ufo.lib.event'):emit('ColorScheme')
         aug END
     ]])
-end
-
-local function destroyEvents()
-    cmd([[
-        au! Ufo
-        aug! Ufo
-    ]])
+    return disposable:create(function()
+        cmd([[
+            au! Ufo
+            aug! Ufo
+        ]])
+    end)
 end
 
 local function createCommand()
@@ -56,11 +56,11 @@ function M.enable()
         return false
     end
     local ns = api.nvim_create_namespace('ufo')
-    initEvents()
     createCommand()
-    highlight.initialize()
-    fold.initialize(ns)
-    decorator.initialize(ns)
+    table.insert(disposables, createEvents())
+    table.insert(disposables, highlight:initialize())
+    table.insert(disposables, fold:initialize(ns))
+    table.insert(disposables, decorator:initialize(ns))
     enabled = true
     return true
 end
@@ -69,11 +69,10 @@ function M.disable()
     if not enabled then
         return false
     end
-    destroyEvents()
     deleteCommand()
-    highlight.dispose()
-    fold.dispose()
-    decorator.dispose()
+    for _, item in ipairs(disposables) do
+        item:disable()
+    end
     enabled = false
     return true
 end
@@ -98,7 +97,7 @@ end
 
 function M.attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
-    event.emit('BufEnter', bufnr)
+    event:emit('BufEnter', bufnr)
 end
 
 function M.detach(bufnr)

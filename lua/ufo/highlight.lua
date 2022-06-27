@@ -1,7 +1,8 @@
-local event = require 'ufo.event'
+local event = require('ufo.lib.event')
 local cmd = vim.cmd
 local api = vim.api
 
+---@class UfoHighlight
 local Highlight = {}
 local initialized
 local hlGroups
@@ -49,19 +50,22 @@ function Highlight.hlGroups()
     return hlGroups
 end
 
-function Highlight.initialize()
+---
+---@return UfoHighlight
+function Highlight:initialize()
     if initialized then
         return
     end
-    Highlight.disposables = {}
-    event.on('ColorScheme', resetHighlightGroup, Highlight.disposables)
+    self.disposables = {}
+    event:on('ColorScheme', resetHighlightGroup, self.disposables)
     resetHighlightGroup()
     initialized = true
+    return self
 end
 
-function Highlight.dispose()
-    for _, item in ipairs(Highlight.disposables) do
-        item.dispose()
+function Highlight:dispose()
+    for _, item in ipairs(self.disposables) do
+        item:dispose()
     end
     initialized = false
 end
