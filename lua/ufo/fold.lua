@@ -215,6 +215,22 @@ local function updateFoldFlush(bufnr)
     end)
 end
 
+local function updatePendingFold(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    local fb = foldbuffer:get(bufnr)
+    if not fb then
+        return
+    end
+    promise.resolve():thenCall(function()
+        if utils.mode() == 'n' then
+            if fb.status == 'pending' then
+                fb.status = 'start'
+                updateFoldDebounced(bufnr)
+            end
+        end
+    end)
+end
+
 local function diffWinClosed()
     local winid = tonumber(fn.expand('<afile>')) or api.nvim_get_current_win()
     if utils.isWinValid(winid) and utils.isDiffFold(winid) then
@@ -243,7 +259,7 @@ function Fold:initialize(ns)
     event:on('InsertLeave', updateFoldFlush, disposables)
     event:on('TextChanged', updateFoldDebounced, disposables)
     event:on('BufWritePost', updateFoldFlush, disposables)
-    event:on('CmdlineLeave', updateFoldFlush, disposables)
+    event:on('CmdlineLeave', updatePendingFold, disposables)
     event:on('WinClosed', diffWinClosed, disposables)
     local d = foldbuffer:initialize(ns, config.open_fold_hl_timeout, config.provider_selector)
     table.insert(disposables, d)
