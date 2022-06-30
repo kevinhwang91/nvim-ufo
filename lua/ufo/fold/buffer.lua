@@ -184,6 +184,9 @@ function FoldBuffer:closeFold(lnum, endLnum, virtText, width)
 end
 
 function FoldBuffer:parseProviders()
+    if not utils.isBufLoaded(self.bufnr) then
+        return
+    end
     if not self.providerSelector then
         self.providers = {'lsp', 'indent'}
         return
