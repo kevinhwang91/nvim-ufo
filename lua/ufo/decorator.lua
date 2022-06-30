@@ -23,6 +23,7 @@ local Decorator = {}
 
 local collection
 local redrawType
+local bufnrSet
 
 local function fillSlots(col, endCol, hlGroup, priority, hlGroupSlots, prioritySlots)
     if not hlGroup or not hlGroups[hlGroup].foreground then
@@ -120,12 +121,13 @@ end
 local function onStart(name, tick, redrawT)
     redrawType = redrawT
     collection = {}
+    bufnrSet = {}
 end
 
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
     local fb = foldbuffer:get(bufnr)
-    if not fb or not vim.wo[winid].foldenable then
+    if bufnrSet[bufnr] or not fb or not vim.wo[winid].foldenable then
         collection[winid] = nil
         return false
     end
@@ -134,6 +136,7 @@ local function onWin(name, winid, bufnr, topRow, botRow)
         bufnr = bufnr,
         rows = {}
     }
+    bufnrSet[bufnr] = true
 end
 
 ---@diagnostic disable-next-line: unused-local
@@ -203,6 +206,7 @@ local function onEnd(name, tick)
         cmd('redraw')
     end
     collection = nil
+    bufnrSet = nil
 end
 
 ---@diagnostic disable-next-line: unused-local
