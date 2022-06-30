@@ -216,7 +216,7 @@ function FoldBuffer:isFoldMethodsDisabled()
     if not self.providers then
         self:parseProviders()
     end
-    return self.providers[1] == ''
+    return not self.providers or self.providers[1] == ''
 end
 
 ---
