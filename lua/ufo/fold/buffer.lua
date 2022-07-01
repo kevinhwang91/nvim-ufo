@@ -20,7 +20,8 @@ local FoldBuffer = {
     ns = nil,
     hlNs = nil,
     openFoldHlTimeout = 0,
-    pool = {}
+    pool = {},
+    detachedBufSet = {}
 }
 
 ---@class UfoFoldedLine

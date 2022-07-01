@@ -1,4 +1,5 @@
 local disposable = require('ufo.lib.disposable')
+local log        = require('ufo.lib.log')
 
 ---@class UfoEvent
 local Event = {
@@ -48,6 +49,7 @@ function Event:emit(name, ...)
     if not listeners then
         return
     end
+    log.trace('event:', name, 'listeners:', listeners, 'args:', ...)
     for _, listener in ipairs(listeners) do
         listener(...)
     end

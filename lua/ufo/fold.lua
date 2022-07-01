@@ -115,6 +115,14 @@ function Fold.get(bufnr)
     return foldbuffer:get(bufnr)
 end
 
+function Fold.attach(bufnr)
+    foldbuffer.detachedBufSet[bufnr] = nil
+end
+
+function Fold.detach(bufnr)
+    foldbuffer.detachedBufSet[bufnr] = true
+end
+
 function Fold.setStatus(bufnr, status)
     local fb = foldbuffer:get(bufnr)
     local old = ''
@@ -147,6 +155,9 @@ end)()
 
 local function attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
+    if foldbuffer.detachedBufSet[bufnr] then
+        return
+    end
     log.debug('attach bufnr:', bufnr)
     local fb = foldbuffer:get(bufnr)
     if fb then

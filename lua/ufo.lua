@@ -1,3 +1,5 @@
+local api = vim.api
+
 ---Export methods to the users, `require('ufo').method(...)`
 ---@class Ufo
 local M = {}
@@ -33,6 +35,7 @@ end
 ---Inspect ufo information by bufnr
 ---@param bufnr? number current buffer default
 function M.inspect(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
     local msg = require('ufo.main').inspectBuf(bufnr)
     if not msg then
         vim.notify(('Buffer %d has not been attached.'):format(bufnr), vim.log.levels.ERROR)

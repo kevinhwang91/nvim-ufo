@@ -10,6 +10,8 @@ local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 
 local enabled
+
+---@type UfoDisposable[]
 local disposables = {}
 
 local function createEvents()
@@ -71,7 +73,7 @@ function M.disable()
     end
     deleteCommand()
     for _, item in ipairs(disposables) do
-        item:disable()
+        item:dispose()
     end
     enabled = false
     return true
@@ -97,6 +99,7 @@ end
 
 function M.attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
+    fold.attach(bufnr)
     event:emit('BufEnter', bufnr)
 end
 
@@ -106,6 +109,7 @@ function M.detach(bufnr)
     if fb then
         fb:dispose()
     end
+    fold.detach(bufnr)
 end
 
 function M.enableFold(bufnr)
