@@ -42,7 +42,6 @@ function NvimClient.requestFoldingRange(bufnr, kind)
             return
         end
         local bt = vim.bo[bufnr].bt
-        -- same behavior with coc.nvim
         if bt ~= '' and bt ~= 'acwrite' then
             return
         end

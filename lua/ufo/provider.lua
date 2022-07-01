@@ -34,10 +34,13 @@ end
 function Provider.requestFoldingRange(providers, bufnr)
     local main, fallback = providers[1], providers[2]
     local mainFunc = getFunction(main)
-    return promise.resolve(mainFunc(bufnr)):thenCall(function(value)
+
+    return promise(function(resolve)
+        resolve(mainFunc(bufnr))
+    end):thenCall(function(value)
         return {main, value}
     end, function(reason)
-        if reason == 'UfoFallbackException' then
+        if type(reason) == 'string' and reason:match('UfoFallbackException') then
             local fallbackFunc = getFunction(fallback)
             if fallbackFunc then
                 return {fallback, fallbackFunc(bufnr)}
