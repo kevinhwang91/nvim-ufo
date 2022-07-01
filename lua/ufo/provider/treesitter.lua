@@ -82,7 +82,6 @@ local function getCpatureMatchesRecursively(bufnr, parser)
 end
 
 function Treesitter.getFolds(bufnr)
-    local rt = ktime()
     if not utils.isBufLoaded(bufnr) then
         return
     end
@@ -106,7 +105,6 @@ function Treesitter.getFolds(bufnr)
             table.insert(ranges, {startLine = start, endLine = stop})
         end
     end
-    info(ktime() - rt)
     return ranges
 end
 
