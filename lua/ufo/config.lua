@@ -1,7 +1,8 @@
 ---@class UfoConfig
 ---@field open_fold_hl_timeout number
----@field provider_selector function
----@field fold_virt_text_handler function
+---@field provider_selector? function
+---@field fold_virt_text_handler? function
+---@field preview table
 local Config = {}
 
 
@@ -60,13 +61,39 @@ local function init()
         open_fold_hl_timeout = 400,
         provider_selector = nil,
         fold_virt_text_handler = nil,
+        preview = {
+            win_config = {
+                border = 'rounded',
+                winblend = 12,
+                winhighlight = 'Normal:Normal'
+            },
+            mappings = {
+                scrollB = '',
+                scrollF = '',
+                scrollU = '',
+                scrollD = '',
+                scrollE = '<C-E>',
+                scrollY = '<C-Y>',
+                close = 'q',
+                switch = '<Tab>',
+                trace = '<CR>',
+            }
+        }
     }
     Config = vim.tbl_deep_extend('keep', ufo._config or {}, def)
     vim.validate({
         open_fold_hl_timeout = {Config.open_fold_hl_timeout, 'number'},
         provider_selector = {Config.provider_selector, 'function', true},
-        fold_virt_text_handler = {Config.fold_virt_text_handler, 'function', true}
+        fold_virt_text_handler = {Config.fold_virt_text_handler, 'function', true},
+        preview_mappings = {Config.preview.mappings, 'table'}
     })
+
+    local preview = Config.preview
+    for msg, key in pairs(preview.mappings) do
+        if key == '' then
+            preview.mappings[msg] = nil
+        end
+    end
     ufo._config = nil
 end
 

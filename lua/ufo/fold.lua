@@ -263,7 +263,7 @@ end
 ---@return UfoFold
 function Fold:initialize(ns)
     if initialized then
-        return
+        return self
     end
     local disposables = {}
     event:on('BufEnter', attach, disposables)

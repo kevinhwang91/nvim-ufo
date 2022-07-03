@@ -12,6 +12,15 @@ function M.setup(opts)
     M.enable()
 end
 
+---
+---@param maxHeight? number max height for floating window, default 20
+---@param enter? boolean enter the floating window, default false
+---@param nextLineIncluded? boolean include the next line of last line of closed fold, default true
+---@return number? winid, number? bufnr return the winid and bufnr if successful, otherwise return nil
+function M.peekFoldedLinesUnderCursor(maxHeight, enter, nextLineIncluded)
+    return require('ufo.preview'):peekFoldedLinesUnderCursor(maxHeight, enter, nextLineIncluded)
+end
+
 function M.goPreviousStartFold()
     return require('ufo.action').goPreviousStartFold()
 end

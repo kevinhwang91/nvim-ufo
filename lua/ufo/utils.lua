@@ -187,6 +187,20 @@ function M.textoff(winid)
 end
 
 ---
+---@param bufnr number
+---@param lnum number 1-indexed
+---@param col number 1-indexed
+---@return number 0-indexed
+function M.curswant(bufnr, lnum, col)
+    if col == 0 then
+        return 0
+    end
+    local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, true)[1]
+    text = M.expandTab(text:sub(1, col), vim.bo[bufnr].ts)
+    return #text - 1
+end
+
+---
 ---@param winid number
 ---@return boolean
 function M.isWinValid(winid)

@@ -8,12 +8,9 @@ local log        = require('ufo.lib.log')
 local disposable = require('ufo.lib.disposable')
 
 local foldbuffer = require('ufo.fold.buffer')
-local highlight = require('ufo.highlight')
-local treesitter = require('ufo.treesitter')
+local render = require('ufo.render')
 
 local initialized
-local hlGroups
-
 
 ---@class UfoDecorator
 ---@field ns number
@@ -24,73 +21,6 @@ local Decorator = {}
 local collection
 local redrawType
 local bufnrSet
-
-local function fillSlots(col, endCol, hlGroup, priority, hlGroupSlots, prioritySlots)
-    if not hlGroup or not hlGroups[hlGroup].foreground then
-        return
-    end
-    for i = col + 1, endCol do
-        local oldPriority = prioritySlots[i]
-        if not oldPriority or oldPriority <= priority then
-            prioritySlots[i] = priority
-            hlGroupSlots[i] = hlGroup
-        end
-    end
-end
-
-local function getVirtText(bufnr, text, width, lnum, syntax, namespaces)
-    text = utils.truncateStrByWidth(text, width)
-    local len = #text
-    if len == 0 then
-        return {{'', 'UfoFoldedFg'}}
-    end
-    local prioritySlots = {}
-    local hlGroupSlots = {}
-    for _, n in pairs(namespaces) do
-        local marks = api.nvim_buf_get_extmarks(bufnr, n, {lnum - 1, 0}, {lnum - 1, len - 1},
-                                                {details = true})
-        for _, m in ipairs(marks) do
-            local col, details = m[3], m[4]
-            if col < len then
-                local endCol = math.min(details.end_col or (col + 1), len)
-                local hlGroup = details.hl_group
-                local priority = details.priority
-                fillSlots(col, endCol, hlGroup, priority, hlGroupSlots, prioritySlots)
-            end
-        end
-    end
-    for _, m in ipairs(treesitter.getHighlightInRow(bufnr, lnum - 1)) do
-        local hlGroup, priority, col, endCol = m[1], m[2], m[3], m[4]
-        if endCol == -1 then
-            endCol = len
-        end
-        fillSlots(col, endCol, hlGroup, priority, hlGroupSlots, prioritySlots)
-    end
-    if syntax then
-        api.nvim_buf_call(bufnr, function()
-            for i = 1, len do
-                if not prioritySlots[i] then
-                    local hlId = fn.synID(lnum, i, true)
-                    prioritySlots[i] = 1
-                    hlGroupSlots[i] = hlId
-                end
-            end
-        end)
-    end
-    local virtText = {}
-    local lastHlGroup = hlGroupSlots[1] or 'UfoFoldedFg'
-    local lastIndex = 1
-    for i = 2, len do
-        local hlGroup = hlGroupSlots[i] or 'UfoFoldedFg'
-        if lastHlGroup ~= hlGroup then
-            table.insert(virtText, {text:sub(lastIndex, i - 1), lastHlGroup})
-            lastIndex = i
-            lastHlGroup = hlGroup
-        end
-    end
-    table.insert(virtText, {text:sub(lastIndex), lastHlGroup})
-    return virtText
-end
 
 local function unHandledFoldedLnums(fb, rows)
     local lastRow = rows[1]
@@ -177,7 +107,7 @@ local function onEnd(name, tick)
                         local endLnum = utils.foldClosedEnd(0, lnum)
                         local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
                         local handler = Decorator:getVirtTextHandler(bufnr)
-                        local virtText = getVirtText(bufnr, text, width, lnum, syntax, nss)
+                        local virtText = render.getVirtText(bufnr, text, width, lnum, syntax, nss)
                         virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
                             winid = winid,
@@ -253,7 +183,7 @@ end
 ---@return UfoDecorator
 function Decorator:initialize(namespace)
     if initialized then
-        return
+        return self
     end
     local disposables = {}
     api.nvim_set_decoration_provider(namespace, {
@@ -276,8 +206,8 @@ function Decorator:initialize(namespace)
             return virtTextHandler
         end
     })
-    hlGroups = highlight.hlGroups()
     self.disposables = disposables
+    require('ufo.render')
     initialized = true
     return self
 end

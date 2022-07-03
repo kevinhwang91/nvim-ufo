@@ -1,12 +1,14 @@
 local api = vim.api
 
 local utils = require('ufo.utils')
+local event = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 
 ---@class UfoFoldBuffer
 ---@field ns number
 ---@field hlNs number
 ---@field openFoldHlTimeout number
+---@field openFoldHlEnabled boolean
 ---@field bufnr number
 ---@field winid? number
 ---@field lnum? number
@@ -142,7 +144,7 @@ end
 ---@param lnum number
 function FoldBuffer:openFold(lnum)
     local fl = self.foldedLines[lnum]
-    if self.openFoldHlTimeout > 0 then
+    if self.openFoldHlEnabled then
         local mark = api.nvim_buf_get_extmark_by_id(self.bufnr, self.ns, fl.id, {details = true})
         local row, details = mark[1], mark[3]
         if row and lnum == row + 1 then
@@ -229,6 +231,17 @@ function FoldBuffer:initialize(namespace, openFoldHlTimeout, selector)
     self.ns = namespace
     self.hlNs = api.nvim_create_namespace('ufo-hl')
     self.openFoldHlTimeout = openFoldHlTimeout
+    self.openFoldHlEnabled = openFoldHlTimeout > 0
+    self.providerSelector = selector
+    local disposables = {}
+    event:on('setOpenFoldHl', function(val)
+        if type(val) == 'boolean' then
+            self.openFoldHlEnabled = val
+        else
+            self.openFoldHlEnabled = self.openFoldHlTimeout > 0
+        end
+    end, disposables)
+    self.disposables = disposables
     self.providerSelector = selector
     return disposable:create(function()
         for _, fb in pairs(self.pool) do

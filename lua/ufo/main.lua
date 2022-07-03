@@ -6,6 +6,7 @@ local utils      = require('ufo.utils')
 local fold       = require('ufo.fold')
 local decorator  = require('ufo.decorator')
 local highlight  = require('ufo.highlight')
+local preview    = require('ufo.preview')
 local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 
@@ -63,6 +64,7 @@ function M.enable()
     table.insert(disposables, highlight:initialize())
     table.insert(disposables, fold:initialize(ns))
     table.insert(disposables, decorator:initialize(ns))
+    table.insert(disposables, preview:initialize(ns))
     enabled = true
     return true
 end

@@ -43,10 +43,18 @@ local function resetHighlightGroup()
     else
         cmd('hi default UfoFoldedFg ctermfg=None guifg=None')
     end
-    cmd('hi default link UfoFoldedEllipsis Comment')
+
+    cmd([[
+        hi default link UfoPreviewSbar PmenuSbar
+        hi default link UfoPreviewThumb PmenuThumb
+        hi default link UfoFoldedEllipsis Comment
+    ]])
 end
 
 function Highlight.hlGroups()
+    if not initialized then
+        Highlight:initialize()
+    end
     return hlGroups
 end
 
@@ -54,7 +62,7 @@ end
 ---@return UfoHighlight
 function Highlight:initialize()
     if initialized then
-        return
+        return self
     end
     self.disposables = {}
     event:on('ColorScheme', resetHighlightGroup, self.disposables)

@@ -1,4 +1,5 @@
 ---@diagnostic disable: undefined-field
+---@class UfoWffi
 local M = {}
 
 local utils
@@ -12,12 +13,34 @@ local function findWin(winid)
     return C.find_window_by_handle(winid, err)
 end
 
+---
+---@param winid number
+---@param lnum number
+---@return number
+function M.plinesWin(winid, lnum)
+    return C.plines_win(findWin(winid), lnum, true)
+end
+
+---
+---@param winid number
+---@param lnum number
+---@param winheight boolean
+---@return number
+function M.plinesWinNofill(winid, lnum, winheight)
+    return C.plines_win_nofill(findWin(winid), lnum, winheight)
+end
+
+---
+---@param winid number
 function M.clearFolds(winid)
     local wp = findWin(winid)
     C.clearFolding(wp)
     C.changed_window_setting()
 end
 
+---
+---@param winid number
+---@param posList table
 function M.createFolds(winid, posList)
     local wp = findWin(winid)
     local s, e = CPos_T(), CPos_T()
@@ -58,6 +81,9 @@ local function init()
         void clearFolding(win_T *win);
         void changed_window_setting(void);
         void foldCreate(win_T *wp, pos_T start, pos_T end);
+
+        int plines_win(win_T *wp, linenr_T lnum, bool winheight);
+        int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight);
     ]])
     CPos_T = ffi.typeof('pos_T')
 end
