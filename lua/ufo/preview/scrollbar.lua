@@ -57,7 +57,7 @@ function ScrollBar:update(topline)
         barPos = self.height - barSize + 1
     end
 
-    if self:BorderHasRightLine() then
+    if self:borderHasRightLine() then
         local wopts = self:build()
         wopts.height = barSize
         wopts.row = wopts.row + barPos - 1
