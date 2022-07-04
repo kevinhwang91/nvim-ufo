@@ -15,6 +15,7 @@ local initialized
 ---@class UfoDecorator
 ---@field ns number
 ---@field virtTextHandler? function[]
+---@field enableFoldEndVirtText boolean
 ---@field disposables table
 local Decorator = {}
 
@@ -108,10 +109,16 @@ local function onEnd(name, tick)
                         local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
                         local handler = Decorator:getVirtTextHandler(bufnr)
                         local virtText = render.getVirtText(bufnr, text, width, lnum, syntax, nss)
+                        local endVirtText
+                        if Decorator.enableFoldEndVirtText then
+                            local endText = api.nvim_buf_get_lines(bufnr, endLnum - 1, endLnum, false)[1]
+                            endVirtText = render.getVirtText(bufnr, endText, width, endLnum, syntax, nss)
+                        end
                         virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
                             winid = winid,
-                            text = text
+                            text = text,
+                            end_virt_text = endVirtText
                         })
                         fb:closeFold(lnum, endLnum, virtText, width)
                     end
@@ -197,6 +204,8 @@ function Decorator:initialize(namespace)
     table.insert(disposables, disposable:create(function()
         api.nvim_set_decoration_provider(namespace, {})
     end))
+    self.enableFoldEndVirtText = config.enable_fold_end_virt_text
+
     local virtTextHandler = config.fold_virt_text_handler or self.defaultVirtTextHandler
     -- TODO
     -- how to clean up the wipeouted buffer, need refactor

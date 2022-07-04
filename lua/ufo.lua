@@ -116,6 +116,7 @@ end
 ---@field bufnr number buffer for closed fold
 ---@field winid number window for closed fold
 ---@field text string text for the first line of closed fold
+---@field end_virt_text ExtmarkVirtTextChunk[] contained text and highlight for end lnum
 
 ---@class ExtmarkVirtTextChunk
 ---@field text string

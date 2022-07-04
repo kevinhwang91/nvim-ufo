@@ -2,11 +2,13 @@
 ---@field provider_selector? function
 ---@field open_fold_hl_timeout number
 ---@field fold_virt_text_handler? function A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
+---@field enable_fold_end_virt_text boolean
 ---@field preview table
 local def = {
     open_fold_hl_timeout = 400,
     provider_selector = nil,
     fold_virt_text_handler = nil,
+    enable_fold_end_virt_text = false,
     preview = {
         win_config = {
             border = 'rounded',
