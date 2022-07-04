@@ -39,19 +39,19 @@ local function borderHasLine(border, index)
     end
 end
 
-function FloatWin:BorderHasUpLine()
+function FloatWin:borderHasUpLine()
     return borderHasLine(self.border, 1)
 end
 
-function FloatWin:BorderHasRightLine()
+function FloatWin:borderHasRightLine()
     return borderHasLine(self.border, 2)
 end
 
-function FloatWin:BorderHasBottomLine()
+function FloatWin:borderHasBottomLine()
     return borderHasLine(self.border, 3)
 end
 
-function FloatWin:BorderHasLeftLine()
+function FloatWin:borderHasLeftLine()
     return borderHasLine(self.border, 4)
 end
 
@@ -69,13 +69,13 @@ function FloatWin:build(targetWinid, height, border)
     end
     self.col = 0
     self.width = winfo.width - winfo.textoff
-    if self:BorderHasLeftLine() then
+    if self:borderHasLeftLine() then
         self.col = self.col - 1
     end
-    if self:BorderHasUpLine() then
+    if self:borderHasUpLine() then
         self.row = self.row - 1
     end
-    if self:BorderHasRightLine() then
+    if self:borderHasRightLine() then
         self.width = self.width - 1
     end
     self.zindex = 51

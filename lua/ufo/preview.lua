@@ -73,7 +73,7 @@ function Preview:trace(bufnr)
     local fWinConfig = api.nvim_win_get_config(floatWinid)
     -- fWinConfig.row is a table value converted from a floating-point
     local wrow = tonumber(fWinConfig.row[vim.val_idx])
-    if floatwin:BorderHasUpLine() then
+    if floatwin:borderHasUpLine() then
         wrow = math.max(0, wrow) + 1
     end
     local fLnum, fCol, fWrow

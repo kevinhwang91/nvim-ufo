@@ -199,7 +199,9 @@ For example, Changing the text in a buffer will request the providers for folds.
 Additional mouse supported:
 
 1. `<ScrollWheelUp>` and `<ScrollWheelDown>`: Scroll preview window.
-2. `<2-LeftMouse>`: Same with `trace` action in preview window.
+2. `<2-LeftMouse>`: Same as `trace` action in preview window.
+
+> `trace` action will open all fold for the folded lines
 
 ### Commands
 
@@ -227,7 +229,7 @@ hi default link UfoFoldedEllipsis Comment
 
 - `UfoPreviewSbar`: highlight the scroll bar of preview window, only take effect if the border is
   missing right horizontal line, like `border = 'none'`.
-- `UfoPreviewSbar`: highlight the thumb of preview window.
+- `UfoPreviewThumb`: highlight the thumb of preview window.
 - `UfoFoldedEllipsis`: highlight ellipsis at the end of folded line, invalid if
   `fold_virt_text_handler` is set.
 
