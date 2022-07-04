@@ -12,6 +12,9 @@ local function selectProviderWithFt()
             -- return a string in a table like a string type
             -- return empty string '' will disable any providers
             -- return `nil` will use default value {'lsp', 'indent'}
+
+            -- if you prefer treesitter provider rather than lsp,
+            -- return ftMap[filetype] or {'treesitter', 'indent'}
             return ftMap[filetype]
         end
     })
@@ -28,6 +31,16 @@ local function selectProviderWithFunc()
             end
         end
     })
+end
+
+local function peekOrHover()
+    local winid = require('ufo').peekFoldedLinesUnderCursor()
+    if not winid then
+        -- coc.nvim
+        vim.fn.CocActionAsync('definitionHover')
+        -- nvimlsp
+        vim.lsp.buf.hover()
+    end
 end
 
 local handler = function(virtText, lnum, endLnum, width, truncate)

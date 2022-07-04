@@ -37,8 +37,6 @@ local function createEvents()
 end
 
 local function createCommand()
-    -- TODO
-    -- no completion and args
     cmd([[
         com! UfoEnable lua require('ufo').enable()
         com! UfoDisable lua require('ufo').disable()

@@ -20,11 +20,12 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 - [Documentation](#documentation)
   - [How does nvim-ufo get the folds?](#how-does-nvim-ufo-get-the-folds?)
   - [Setup and description](#setup-and-description)
+  - [Preview function table](#preview-function-table)
   - [Commands](#commands)
   - [API](#api)
   - [Highlight groups](#highlight-groups)
 - [Advanced configuration](#advanced-configuration)
-  - [Customize provider selector](#customize-provider-selector)
+  - [Customize configuration](#customize-configuration)
   - [Customize fold text](#customize-fold-text)
 - [Feedback](#feedback)
 - [License](#license)
@@ -35,6 +36,7 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 - Never block Neovim
 - Adding folds high accuracy with Folding Range in LSP
 - Support Fallback and customize strategy for fold provider
+- Peek folded line and jump the desired location with less redraw
 
 ## Quickstart
 
@@ -42,6 +44,7 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 
 - [Neovim](https://github.com/neovim/neovim) 0.6.1 or later
 - [coc.nvim](https://github.com/neoclide/coc.nvim) (optional)
+- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) (optional)
 
 ### Installation
 
@@ -57,11 +60,16 @@ use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 
 vim.wo.foldcolumn = '1'
-vim.wo.foldlevel = 99 -- feel free to decrease the value
+vim.wo.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
 vim.wo.foldenable = true
+
+-- Using ufo provider need remap `zR` and `zM`. If Neovim is 0.6.1, remap yourself
+vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
+vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
 
 -- option 1: coc.nvim as LSP client
 use {'neoclide/coc.nvim', branch = 'master', run = 'yarn install --frozen-lockfile'}
+require('ufo').setup()
 --
 
 -- option 2: nvim lsp as LSP client
@@ -79,14 +87,36 @@ for _, ls in ipairs(language_servers) do
         other_fields = ...
     })
 end
+require('ufo').setup()
 --
 
-require('ufo').setup()
+-- option 3: treesitter as a main provider instead
+use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'}
+require('ufo').setup({
+    provider_selector = function(bufnr, filetype)
+        return {'treesitter', 'indent'}
+    end
+})
+--
+
+-- option 4: disable all providers for all buffers
+-- Not recommend, AFAIK, the providers in ufo is the best performance in Neovim
+require('ufo').setup({
+    provider_selector = function(bufnr, filetype)
+        return ''
+    end
+})
 ```
 
 ### Usage
 
 Use fold as usual.
+
+If use a provider of ufo, must set a large value for `foldlevel`, this is the limitation of
+`foldmethod=manual`. A small value may close fold automatically if the fold ranges updated.
+
+After running `zR` and `zM` normal commands will change the `foldlevel`, ufo provide the API to
+open/close all folds but keep `foldlevel`, need to remap them.
 
 ## Documentation
 
@@ -96,7 +126,7 @@ If ufo detect `foldmethod` option is not `diff` or `marker`, it will request the
 the folds, the request strategy is formed by the main and the fallback. The default value of main is
 `lsp` and the default value of fallback is `indent` which implemented by ufo.
 
-Changing the text in a buffer will request the providers for folds.
+For example, Changing the text in a buffer will request the providers for folds.
 
 > `foldmethod` option will finally become `manual` if ufo are working.
 
@@ -105,36 +135,99 @@ Changing the text in a buffer will request the providers for folds.
 ```lua
 {
     open_fold_hl_timeout = {
-        description = [[time in millisecond between the range to be highlgihted and to be cleared
+        description = [[Time in millisecond between the range to be highlgihted and to be cleared
                     while opening the folded line, `0` value will disable the highlight]],
         default = 400
     },
     provider_selector = {
-        description = [[a function as a selector for fold providers. For now, there are
-                    'lsp' and 'indent' providers]],
+        description = [[A function as a selector for fold providers. For now, there are
+                    'lsp', 'treesitter' and 'indent' providers]],
         default = nil
     },
     fold_virt_text_handler = {
-        description = [[a function customize fold virt text, see ### Customize fold text]],
+        description = [[A function customize fold virt text, see ### Customize fold text]],
         default = nil
+    },
+    preview = {
+        description = [[Configure the options for preview window and remap the keys for current
+                    buffer and preview buffer if the preview window is displayed.
+                    Never worry about the users's keymaps are overridden by ufo, ufo will save
+                    them and restore them if preview window is closed.]],
+        win_config = {
+            border = {
+                description = [[The border for preview window,
+                    `:h nvim_open_win() | call search('border:')`]],
+                default = 'rounded',
+            },
+            winblend = {
+                description = [[The winblend for preview window, `:h winblend`]],
+                default = 12,
+            },
+            winhighlight = {
+                description = [[The winhighlight for preview window, `:h winhighlight`]],
+                default = 'Normal:Normal',
+            },
+        },
+        mappings = {
+            description = [[The table for {function = key}]],
+            default = [[see ###Preview function table for detail]],
+        }
     }
 }
 ```
 
+`:h ufo` may help you to get the all default configuration.
+
+### Preview function table
+
+<!-- markdownlint-disable MD013 -->
+
+| Function | Action                                                                                         | Def Key |
+| -------- | ---------------------------------------------------------------------------------------------- | ------- |
+| scrollB  | Type `CTRL-B` in preview window                                                                |         |
+| scrollF  | Type `CTRL-F` in preview window                                                                |         |
+| scrollU  | Type `CTRL-U` in preview window                                                                |         |
+| scrollD  | Type `CTRL-D` in preview window                                                                |         |
+| scrollE  | Type `CTRL-E` in preview window                                                                | `<C-E>` |
+| scrollY  | Type `CTRL-Y` in preview window                                                                | `<C-Y>` |
+| close    | In normal window: close preview window<br>In preview window: close preview window              | `q`     |
+| switch   | In normal window: Go to preview window<br>In preview window: Go to normal window               | `<Tab>` |
+| trace    | In normal window: Trace code based on topline<br>In preview window: Trace code based on cursor | `<CR>`  |
+
+<!-- markdownlint-enable MD013-->
+
+Additional mouse supported:
+
+1. `<ScrollWheelUp>` and `<ScrollWheelDown>`: Scroll preview window.
+2. `<2-LeftMouse>`: Same with `trace` action in preview window.
+
 ### Commands
 
-TODO [main.lua](./lua/ufo/main.lua)
+| Command       | Description                                                    |
+| ------------- | -------------------------------------------------------------- |
+| UfoEnable     | Enable ufo                                                     |
+| UfoDisable    | Disable ufo                                                    |
+| UfoInspect    | Inspect current buffer information                             |
+| UfoAttach     | Attach current buffer to enable all features                   |
+| UfoDetach     | Attach current buffer to disable all features                  |
+| UfoEnableFold | Enable to get folds and update them at once for current buffer |
+| UfoEnableFold | Disable to get folds for current buffer                        |
 
 ### API
 
-TODO [ufo.lua](./lua/ufo.lua)
+[ufo.lua](./lua/ufo.lua)
 
 ### Highlight groups
 
 ```vim
+hi default link UfoPreviewSbar PmenuSbar
+hi default link UfoPreviewThumb PmenuThumb
 hi default link UfoFoldedEllipsis Comment
 ```
 
+- `UfoPreviewSbar`: highlight the scroll bar of preview window, only take effect if the border is
+  missing right horizontal line, like `border = 'none'`.
+- `UfoPreviewSbar`: highlight the thumb of preview window.
 - `UfoFoldedEllipsis`: highlight ellipsis at the end of folded line, invalid if
   `fold_virt_text_handler` is set.
 
@@ -142,7 +235,7 @@ hi default link UfoFoldedEllipsis Comment
 
 Configuration can be found at [example.lua](./doc/example.lua)
 
-### Customize provider selector
+### Customize configuration
 
 ```lua
 local ftMap = {
@@ -151,14 +244,39 @@ local ftMap = {
     git = ''
 }
 require('ufo').setup({
+    open_fold_hl_timeout = 150,
+    preview = {
+        win_config = {
+            border = {'', '─', '', '', '', '─', '', ''},
+            winhighlight = 'Normal:Folded',
+            winblend = 0
+        },
+        mappings = {
+            scrollU = '<C-u>',
+            scrollD = '<C-d>'
+        }
+    },
     provider_selector = function(bufnr, filetype)
         -- return a string type use internal providers
         -- return a string in a table like a string type
         -- return empty string '' will disable any providers
         -- return `nil` will use default value {'lsp', 'indent'}
+
+        -- if you prefer treesitter provider rather than lsp,
+        -- return ftMap[filetype] or {'treesitter', 'indent'}
         return ftMap[filetype]
     end
 })
+vim.keymap.set('n', 'K', function()
+    local winid = require('ufo').peekFoldedLinesUnderCursor()
+    if not winid then
+        -- choose one of them
+        -- coc.nvim
+        vim.fn.CocActionAsync('definitionHover')
+        -- nvimlsp
+        vim.lsp.buf.hover()
+    end
+end)
 ```
 
 ### Customize fold text

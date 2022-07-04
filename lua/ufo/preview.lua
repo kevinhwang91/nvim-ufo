@@ -193,10 +193,10 @@ end
 
 ---
 ---@param maxHeight? number
----@param enter? boolean
 ---@param nextLineIncluded? boolean
+---@param enter? boolean
 ---@return number? winid, number? bufnr
-function Preview:peekFoldedLinesUnderCursor(maxHeight, enter, nextLineIncluded)
+function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
     local lnum = api.nvim_win_get_cursor(0)[1]
     lnum = utils.foldClosed(0, lnum)
     if lnum == -1 then
