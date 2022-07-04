@@ -99,37 +99,11 @@ function M.goNextClosedFold()
 end
 
 function M.closeAllFolds()
-    local lineCount = api.nvim_buf_line_count(0)
-    local winView = fn.winsaveview()
-    local lnum = 1
-    while lnum <= lineCount do
-        if fn.foldlevel(lnum) > 0 then
-            api.nvim_win_set_cursor(0, {lnum, 0})
-            cmd('norm! zC')
-            local endLnum = utils.foldClosedEnd(0, lnum)
-            lnum = endLnum > 0 and (endLnum + 1) or (lnum + 1)
-        else
-            lnum = lnum + 1
-        end
-    end
-    fn.winrestview(winView)
+    cmd 'silent! %foldclose!'
 end
 
 function M.openAllFolds()
-    local lineCount = api.nvim_buf_line_count(0)
-    local winView = fn.winsaveview()
-    local lnum = 1
-    while lnum <= lineCount do
-        local endLnum = utils.foldClosedEnd(0, lnum)
-        if endLnum > 0 then
-            api.nvim_win_set_cursor(0, {lnum, 0})
-            cmd('norm! zO')
-            lnum = endLnum + 1
-        else
-            lnum = lnum + 1
-        end
-    end
-    fn.winrestview(winView)
+    cmd 'silent! %foldopen!'
 end
 
 return M
