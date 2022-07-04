@@ -36,9 +36,15 @@ function Keymap:restoreKeymaps()
 end
 
 function Keymap:saveKeymaps()
-    local keys = vim.tbl_values(self.keyMessages)
+    local keys = {}
+    for _, v in pairs(self.keyMessages) do
+        if v:match('^<.*>$') then
+            v = v:upper()
+        end
+        keys[v] = true
+    end
     for _, k in ipairs(api.nvim_buf_get_keymap(self.bufnr, 'n')) do
-        if keys[k] then
+        if keys[k.lhs] then
             local opts = {
                 expr = k.expr == 1,
                 noremap = k.noremap == 1,
