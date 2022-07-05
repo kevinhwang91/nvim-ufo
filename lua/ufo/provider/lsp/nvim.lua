@@ -10,6 +10,22 @@ local NvimClient = {
     initialized = true
 }
 
+local errorCodes = {
+    -- Defined by JSON RPC
+    ParseError = -32700,
+    InvalidRequest = -32600,
+    MethodNotFound = -32601,
+    InvalidParams = -32602,
+    InternalError = -32603,
+    serverErrorStart = -32099,
+    serverErrorEnd = -32000,
+    ServerNotInitialized = -32002,
+    UnknownErrorCode = -32001,
+    -- Defined by the protocol.
+    RequestCancelled = -32800,
+    ContentModified = -32801,
+}
+
 function NvimClient.request(client, method, params, bufnr)
     return promise(function(resolve, reject)
         client.request(method, params, function(err, res)
@@ -17,7 +33,12 @@ function NvimClient.request(client, method, params, bufnr)
                 log.error('Received error in callback', err)
                 log.error('Client:', client)
                 log.error('All clients:', vim.lsp.get_active_clients({bufnr = bufnr}))
-                reject(err)
+                local code = err.code
+                if code == errorCodes.RequestCancelled or code == errorCodes.ContentModified then
+                    reject('UfoFallbackException')
+                else
+                    reject(err)
+                end
             else
                 resolve(res)
             end
