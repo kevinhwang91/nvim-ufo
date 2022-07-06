@@ -59,9 +59,10 @@ use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 ```lua
 use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 
-vim.wo.foldcolumn = '1'
-vim.wo.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
-vim.wo.foldenable = true
+vim.o.foldcolumn = '1'
+vim.o.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
+vim.o.foldlevelstart = -1
+vim.o.foldenable = true
 
 -- Using ufo provider need remap `zR` and `zM`. If Neovim is 0.6.1, remap yourself
 vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
@@ -100,7 +101,7 @@ require('ufo').setup({
 --
 
 -- option 4: disable all providers for all buffers
--- Not recommend, AFAIK, the providers in ufo is the best performance in Neovim
+-- Not recommend, AFAIK, the ufo's providers are the best performance in Neovim
 require('ufo').setup({
     provider_selector = function(bufnr, filetype)
         return ''

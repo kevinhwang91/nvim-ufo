@@ -21,8 +21,30 @@ body:
   - type: textarea
     attributes:
       label: 'How to reproduce the issue'
-      description: 'How do you trigger this bug? Please walk us through it step by step.'
+      description: |
+        How do you trigger this bug? Please walk us through it step by step.
+        Log path: `~/.cache/nvim/ufo.log`
       value: |
+        `cat mini.lua`
+        ```lua
+        -- Use Vim packages install the plugin, also work with some plugins manager such as packer.nvim
+        vim.o.packpath = '~/.local/share/nvim/site'
+        vim.cmd('packadd promise-async')
+        vim.cmd('packadd nvim-ufo')
+
+        -- Setting
+        vim.o.foldcolumn = '1'
+        vim.o.foldlevel = 99
+        vim.o.foldlevelstart = -1
+        vim.o.foldenable = true
+
+        local ufo = require('ufo')
+        ufo.setup()
+        vim.keymap.set('n', 'zR', ufo.openAllFolds)
+        vim.keymap.set('n', 'zM', ufo.closeAllFolds)
+        ```
+        `nvim --clean -u mini.lua`
+
         1.
         2.
         3.
