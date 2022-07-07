@@ -85,7 +85,7 @@ local function onEnd(name, tick)
         if #data.rows > 0 then
             utils.winCall(winid, function()
                 local folded = unHandledFoldedLnums(fb, data.rows)
-                log.debug('folded:', folded)
+                log.debug('unhandled folded lnum:', folded)
                 if #folded == 0 then
                     return
                 end
@@ -102,9 +102,9 @@ local function onEnd(name, tick)
                 end
                 for i = 1, #folded do
                     local lnum = folded[i]
-                    if not fb:hasClosed(lnum) or fb:foldedLineWidthChanged(lnum, width) then
+                    if not fb:hasRendered(lnum) or fb:foldedLineWidthChanged(lnum, width) then
                         needRedraw = 1
-                        log.debug('need add/update folded:', lnum)
+                        log.debug('need add/update folded lnum:', lnum)
                         local endLnum = utils.foldClosedEnd(0, lnum)
                         local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
                         local handler = Decorator:getVirtTextHandler(bufnr)

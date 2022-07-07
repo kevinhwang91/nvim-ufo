@@ -30,6 +30,8 @@ local function applyFoldRanges(bufnr, winid, ranges, ns)
         local row, endRow = m[2], m[4].end_row
         rowPairs[row] = endRow
     end
+    log.info('apply fold ranges:', ranges)
+    log.info('apply fold rowPairs:', rowPairs)
     driver:createFolds(winid, ranges, rowPairs)
     return true
 end

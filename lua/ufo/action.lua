@@ -99,11 +99,16 @@ function M.goNextClosedFold()
 end
 
 function M.closeAllFolds()
-    cmd 'silent! %foldclose!'
+    cmd('silent! %foldclose!')
+    local curBufnr = api.nvim_get_current_buf()
+    local fb = require('ufo.fold').get(curBufnr)
+    for _, fr in ipairs(fb.foldRanges) do
+        fb:closeFold(fr.startLine + 1, fr.endLine + 1)
+    end
 end
 
 function M.openAllFolds()
-    cmd 'silent! %foldopen!'
+    cmd('silent! %foldopen!')
 end
 
 return M

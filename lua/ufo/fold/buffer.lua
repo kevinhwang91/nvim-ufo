@@ -29,8 +29,8 @@ local FoldBuffer = {
 ---@class UfoFoldedLine
 ---@field id number
 ---@field lnum number
----@field width number
----@field virtText string
+---@field width? number
+---@field virtText? string
 local FoldedLine = {}
 
 function FoldedLine:new(lnum, width)
@@ -86,8 +86,16 @@ end
 ---@param lnum number
 ---@return boolean
 function FoldBuffer:hasClosed(lnum)
-    local f = self.foldedLines[lnum]
-    return f ~= nil
+    local fl = self.foldedLines[lnum]
+    return fl ~= nil
+end
+
+---
+---@param lnum number
+---@return boolean
+function FoldBuffer:hasRendered(lnum)
+    local fl = self.foldedLines[lnum]
+    return fl and fl.virtText ~= nil
 end
 
 ---
@@ -160,12 +168,12 @@ end
 ---
 ---@param lnum number
 ---@param endLnum number
----@param virtText string
----@param width number
+---@param virtText? string
+---@param width? number
 function FoldBuffer:closeFold(lnum, endLnum, virtText, width)
     local fl = self.foldedLines[lnum]
     if fl then
-        if self:foldedLineWidthChanged(lnum, width) then
+        if width and self:foldedLineWidthChanged(lnum, width) then
             fl.width = width
         else
             return
