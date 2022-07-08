@@ -110,6 +110,14 @@ function Fold.update(bufnr)
         return promise.resolve()
     end
 
+    if fb.version == 0 then
+        -- TODO
+        -- content may changed
+        for _, range in ipairs(scanFoldedRanges(bufnr, winid)) do
+            local row, endRow = range[1], range[2]
+            fb:closeFold(row + 1, endRow + 1)
+        end
+    end
     local s
     if log.isEnabled('debug') then
         s = uv.hrtime()
@@ -126,14 +134,8 @@ function Fold.update(bufnr)
             return
         end
         winid = fn.bufwinid(bufnr)
-        if fb.version == 0 then
-            -- TODO
-            -- content may changed
-            for _, range in ipairs(scanFoldedRanges(bufnr, winid)) do
-                local row, endRow = range[1], range[2]
-                fb:closeFold(row + 1, endRow + 1)
-            end
-        end
+        -- TODO
+        -- It's asynchronous, changedtick between ufo and provider may be inconsistent
         local newChangedtick = api.nvim_buf_get_changedtick(bufnr)
         fb.version = newChangedtick
         fb.foldRanges = ranges
