@@ -18,7 +18,11 @@ function CocClient.action(action, ...)
     return promise(function(resolve, reject)
         table.insert(args, function(err, res)
             if err ~= vim.NIL then
-                reject(err)
+                if fn['coc#rpc#ready']() == 1 then
+                    reject(err)
+                else
+                    resolve()
+                end
             else
                 if res == vim.NIL then
                     res = nil
