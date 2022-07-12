@@ -18,10 +18,10 @@ function CocClient.action(action, ...)
     return promise(function(resolve, reject)
         table.insert(args, function(err, res)
             if err ~= vim.NIL then
-                if fn['coc#rpc#ready']() == 1 then
-                    reject(err)
-                else
+                if type(err) == 'string' and err:match('service not started') then
                     resolve()
+                else
+                    reject(err)
                 end
             else
                 if res == vim.NIL then
