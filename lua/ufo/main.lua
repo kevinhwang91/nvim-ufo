@@ -120,7 +120,8 @@ end
 
 function M.foldtext()
     local fs = vim.v.foldstart
-    local text = api.nvim_buf_get_lines(0, fs - 1, fs, false)[1]
+    local curBufnr = api.nvim_get_current_buf()
+    local text = bufmanager:get(curBufnr):lines(fs)[1]
     return utils.expandTab(text, vim.bo.ts)
 end
 

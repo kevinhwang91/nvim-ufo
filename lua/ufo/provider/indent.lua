@@ -1,5 +1,6 @@
-local utils = require('ufo.utils')
+local utils        = require('ufo.utils')
 local foldingrange = require('ufo.model.foldingrange')
+local bufmanager   = require('ufo.bufmanager')
 
 local Indent = {}
 
@@ -9,7 +10,7 @@ function Indent.getFolds(bufnr)
     if not utils.isBufLoaded(bufnr) then
         return
     end
-    local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local lines = bufmanager:get(bufnr):lines(0, -1)
     local sw = vim.bo[bufnr].shiftwidth
     local ts = vim.bo[bufnr].ts
     local levels = {}
