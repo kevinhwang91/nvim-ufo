@@ -171,8 +171,8 @@ function Buffer:lines(lnum, endLnum)
         self._lineCount = #self._lines
         self._q = {}
     end
-    assert(self._lineCount >= lnum, 'index out of bounds')
     local hunks, cnt = self:handleChanged()
+    assert(self._lineCount >= lnum, 'index out of bounds')
     endLnum = endLnum and endLnum or lnum
     if endLnum < 0 then
         endLnum = self._lineCount + endLnum + 1
