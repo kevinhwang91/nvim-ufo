@@ -60,32 +60,6 @@ function Buffer:detach()
     end
 end
 
-function Buffer:changedtick()
-    return self._changedtick
-end
-
-function Buffer:filetype()
-    local ft = self.ft
-    if not ft then
-        ft = vim.bo[self.bufnr].ft
-        if uv.hrtime() - self.hrtime > 1e8 then
-            self.ft = ft
-        end
-    end
-    return ft
-end
-
-function Buffer:buftype()
-    local bt = self.bt
-    if not bt then
-        bt = vim.bo[self.bufnr].bt
-        if uv.hrtime() - self.hrtime > 1e8 then
-            self.bt = bt
-        end
-    end
-    return bt
-end
-
 function Buffer:buildMissingHunk()
     local hunks = {}
     local s, e
@@ -149,6 +123,40 @@ function Buffer:handleChanged()
     return self:buildMissingHunk()
 end
 
+---
+---@return number
+function Buffer:changedtick()
+    return self._changedtick
+end
+
+---
+---@return string
+function Buffer:filetype()
+    local ft = self.ft
+    if not ft then
+        ft = vim.bo[self.bufnr].ft
+        if uv.hrtime() - self.hrtime > 1e8 then
+            self.ft = ft
+        end
+    end
+    return ft
+end
+
+---
+---@return string
+function Buffer:buftype()
+    local bt = self.bt
+    if not bt then
+        bt = vim.bo[self.bufnr].bt
+        if uv.hrtime() - self.hrtime > 1e8 then
+            self.bt = bt
+        end
+    end
+    return bt
+end
+
+---
+---@return number
 function Buffer:lineCount()
     return self._lineCount or api.nvim_buf_line_count(self.bufnr)
 end

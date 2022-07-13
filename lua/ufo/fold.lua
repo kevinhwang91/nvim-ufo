@@ -48,6 +48,9 @@ end
 function Fold.update(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     local fb = manager:get(bufnr)
+    if not fb then
+        return
+    end
     fb.status = 'start'
     if manager:isFoldMethodsDisabled(fb) then
         return promise.resolve()

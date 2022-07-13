@@ -4,8 +4,6 @@ local bufmanager   = require('ufo.bufmanager')
 
 local Indent = {}
 
-local api = vim.api
-
 function Indent.getFolds(bufnr)
     if not utils.isBufLoaded(bufnr) then
         return

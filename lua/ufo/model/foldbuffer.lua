@@ -5,7 +5,7 @@ local disposable = require('ufo.lib.disposable')
 local buffer     = require('ufo.model.buffer')
 local foldedline = require('ufo.model.foldedline')
 
----@class UfoFoldBuffer: UfoBuffer
+---@class UfoFoldBuffer
 ---@field bufnr number
 ---@field buf UfoBuffer
 ---@field ns number
@@ -23,8 +23,10 @@ FoldBuffer.__index = FoldBuffer
 ---@param buf UfoBuffer
 ---@return UfoFoldBuffer
 function FoldBuffer:new(buf, ns)
-    local o = setmetatable(buf, self)
+    local o = setmetatable({}, self)
     self.__index = self
+    o.bufnr = buf.bufnr
+    o.buf = buf
     o.ns = ns
     o.attached = true
     o:reset()
@@ -34,6 +36,30 @@ function FoldBuffer:new(buf, ns)
         end)
     }
     return o
+end
+
+function FoldBuffer:changedtick()
+    return self.buf:changedtick()
+end
+
+function FoldBuffer:filetype()
+    return self.buf:filetype()
+end
+
+function FoldBuffer:buftype()
+    return self.buf:buftype()
+end
+
+function FoldBuffer:lineCount()
+    return self.buf:lineCount()
+end
+
+---
+---@param lnum number
+---@param endLnum? number
+---@return string[]
+function FoldBuffer:lines(lnum, endLnum)
+    return self.buf:lines(lnum, endLnum)
 end
 
 function FoldBuffer:dispose()
