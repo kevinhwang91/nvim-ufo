@@ -1,10 +1,18 @@
-const { languages, commands, workspace, wait, CancellationTokenSource, Disposable } = require('coc.nvim')
+const { events, languages, commands, workspace, wait, CancellationTokenSource, Disposable } = require('coc.nvim')
 
 
 exports.activate = async context => {
-	let log = context.logger
+	let { logger, subscriptions } = context
 	let nvim = workspace.nvim
-	context.subscriptions.push(commands.registerCommand('ufo.foldingRange', async (bufnr, kind) => {
+	let bufTokenSources = new Map()
+	events.on(['TextChanged', 'InsertLeave', 'BufWritePost'], (bufnr) => {
+		let tokenSource = bufTokenSources.get(bufnr)
+		if (tokenSource) {
+			tokenSource.cancel()
+			bufTokenSources.delete(bufnr)
+		}
+	}, null, subscriptions)
+	subscriptions.push(commands.registerCommand('ufo.foldingRange', async (bufnr, kind) => {
 		let doc = workspace.getDocument(bufnr)
 		if (!doc || !doc.attached) {
 			await wait(50)
@@ -25,11 +33,11 @@ exports.activate = async context => {
 			}
 		}
 		await doc.synchronize()
-		// TODO
-		// should support cancellation
 		let tokenSource = new CancellationTokenSource()
+		bufTokenSources.set(bufnr, tokenSource)
 		let { token } = tokenSource
 		let ranges = await languages.provideFoldingRanges(textDocument, {}, token)
+		bufTokenSources.delete(bufnr)
 		if (!ranges || !ranges.length || token.isCancellationRequested) {
 			return []
 		}
@@ -43,7 +51,7 @@ exports.activate = async context => {
 			})
 		return ranges
 	}))
-	context.subscriptions.push(Disposable.create(async () => {
+	subscriptions.push(Disposable.create(async () => {
 		await nvim.lua(`require('ufo.provider.lsp.coc').handleDisposeNotify(...)`, [])
 	}))
 	await nvim.lua(`require('ufo.provider.lsp.coc').handleInitNotify(...)`, [])
