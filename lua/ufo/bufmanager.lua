@@ -1,7 +1,8 @@
 local api = vim.api
 
-local buffer = require('ufo.model.buffer')
-local event  = require('ufo.lib.event')
+local buffer     = require('ufo.model.buffer')
+local event      = require('ufo.lib.event')
+local disposable = require('ufo.lib.disposable')
 
 ---@class UfoBufferManager
 ---@field buffers UfoBuffer[]
@@ -25,12 +26,24 @@ function BufferManager:initialize()
     if initialized then
         return self
     end
-    event:on('BufEnter', function()
-        attach(self, api.nvim_get_current_buf())
-    end, self.disposables)
+    local disposables = {}
+    table.insert(disposables, disposable:create(function()
+        for _, b in pairs(self.buffers) do
+            b:dispose()
+        end
+        self.buffers = {}
+    end))
+    event:on('BufEnter', function(bufnr)
+        attach(self, bufnr or api.nvim_get_current_buf())
+    end, disposables)
     event:on('BufDetach', function(bufnr)
-        self.buffers[bufnr] = nil
-    end, self.disposables)
+        local b = self.buffers[bufnr]
+        if b then
+            b:dispose()
+            self.buffers[bufnr] = nil
+        end
+    end, disposables)
+    self.disposables = disposables
 
     for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do
         attach(self, api.nvim_win_get_buf(winid))

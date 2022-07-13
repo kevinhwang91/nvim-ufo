@@ -20,6 +20,10 @@ function Buffer:new(bufnr)
     return o
 end
 
+function Buffer:dispose()
+    self.attached = false
+end
+
 function Buffer:attach()
     ---@diagnostic disable: redefined-local, unused-local
     self.attached = api.nvim_buf_attach(self.bufnr, false, {
@@ -51,13 +55,6 @@ function Buffer:attach()
     ---@diagnostic enable: redefined-local, unused-local
     event:emit('BufAttach', self.bufnr)
     return self
-end
-
-function Buffer:detach()
-    if self.attached then
-        self.attached = false
-        event:emit('BufDetach', self.bufnr)
-    end
 end
 
 function Buffer:buildMissingHunk()

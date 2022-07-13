@@ -107,15 +107,6 @@ function Fold.attach(bufnr)
     tryUpdateFold(bufnr)
 end
 
-function Fold.detach(bufnr)
-    bufnr = bufnr or api.nvim_get_current_buf()
-    local fb = manager:get(bufnr)
-    if fb then
-        fb:dispose()
-    end
-    manager.buffers[bufnr] = nil
-end
-
 function Fold.setStatus(bufnr, status)
     local fb = manager:get(bufnr)
     local old = ''
@@ -132,7 +123,7 @@ updateFoldDebounced = (function()
     return function(bufnr, flush)
         bufnr = bufnr or api.nvim_get_current_buf()
         local fb = manager:get(bufnr)
-        if not fb then
+        if not fb or fb.status == 'stop' then
             return
         end
         if lastBufnr ~= bufnr then

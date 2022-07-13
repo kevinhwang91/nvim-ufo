@@ -9,6 +9,7 @@ local highlight  = require('ufo.highlight')
 local preview    = require('ufo.preview')
 local disposable = require('ufo.lib.disposable')
 local bufmanager = require('ufo.bufmanager')
+local event      = require('ufo.lib.event')
 
 local enabled
 
@@ -54,6 +55,7 @@ function M.enable()
     end
     local ns = api.nvim_create_namespace('ufo')
     createCommand()
+    disposables = {}
     table.insert(disposables, createEvents())
     table.insert(disposables, highlight:initialize())
     table.insert(disposables, fold:initialize(ns))
@@ -94,11 +96,13 @@ function M.inspectBuf(bufnr)
 end
 
 function M.attach(bufnr)
-    fold.attach(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    event:emit('BufEnter', bufnr)
 end
 
 function M.detach(bufnr)
-    fold.detach(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    event:emit('BufDetach', bufnr)
 end
 
 function M.enableFold(bufnr)
@@ -116,7 +120,8 @@ end
 function M.foldtext()
     local fs = vim.v.foldstart
     local curBufnr = api.nvim_get_current_buf()
-    local text = bufmanager:get(curBufnr):lines(fs)[1]
+    local buf = bufmanager:get(curBufnr)
+    local text = buf and buf:lines(fs)[1] or api.nvim_buf_get_lines(curBufnr, fs - 1, fs, true)[1]
     return utils.expandTab(text, vim.bo.ts)
 end
 
