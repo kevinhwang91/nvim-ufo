@@ -9,7 +9,9 @@
 	"completion.keywordSnippet": "Disable",
 	"completion.postfix": ".",
 	"diagnostics.disable": [
-		"different-requires"
+		"different-requires",
+		"param-type-mismatch",
+		"assign-type-mismatch"
 	],
 	"diagnostics.globals": [
 		"vim",
@@ -22,6 +24,8 @@
 		"teardown"
 	],
 	"runtime.version": "LuaJIT",
+	"type.castNumberToInteger": true,
+	"type.weakUnionCheck": true,
 	"workspace.library": [
 		"$VIMRUNTIME/lua/vim",
 		"$VIM/site/pack/packer/start/promise-async/typings"
