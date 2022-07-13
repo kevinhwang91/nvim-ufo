@@ -12,7 +12,7 @@ local FastFailure = {
 ---@return Promise
 ---@diagnostic disable-next-line: unused-local
 function FastFailure.requestFoldingRange(bufnr, kind)
-    return promise.reject('No provider')
+    return promise.reject('UfoFallbackException')
 end
 
 return FastFailure

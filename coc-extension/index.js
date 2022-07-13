@@ -29,7 +29,7 @@ exports.activate = async context => {
 		if (!languages.hasProvider('foldingRange', textDocument)) {
 			await wait(500)
 			if (!languages.hasProvider('foldingRange', textDocument)) {
-				throw new Error("No provider")
+				throw new Error('UfoFallbackException')
 			}
 		}
 		await doc.synchronize()

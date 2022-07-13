@@ -72,7 +72,7 @@ function NvimClient.requestFoldingRange(bufnr, kind)
         -- How to get the highest priority for the client?
         local client = clients[1]
         if not client then
-            error('No provider')
+            error('UfoFallbackException')
         end
         local params = {textDocument = util.make_text_document_params(bufnr)}
         return NvimClient.request(client, 'textDocument/foldingRange',

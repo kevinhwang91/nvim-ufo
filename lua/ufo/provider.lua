@@ -19,6 +19,10 @@ local function getFunction(m)
     return type(m) == 'string' and modules[m].getFolds or m
 end
 
+local function needFallback(reason)
+    return type(reason) == 'string' and reason:match('UfoFallbackException')
+end
+
 ---
 ---@param providers table
 ---@param bufnr number
@@ -36,7 +40,7 @@ function Provider.requestFoldingRange(providers, bufnr)
     end):thenCall(function(value)
         return {main, value}
     end, function(reason)
-        if type(reason) == 'string' and reason:match('UfoFallbackException') then
+        if needFallback(reason) then
             local fallbackFunc = getFunction(fallback)
             if fallbackFunc then
                 return {fallback, fallbackFunc(bufnr)}

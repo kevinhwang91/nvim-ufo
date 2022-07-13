@@ -52,21 +52,15 @@ local function request(bufnr)
         end
     end
     if provider.initialized and hasProvider ~= false then
-        local resolve
+        local p = provider.requestFoldingRange(bufnr)
         if hasProvider == nil then
-            resolve = function(value)
+            p = p:thenCall(function(value)
                 hasProviders[ft] = true
                 providerTimestamp[ft] = nil
                 return value
-            end
+            end)
         end
-        return provider.requestFoldingRange(bufnr):thenCall(resolve, function(reason)
-            if type(reason) == 'string' and reason:match('No provider') then
-                return promise.reject('UfoFallbackException')
-            else
-                error(reason)
-            end
-        end)
+        return p
     else
         return promise.reject('UfoFallbackException')
     end
