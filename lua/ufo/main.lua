@@ -94,16 +94,11 @@ function M.inspectBuf(bufnr)
 end
 
 function M.attach(bufnr)
-    bufnr = bufnr or api.nvim_get_current_buf()
     fold.attach(bufnr)
 end
 
 function M.detach(bufnr)
-    bufnr = bufnr or api.nvim_get_current_buf()
-    local fb = fold.get(bufnr)
-    if fb then
-        fb:dispose()
-    end
+    fold.detach(bufnr)
 end
 
 function M.enableFold(bufnr)

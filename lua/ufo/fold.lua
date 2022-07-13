@@ -107,6 +107,15 @@ function Fold.attach(bufnr)
     tryUpdateFold(bufnr)
 end
 
+function Fold.detach(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    local fb = manager:get(bufnr)
+    if fb then
+        fb:dispose()
+    end
+    manager.buffers[bufnr] = nil
+end
+
 function Fold.setStatus(bufnr, status)
     local fb = manager:get(bufnr)
     local old = ''
