@@ -40,7 +40,7 @@ end
 
 ---
 ---@param winid number
----@param posList table
+---@param posList number[]
 function M.createFolds(winid, posList)
     local wp = findWin(winid)
     local s, e = CPos_T(), CPos_T()

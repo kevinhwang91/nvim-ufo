@@ -2,6 +2,12 @@ local api = vim.api
 
 local M = {}
 
+---
+---@param bufnr number
+---@param startRange number[]
+---@param endRange number[]
+---@param namespaces number[]
+---@return table
 function M.getHighlightByRange(bufnr, startRange, endRange, namespaces)
     local res = {}
     local endRow, endCol = endRange[1], endRange[2]

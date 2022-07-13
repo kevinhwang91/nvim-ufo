@@ -1,5 +1,6 @@
 local api = vim.api
 local fn = vim.fn
+
 local utils = require('ufo.utils')
 
 --- Singleton
@@ -145,7 +146,7 @@ function FloatWin:display(targetWinid, height, text, enter)
     vim.bo[self.bufnr].modifiable = true
     api.nvim_buf_set_lines(self.bufnr, 0, -1, true, text)
     vim.bo[self.bufnr].modifiable = false
-    self.lineCount = api.nvim_buf_line_count(self.bufnr)
+    self.lineCount = #text
     self.showScrollBar = self.lineCount > self.height
     return self.winid
 end

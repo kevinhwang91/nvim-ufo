@@ -1,4 +1,6 @@
-local utils = require 'ufo.utils'
+local utils = require('ufo.utils')
+local foldingrange = require('ufo.model.foldingrange')
+
 local Indent = {}
 
 local api = vim.api
@@ -41,7 +43,7 @@ function Indent.getFolds(bufnr)
             local data = stack[#stack]
             local level, lnum = data[1], data[2]
             if level >= curLevel then
-                table.insert(ranges, {startLine = lnum - 1, endLine = lastLnum - 1})
+                table.insert(ranges, foldingrange.new(lnum - 1, lastLnum - 1))
                 table.remove(stack)
             else
                 break

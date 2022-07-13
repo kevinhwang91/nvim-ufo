@@ -7,12 +7,13 @@ local render     = require('ufo.render')
 local utils      = require('ufo.utils')
 local floatwin   = require('ufo.preview.floatwin')
 local scrollbar  = require('ufo.preview.scrollbar')
-local lsize      = require('ufo.preview.lsize')
+local lsize      = require('ufo.model.linesize')
 local keymap     = require('ufo.preview.keymap')
 local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 local config     = require('ufo.config')
 local log        = require('ufo.lib.log')
+local bufmanager = require('ufo.bufmanager')
 
 local initialized
 
@@ -207,11 +208,11 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
         api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
     end
     local curBufnr = api.nvim_get_current_buf()
-    local lineCount = api.nvim_buf_line_count(curBufnr)
+    local lineCount = bufmanager:get(curBufnr):lineCount()
     if nextLineIncluded ~= false then
         endLnum = lineCount == endLnum and endLnum or (endLnum + 1)
     end
-    local text = api.nvim_buf_get_lines(curBufnr, lnum - 1, endLnum, true)
+    local text = bufmanager:get(curBufnr):lines(lnum, endLnum)
     local height = math.min(#text, maxHeight or 20)
     floatwin:display(api.nvim_get_current_win(), height, text, enter)
     render.mapHighlightLimitByRange(curBufnr, floatwin.bufnr,

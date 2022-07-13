@@ -143,9 +143,11 @@ end
 ---truncate('1你2好', 7) return '1你2好'
 ---truncate('1你2好', 8) return '1你2好'
 ---@param ctx UfoFoldVirtTextHandlerContext the context used by ufo, export to caller
+
+---@alias UfoFoldVirtTextHandler fun(virtText: ExtmarkVirtTextChunk[], lnum: number, endLnum: number, width: number, truncate: fun(str: string, width: number), ctx: UfoFoldVirtTextHandlerContext): ExtmarkVirtTextChunk
 ---
 ---@param bufnr number
----@param handler fun(virtText: ExtmarkVirtTextChunk[], lnum: number, endLnum: number, width: number, truncate: fun(str: string, width: number), ctx: UfoFoldVirtTextHandlerContext): ExtmarkVirtTextChunk
+---@param handler UfoFoldVirtTextHandler
 function M.setFoldVirtTextHandler(bufnr, handler)
     require('ufo.decorator'):setVirtTextHandler(bufnr, handler)
 end

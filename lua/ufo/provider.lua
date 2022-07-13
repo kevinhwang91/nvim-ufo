@@ -1,5 +1,9 @@
-local promise = require('promise')
+local uv = vim.loop
 
+local promise = require('promise')
+local log     = require('ufo.lib.log')
+
+---@class Provider UfoProvider
 local Provider = {}
 
 local modules = setmetatable({}, {
@@ -15,18 +19,6 @@ local function getFunction(m)
     return type(m) == 'string' and modules[m].getFolds or m
 end
 
----@alias UfoFoldingRangeKind
----| 'comment'
----| 'imports'
----| 'region'
-
----@class UfoFoldingRange
----@field startLine number
----@field startCharacter? number
----@field endLine number
----@field endCharacter? number
----@field kind? UfoFoldingRangeKind
-
 ---
 ---@param providers table
 ---@param bufnr number
@@ -35,7 +27,11 @@ function Provider.requestFoldingRange(providers, bufnr)
     local main, fallback = providers[1], providers[2]
     local mainFunc = getFunction(main)
 
-    return promise(function(resolve)
+    local s
+    if log.isEnabled('debug') then
+        s = uv.hrtime()
+    end
+    local p = promise(function(resolve)
         resolve(mainFunc(bufnr))
     end):thenCall(function(value)
         return {main, value}
@@ -51,6 +47,14 @@ function Provider.requestFoldingRange(providers, bufnr)
             error(reason)
         end
     end)
+    if log.isEnabled('debug') then
+        p = p:finally(function()
+            log.debug(('requestFoldingRange(%s, %d) has elapsed: %dms')
+                :format(vim.inspect(providers, {indent = '', newline = ' '}),
+                        bufnr, (uv.hrtime() - s) / 1e6))
+        end)
+    end
+    return p
 end
 
 return Provider

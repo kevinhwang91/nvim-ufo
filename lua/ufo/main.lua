@@ -7,8 +7,8 @@ local fold       = require('ufo.fold')
 local decorator  = require('ufo.decorator')
 local highlight  = require('ufo.highlight')
 local preview    = require('ufo.preview')
-local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
+local bufmanager = require('ufo.bufmanager')
 
 local enabled
 
@@ -48,10 +48,6 @@ local function createCommand()
     ]])
 end
 
-local function deleteCommand()
-
-end
-
 function M.enable()
     if enabled then
         return false
@@ -63,6 +59,7 @@ function M.enable()
     table.insert(disposables, fold:initialize(ns))
     table.insert(disposables, decorator:initialize(ns))
     table.insert(disposables, preview:initialize(ns))
+    table.insert(disposables, bufmanager:initialize())
     enabled = true
     return true
 end
@@ -71,7 +68,6 @@ function M.disable()
     if not enabled then
         return false
     end
-    deleteCommand()
     for _, item in ipairs(disposables) do
         item:dispose()
     end
@@ -100,7 +96,6 @@ end
 function M.attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     fold.attach(bufnr)
-    event:emit('BufEnter', bufnr)
 end
 
 function M.detach(bufnr)
@@ -109,7 +104,6 @@ function M.detach(bufnr)
     if fb then
         fb:dispose()
     end
-    fold.detach(bufnr)
 end
 
 function M.enableFold(bufnr)

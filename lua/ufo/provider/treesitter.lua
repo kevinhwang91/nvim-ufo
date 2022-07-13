@@ -1,10 +1,12 @@
 local parsers = require('nvim-treesitter.parsers')
 local query = require('nvim-treesitter.query')
 local utils = require('ufo.utils')
+local bufmanager = require('ufo.bufmanager')
+local foldingrange = require('ufo.model.foldingrange')
 
 local Treesitter = {}
 
-local function prepare_query(bufnr, parser, queryName, root, rootLang)
+local function prepareQuery(bufnr, parser, root, rootLang, queryName)
     if not root then
         local firstTree = parser:trees()[1]
         if firstTree then
@@ -35,10 +37,11 @@ local function prepare_query(bufnr, parser, queryName, root, rootLang)
 end
 
 local function iterFoldMatches(bufnr, parser, root, rootLang)
-    local q, p = prepare_query(bufnr, parser, 'folds', root, rootLang)
+    local q, p = prepareQuery(bufnr, parser, root, rootLang, 'folds')
     if not q then
         return function() end
     end
+    ---@diagnostic disable-next-line: need-check-nil
     local iter = q:iter_matches(p.root, p.source, p.start, p.stop)
     return function()
         local pattern, match = iter()
@@ -85,7 +88,7 @@ function Treesitter.getFolds(bufnr)
     if not utils.isBufLoaded(bufnr) then
         return
     end
-    local bt = vim.bo[bufnr].bt
+    local bt = bufmanager:get(bufnr):buftype()
     if bt ~= '' and bt ~= 'acwrite' then
         return
     end
@@ -102,9 +105,10 @@ function Treesitter.getFolds(bufnr)
             stop = stop - 1
         end
         if stop > start then
-            table.insert(ranges, {startLine = start, endLine = stop})
+            table.insert(ranges, foldingrange.new(start, stop))
         end
     end
+    foldingrange.sortRanges(ranges)
     return ranges
 end
 

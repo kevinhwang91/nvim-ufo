@@ -115,6 +115,7 @@ end
 ---@param ms number
 ---@return userdata
 function M.setTimeout(callback, ms)
+    ---@type userdata
     local timer = uv.new_timer()
     timer:start(ms, 0, function()
         timer:close()
@@ -151,7 +152,7 @@ end
 
 ---
 ---@param winid number
----@return table
+---@return table<string, number>
 function M.getWinInfo(winid)
     local winfos = fn.getwininfo(winid)
     assert(type(winfos) == 'table' and #winfos == 1,

@@ -6,47 +6,27 @@ local utils      = require('ufo.utils')
 local config     = require('ufo.config')
 local log        = require('ufo.lib.log')
 local disposable = require('ufo.lib.disposable')
+local event      = require('ufo.lib.event')
 
-local foldbuffer = require('ufo.fold.buffer')
+local fold = require('ufo.fold')
 local render = require('ufo.render')
 
 local initialized
 
 ---@class UfoDecorator
 ---@field ns number
----@field virtTextHandler? function[]
+---@field hlNs number
+---@field virtTextHandler? UfoFoldVirtTextHandler[]
 ---@field enableFoldEndVirtText boolean
+---@field openFoldHlTimeout number
+---@field openFoldHlEnabled boolean
 ---@field disposables table
 local Decorator = {}
 
 local collection
 local redrawType
 local bufnrSet
-
-local function unHandledFoldedLnums(fb, rows)
-    local lastRow = rows[1]
-    local folded = {}
-    for i = 2, #rows do
-        local lnum = lastRow + 1
-        if rows[i] > lnum then
-            if utils.foldClosed(0, lnum) == lnum then
-                table.insert(folded, lnum)
-            end
-        elseif fb:hasClosed(lnum) then
-            fb:openFold(lnum)
-        end
-        lastRow = rows[i]
-
-    end
-
-    local lnum = lastRow + 1
-    if utils.foldClosed(0, lnum) == lnum then
-        table.insert(folded, lnum)
-    elseif fb:hasClosed(lnum) then
-        fb:openFold(lnum)
-    end
-    return folded
-end
+local lastContext
 
 ---@diagnostic disable-next-line: unused-local
 local function onStart(name, tick, redrawT)
@@ -57,8 +37,7 @@ end
 
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
-    local fb = foldbuffer:get(bufnr)
-    if bufnrSet[bufnr] or not fb or not vim.wo[winid].foldenable then
+    if bufnrSet[bufnr] or not fold.get(bufnr) or not vim.wo[winid].foldenable then
         collection[winid] = nil
         return false
     end
@@ -79,12 +58,15 @@ end
 local function onEnd(name, tick)
     local nss, mode
     local needRedraw = nil
+    local ctx = {}
+    local self = Decorator
     for winid, data in pairs(collection or {}) do
         local bufnr = data.bufnr
-        local fb = foldbuffer:get(bufnr)
+        local fb = fold.get(bufnr)
+        local synced = false
         if #data.rows > 0 then
             utils.winCall(winid, function()
-                local folded = unHandledFoldedLnums(fb, data.rows)
+                local folded = self:unHandledFoldedLnums(fb, data.rows)
                 log.debug('unhandled folded lnum:', folded)
                 if #folded == 0 then
                     return
@@ -95,23 +77,27 @@ local function onEnd(name, tick)
                 if not nss then
                     nss = {}
                     for _, ns in pairs(api.nvim_get_namespaces()) do
-                        if Decorator.ns ~= ns then
+                        if self.ns ~= ns then
                             table.insert(nss, ns)
                         end
                     end
                 end
                 for i = 1, #folded do
                     local lnum = folded[i]
-                    if not fb:hasRendered(lnum) or fb:foldedLineWidthChanged(lnum, width) then
-                        needRedraw = 1
+                    if fb:lineNeedRender(lnum, width) then
+                        local text = fb:lines(lnum)[1]
+                        if not synced then
+                            synced = fb:maySyncFoldedLines(winid, lnum, text)
+                        end
+                        needRedraw = synced and 3 or 1
                         log.debug('need add/update folded lnum:', lnum)
                         local endLnum = utils.foldClosedEnd(0, lnum)
-                        local text = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
-                        local handler = Decorator:getVirtTextHandler(bufnr)
+
+                        local handler = self:getVirtTextHandler(bufnr)
                         local virtText = render.getVirtText(bufnr, text, width, lnum, syntax, nss)
                         local endVirtText
-                        if Decorator.enableFoldEndVirtText then
-                            local endText = api.nvim_buf_get_lines(bufnr, endLnum - 1, endLnum, false)[1]
+                        if self.enableFoldEndVirtText then
+                            local endText = fb:lines(endLnum)[1]
                             endVirtText = render.getVirtText(bufnr, endText, width, endLnum, syntax, nss)
                         end
                         virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
@@ -120,23 +106,24 @@ local function onEnd(name, tick)
                             text = text,
                             end_virt_text = endVirtText
                         })
-                        fb:closeFold(lnum, endLnum, virtText, width)
+                        fb:closeFold(lnum, endLnum, text, virtText, width)
                     end
                 end
             end)
         end
         local lnum = api.nvim_win_get_cursor(winid)[1]
-        if redrawType == 40 then
-            if winid == fb.winid and lnum == fb.lnum then
+        log.debug('synced:', synced)
+        if not synced and redrawType == 40 then
+            local lastCtx = lastContext[bufnr] or {}
+            if winid == lastCtx.winid and lnum == lastCtx.lnum then
                 mode = mode and mode or utils.mode()
                 if mode == 'n' then
-                    fb:synchronize(winid)
+                    fb:syncFoldedLines(winid)
                     needRedraw = needRedraw and 3 or 2
                 end
             end
         end
-        fb.lnum = lnum
-        fb.winid = winid
+        ctx[bufnr] = {lnum = lnum, winid = winid}
     end
     if needRedraw then
         log.debug('need redraw, type:', needRedraw)
@@ -144,6 +131,47 @@ local function onEnd(name, tick)
     end
     collection = nil
     bufnrSet = nil
+    lastContext = ctx
+end
+
+function Decorator:highlightOpenFold(bufnr, lnum, markId)
+    if self.openFoldHlEnabled then
+        local mark = api.nvim_buf_get_extmark_by_id(bufnr, self.ns, markId, {details = true})
+        local row, details = mark[1], mark[3]
+        if row and lnum == row + 1 then
+            local endRow = details.end_row
+            utils.highlightTimeout(bufnr, self.hlNs, 'UfoFoldedBg', row, endRow + 1,
+                                   nil, self.openFoldHlTimeout)
+        end
+    end
+end
+
+function Decorator:unHandledFoldedLnums(fb, rows)
+    local lastRow = rows[1]
+    local folded = {}
+    for i = 2, #rows do
+        local lnum = lastRow + 1
+        if rows[i] > lnum then
+            if utils.foldClosed(0, lnum) == lnum then
+                table.insert(folded, lnum)
+            end
+        elseif fb:lineIsClosed(lnum) then
+            local fl = fb.foldedLines[lnum]
+            self:highlightOpenFold(fb.bufnr, lnum, fl.id)
+            fb:openFold(lnum)
+        end
+        lastRow = rows[i]
+    end
+
+    local lnum = lastRow + 1
+    if utils.foldClosed(0, lnum) == lnum then
+        table.insert(folded, lnum)
+    elseif fb:lineIsClosed(lnum) then
+        local fl = fb.foldedLines[lnum]
+        self:highlightOpenFold(fb.bufnr, lnum, fl.id)
+        fb:openFold(lnum)
+    end
+    return folded
 end
 
 ---@diagnostic disable-next-line: unused-local
@@ -180,6 +208,9 @@ function Decorator:setVirtTextHandler(bufnr, handler)
     self.virtTextHandlers[bufnr] = handler
 end
 
+---
+---@param bufnr number
+---@return UfoFoldVirtTextHandler
 function Decorator:getVirtTextHandler(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     return self.virtTextHandlers[bufnr]
@@ -200,23 +231,34 @@ function Decorator:initialize(namespace)
         on_end = onEnd
     })
     self.ns = namespace
+    self.hlNs = api.nvim_create_namespace('ufo-hl')
 
     table.insert(disposables, disposable:create(function()
         api.nvim_set_decoration_provider(namespace, {})
     end))
     self.enableFoldEndVirtText = config.enable_fold_end_virt_text
+    self.openFoldHlTimeout = config.open_fold_hl_timeout
+    self.openFoldHlEnabled = self.openFoldHlTimeout > 0
+    event:on('setOpenFoldHl', function(val)
+        if type(val) == 'boolean' then
+            self.openFoldHlEnabled = val
+        else
+            self.openFoldHlEnabled = self.openFoldHlTimeout > 0
+        end
+    end, disposables)
 
     local virtTextHandler = config.fold_virt_text_handler or self.defaultVirtTextHandler
-    -- TODO
-    -- how to clean up the wipeouted buffer, need refactor
     self.virtTextHandlers = setmetatable({}, {
         __index = function(tbl, bufnr)
             rawset(tbl, bufnr, virtTextHandler)
             return virtTextHandler
         end
     })
+    event:on('BufDetach', function(bufnr)
+        self.virtTextHandlers[bufnr] = nil
+    end, disposables)
     self.disposables = disposables
-    require('ufo.render')
+    lastContext = {}
     initialized = true
     return self
 end

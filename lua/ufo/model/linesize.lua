@@ -5,7 +5,7 @@ local utils = require('ufo.utils')
 local LSize
 
 ---
----@class UfoPreviewLBase
+---@class UfoLineSizeBase
 ---@field winid number
 ---@field foldenable boolean
 ---@field foldClosePairs table<number, number[]>
@@ -14,7 +14,7 @@ local LBase = {}
 
 ---
 ---@param sizes table<number, number>
----@return UfoPreviewLBase
+---@return UfoLineSizeBase
 function LBase:new(winid, sizes)
     local o = setmetatable({}, self)
     self.__index = self
@@ -33,21 +33,21 @@ function LBase:size(lnum)
 end
 
 ---
----@class UfoPreviewLFFI : UfoPreviewLBase
+---@class UfoLineSizeFFI : UfoLineSizeBase
 ---@field private _wffi UfoWffi
 local LFFI = setmetatable({}, {__index = LBase})
 
 ---
----@return UfoPreviewLFFI
+---@return UfoLineSizeFFI
 function LFFI:new(winid)
-    local o = LBase:new(winid, setmetatable({}, {
+    local super = LBase:new(winid, setmetatable({}, {
         __index = function(t, i)
             local v = self._wffi.plinesWin(winid, i)
             rawset(t, i, v)
             return v
         end
     }))
-    setmetatable(o, self)
+    local o = setmetatable(super, self)
     self.__index = self
     return o
 end
@@ -69,16 +69,16 @@ function LFFI:fillSize(lnum)
 end
 
 ---
----@class UfoPreviewLNonFFI : UfoPreviewLBase
+---@class UfoLineSizeNonFFI : UfoLineSizeBase
 ---@field perLineWidth number
 local LNonFFI = setmetatable({}, {__index = LBase})
 
 ---
----@return UfoPreviewLNonFFI
+---@return UfoLineSizeNonFFI
 function LNonFFI:new(winid)
     local wrap = vim.wo[winid].wrap
     local perLineWidth = api.nvim_win_get_width(winid) - utils.textoff(winid)
-    local o = LBase:new(winid, setmetatable({}, {
+    local super = LBase:new(winid, setmetatable({}, {
         __index = function(t, i)
             local v
             if wrap then
@@ -90,8 +90,8 @@ function LNonFFI:new(winid)
             return v
         end
     }))
+    local o = setmetatable(super, self)
     o.perLineWidth = perLineWidth
-    setmetatable(o, self)
     self.__index = self
     return o
 end

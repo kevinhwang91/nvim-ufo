@@ -9,6 +9,7 @@ local Log = {}
 local fn = vim.fn
 local uv = vim.loop
 
+---@type table<string, number>
 local levelMap
 local levelNr
 local defaultLevel

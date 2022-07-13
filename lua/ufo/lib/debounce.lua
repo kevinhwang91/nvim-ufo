@@ -17,20 +17,20 @@ local Debounce = {}
 function Debounce:new(fn, wait, leading)
     vim.validate({fn = {fn, 'function'}, wait = {wait, 'number'},
                   leading = {leading, 'boolean', true}})
-    local obj = {}
-    setmetatable(obj, self)
-    obj.timer = nil
-    obj.fn = vim.schedule_wrap(fn)
-    obj.args = nil
-    obj.wait = wait
-    obj.leading = leading
-    return obj
+    local o = setmetatable({}, self)
+    o.timer = nil
+    o.fn = vim.schedule_wrap(fn)
+    o.args = nil
+    o.wait = wait
+    o.leading = leading
+    return o
 end
 
 function Debounce:call(...)
     local timer = self.timer
     self.args = {...}
     if not timer then
+        ---@type userdata
         timer = uv.new_timer()
         self.timer = timer
         local wait = self.wait

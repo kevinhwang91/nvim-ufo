@@ -1,8 +1,9 @@
 local uv = vim.loop
 
-local promise = require('promise')
-local utils   = require('ufo.utils')
-local log     = require('ufo.lib.log')
+local promise    = require('promise')
+local utils      = require('ufo.utils')
+local log        = require('ufo.lib.log')
+local bufmanager = require('ufo.bufmanager')
 
 local LSP               = {}
 local provider
@@ -31,7 +32,12 @@ local function initialize()
 end
 
 local function request(bufnr)
-    local ft = vim.bo[bufnr].ft
+    local buf = bufmanager:get(bufnr)
+    local bt = buf:buftype()
+    if bt ~= '' and bt ~= 'acwrite' then
+        return
+    end
+    local ft = buf:filetype()
     local hasProvider = hasProviders[ft]
     if hasProvider == nil then
         if not providerTimestamp[ft] then

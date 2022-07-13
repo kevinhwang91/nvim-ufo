@@ -1,8 +1,9 @@
-local util    = require('vim.lsp.util')
-local promise = require('promise')
-local utils   = require('ufo.utils')
-local async   = require('async')
-local log     = require('ufo.lib.log')
+local util         = require('vim.lsp.util')
+local promise      = require('promise')
+local utils        = require('ufo.utils')
+local async        = require('async')
+local log          = require('ufo.lib.log')
+local foldingrange = require('ufo.model.foldingrange')
 
 ---@class UfoLspNvimClient
 ---@field initialized boolean
@@ -62,10 +63,6 @@ function NvimClient.requestFoldingRange(bufnr, kind)
         if not utils.isBufLoaded(bufnr) then
             return
         end
-        local bt = vim.bo[bufnr].bt
-        if bt ~= '' and bt ~= 'acwrite' then
-            return
-        end
         local clients = getClients(bufnr)
         if #clients == 0 then
             await(utils.wait(500))
@@ -73,7 +70,7 @@ function NvimClient.requestFoldingRange(bufnr, kind)
         end
         -- TODO
         -- How to get the highest priority for the client?
-        local _, client = next(clients)
+        local client = clients[1]
         if not client then
             error('No provider')
         end
@@ -86,10 +83,7 @@ function NvimClient.requestFoldingRange(bufnr, kind)
             ranges = vim.tbl_filter(function(o)
                 return (not kind or kind == o.kind) and o.startLine < o.endLine
             end, ranges)
-            table.sort(ranges, function(a, b)
-                return a.startLine == b.startLine and a.endLine < b.endLine or
-                    a.startLine > b.startLine
-            end)
+            foldingrange.sortRanges(ranges)
             return ranges
         end)
     end)

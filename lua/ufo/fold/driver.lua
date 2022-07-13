@@ -3,6 +3,7 @@ local fn  = vim.fn
 
 local utils = require('ufo.utils')
 
+---@type UfoFoldDriverNonFFI|UfoFoldDriverFFI
 local FoldDriver
 
 ---@class UfoFoldDriverFFI
@@ -15,6 +16,10 @@ function FoldDriverFFI:new(wffi)
     return o
 end
 
+---
+---@param winid number
+---@param ranges UfoFoldingRange
+---@param rowPairs table<number, number>
 function FoldDriverFFI:createFolds(winid, ranges, rowPairs)
     utils.winCall(winid, function()
         local foldRanges = {}
@@ -47,6 +52,10 @@ function FoldDriverNonFFI:new()
     return o
 end
 
+---
+---@param winid number
+---@param ranges UfoFoldingRange
+---@param rowPairs table<number, number>
 function FoldDriverNonFFI:createFolds(winid, ranges, rowPairs)
     utils.winCall(winid, function()
         local cmds = {}
