@@ -153,11 +153,17 @@ end
 ---@return boolean
 function FoldBufferManager:applyFoldRanges(fb, winid, ranges)
     local changedtick = fb:changedtick()
-    if not ranges and changedtick ~= fb.version then
-        return false
-    elseif utils.mode() ~= 'n' or not utils.isWinValid(winid) or
-        utils.isDiffOrMarkerFold(winid) then
-        fb.status = 'pending'
+    if ranges then
+        if utils.mode() ~= 'n' or not utils.isWinValid(winid) or
+            utils.isDiffOrMarkerFold(winid) then
+            if fb.version > 0 then
+                fb.version = changedtick
+                fb.foldRanges = ranges
+                fb.status = 'pending'
+            end
+            return false
+        end
+    elseif changedtick ~= fb.version then
         return false
     end
     local rowPairs = {}
