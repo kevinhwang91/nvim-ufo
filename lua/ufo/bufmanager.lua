@@ -3,6 +3,8 @@ local api = vim.api
 local buffer     = require('ufo.model.buffer')
 local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
+local promise    = require('promise')
+local utils      = require('ufo.utils')
 
 ---@class UfoBufferManager
 ---@field buffers UfoBuffer[]
@@ -18,7 +20,9 @@ local function attach(self, bufnr)
     if not self.buffers[bufnr] then
         local buf = buffer:new(bufnr)
         self.buffers[bufnr] = buf
-        buf:attach()
+        if not buf:attach() then
+            self.buffers[bufnr] = nil
+        end
     end
 end
 
@@ -46,7 +50,15 @@ function BufferManager:initialize()
     self.disposables = disposables
 
     for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do
-        attach(self, api.nvim_win_get_buf(winid))
+        local bufnr = api.nvim_win_get_buf(winid)
+        if utils.isBufLoaded(bufnr) then
+            attach(self, bufnr)
+        else
+            -- the first buffer is unloaded while firing `BufEnter`
+            promise.resolve():thenCall(function()
+                attach(self, bufnr)
+            end)
+        end
     end
     initialized = true
     return self

@@ -53,8 +53,10 @@ function Buffer:attach()
         end
     })
     ---@diagnostic enable: redefined-local, unused-local
-    event:emit('BufAttach', self.bufnr)
-    return self
+    if self.attached then
+        event:emit('BufAttach', self.bufnr)
+    end
+    return self.attached
 end
 
 function Buffer:buildMissingHunk()
