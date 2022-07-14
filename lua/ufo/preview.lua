@@ -198,6 +198,12 @@ end
 ---@param enter? boolean
 ---@return number? winid, number? bufnr
 function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
+    local curBufnr = api.nvim_get_current_buf()
+    local buf = bufmanager:get(curBufnr)
+    if not buf then
+        -- buffer is detached
+        return
+    end
     local lnum = api.nvim_win_get_cursor(0)[1]
     lnum = utils.foldClosed(0, lnum)
     if lnum == -1 then
@@ -207,8 +213,7 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
     if floatwin.bufnr then
         api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
     end
-    local curBufnr = api.nvim_get_current_buf()
-    local lineCount = bufmanager:get(curBufnr):lineCount()
+    local lineCount = buf:lineCount()
     if nextLineIncluded ~= false then
         endLnum = lineCount == endLnum and endLnum or (endLnum + 1)
     end

@@ -95,6 +95,12 @@ function M.inspectBuf(bufnr)
     return msg
 end
 
+function M.hasAttached(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    local buf = bufmanager:get(bufnr)
+    return buf and buf.attached
+end
+
 function M.attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     event:emit('BufEnter', bufnr)

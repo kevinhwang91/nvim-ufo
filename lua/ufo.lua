@@ -64,7 +64,7 @@ end
 ---@param bufnr? number current buffer default
 ---@return boolean
 function M.hasAttached(bufnr)
-    return require('ufo.main').inspectBuf(bufnr) ~= nil
+    return require('ufo.main').hasAttached(bufnr)
 end
 
 ---Attach bufnr to enable all features
@@ -149,6 +149,7 @@ end
 ---@param bufnr number
 ---@param handler UfoFoldVirtTextHandler
 function M.setFoldVirtTextHandler(bufnr, handler)
+    vim.validate({bufnr = {bufnr, 'number', true}, handler = {handler, 'function'}})
     require('ufo.decorator'):setVirtTextHandler(bufnr, handler)
 end
 
