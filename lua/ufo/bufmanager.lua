@@ -56,7 +56,9 @@ function BufferManager:initialize()
         else
             -- the first buffer is unloaded while firing `BufEnter`
             promise.resolve():thenCall(function()
-                attach(self, bufnr)
+                if utils.isBufLoaded(bufnr) then
+                    attach(self, bufnr)
+                end
             end)
         end
     end
