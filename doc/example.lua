@@ -7,7 +7,7 @@ local function selectProviderWithFt()
         git = ''
     }
     require('ufo').setup({
-        provider_selector = function(bufnr, filetype)
+        provider_selector = function(bufnr, filetype, buftype)
             -- return a string type use ufo providers
             -- return a string in a table like a string type
             -- return empty string '' will disable any providers
@@ -22,7 +22,7 @@ end
 
 local function selectProviderWithFunc()
     require('ufo').setup({
-        provider_selector = function(bufnr, filetype)
+        provider_selector = function(bufnr, filetype, buftype)
             -- use indent provider for c fieltype
             if filetype == 'c' then
                 return function()

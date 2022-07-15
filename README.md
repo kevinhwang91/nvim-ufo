@@ -94,7 +94,7 @@ require('ufo').setup()
 -- option 3: treesitter as a main provider instead
 use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'}
 require('ufo').setup({
-    provider_selector = function(bufnr, filetype)
+    provider_selector = function(bufnr, filetype, buftype)
         return {'treesitter', 'indent'}
     end
 })
@@ -103,7 +103,7 @@ require('ufo').setup({
 -- option 4: disable all providers for all buffers
 -- Not recommend, AFAIK, the ufo's providers are the best performance in Neovim
 require('ufo').setup({
-    provider_selector = function(bufnr, filetype)
+    provider_selector = function(bufnr, filetype, buftype)
         return ''
     end
 })
@@ -265,7 +265,7 @@ require('ufo').setup({
             scrollD = '<C-d>'
         }
     },
-    provider_selector = function(bufnr, filetype)
+    provider_selector = function(bufnr, filetype, buftype)
         -- return a string type use internal providers
         -- return a string in a table like a string type
         -- return empty string '' will disable any providers

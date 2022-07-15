@@ -91,7 +91,7 @@ function FoldBufferManager:parseBufferProviders(fb, selector)
         return
     end
     local res
-    local providers = selector(fb.bufnr, fb:filetype())
+    local providers = selector(fb.bufnr, fb:filetype(), fb:buftype())
     local t = type(providers)
     if t == 'nil' then
         res = {'lsp', 'indent'}

@@ -40,14 +40,15 @@ local Config = {}
 
 ---
 ---@param bufnr number
----@param filetype string buffer filetype
+---@param filetype string file type
+---@param buftype string buffer type
 ---@return UfoProviderEnum|string[]|function|nil
 ---return a string type use ufo providers
 ---return a string in a table like a string type
 ---return empty string '' will disable any providers
 ---return `nil` will use default value {'lsp', 'indent'}
 ---@diagnostic disable-next-line: unused-function, unused-local
-function Config.provider_selector(bufnr, filetype) end
+function Config.provider_selector(bufnr, filetype, buftype) end
 
 local function init()
     local ufo = require('ufo')
