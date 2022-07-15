@@ -46,12 +46,13 @@ function Keymap:saveKeymaps()
     for _, k in ipairs(api.nvim_buf_get_keymap(self.bufnr, 'n')) do
         if keys[k.lhs] then
             local opts = {
+                callback = k.callback,
                 expr = k.expr == 1,
                 noremap = k.noremap == 1,
                 nowait = k.nowait == 1,
                 silent = k.silent == 1
             }
-            table.insert(self.keyBackup, {lhs = k.lhs, rhs = k.rhs, opts = opts})
+            table.insert(self.keyBackup, {lhs = k.lhs, rhs = k.rhs or '', opts = opts})
         end
     end
 end
