@@ -3,6 +3,14 @@
 local Disposable = {}
 
 ---
+---@param disposables UfoDisposable[]
+function Disposable.disposeAll(disposables)
+    for _, item in ipairs(disposables) do
+        item:dispose()
+    end
+end
+
+---
 ---@param func fun()
 ---@return UfoDisposable
 function Disposable:new(func)

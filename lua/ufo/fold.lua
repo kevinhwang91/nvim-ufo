@@ -2,14 +2,15 @@ local api = vim.api
 local cmd = vim.cmd
 local fn = vim.fn
 
-local config   = require('ufo.config')
-local promise  = require('promise')
-local async    = require('async')
-local utils    = require('ufo.utils')
-local provider = require('ufo.provider')
-local log      = require('ufo.lib.log')
-local event    = require('ufo.lib.event')
-local manager  = require('ufo.fold.manager')
+local config     = require('ufo.config')
+local promise    = require('promise')
+local async      = require('async')
+local utils      = require('ufo.utils')
+local provider   = require('ufo.provider')
+local log        = require('ufo.lib.log')
+local event      = require('ufo.lib.event')
+local manager    = require('ufo.fold.manager')
+local disposable = require('ufo.lib.disposable')
 
 local initialized
 
@@ -213,9 +214,8 @@ function Fold:initialize(ns)
 end
 
 function Fold:dispose()
-    for _, item in ipairs(self.disposables) do
-        item:dispose()
-    end
+    disposable.disposeAll(self.disposables)
+    self.disposables = {}
     initialized = false
 end
 

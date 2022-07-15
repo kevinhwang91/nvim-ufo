@@ -76,9 +76,7 @@ function M.disable()
     if not enabled then
         return false
     end
-    for _, item in ipairs(disposables) do
-        item:dispose()
-    end
+    disposable.disposeAll(disposables)
     enabled = false
     return true
 end

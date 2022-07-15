@@ -90,9 +90,8 @@ function BufferManager:get(bufnr)
 end
 
 function BufferManager:dispose()
-    for _, item in ipairs(self.disposables) do
-        item:dispose()
-    end
+    disposable.disposeAll(self.disposables)
+    self.disposables = {}
     initialized = false
 end
 

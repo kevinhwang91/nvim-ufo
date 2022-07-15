@@ -1,4 +1,5 @@
 local event = require('ufo.lib.event')
+local disposable = require('ufo.lib.disposable')
 local cmd = vim.cmd
 local api = vim.api
 
@@ -72,9 +73,8 @@ function Highlight:initialize()
 end
 
 function Highlight:dispose()
-    for _, item in ipairs(self.disposables) do
-        item:dispose()
-    end
+    disposable.disposeAll(self.disposables)
+    self.disposables = {}
     initialized = false
 end
 

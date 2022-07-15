@@ -64,9 +64,8 @@ function FoldBuffer:lines(lnum, endLnum)
 end
 
 function FoldBuffer:dispose()
-    for _, item in ipairs(self.disposables) do
-        item:dispose()
-    end
+    disposable.disposeAll(self.disposables)
+    self.disposables = {}
 end
 
 function FoldBuffer:reset()

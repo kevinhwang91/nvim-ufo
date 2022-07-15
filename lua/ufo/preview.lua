@@ -155,9 +155,7 @@ function Preview:attach(bufnr, foldedLnum)
     event:on('WinClosed', function()
         promise.resolve():thenCall(function()
             if not self.validate() then
-                for _, item in ipairs(disposables) do
-                    item:dispose()
-                end
+                disposable.disposeAll(disposables)
                 disposables = {}
                 self.close()
             end
@@ -284,9 +282,8 @@ function Preview:initialize(namespace)
 end
 
 function Preview:dispose()
-    for _, item in ipairs(self.disposables) do
-        item:dispose()
-    end
+    disposable.disposeAll(self.disposables)
+    self.disposables = {}
     initialized = false
 end
 

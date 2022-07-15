@@ -77,9 +77,8 @@ function FoldBufferManager:get(bufnr)
 end
 
 function FoldBufferManager:dispose()
-    for _, item in ipairs(self.disposables) do
-        item:dispose()
-    end
+    disposable.disposeAll(self.disposables)
+    self.disposables = {}
     initialized = false
 end
 
