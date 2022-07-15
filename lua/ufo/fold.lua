@@ -167,8 +167,8 @@ local function updatePendingFold(bufnr)
     end)
 end
 
-local function diffWinClosed()
-    local winid = tonumber(fn.expand('<afile>')) or api.nvim_get_current_win()
+local function diffWinClosed(winid)
+    winid = winid or api.nvim_get_current_win()
     if utils.isWinValid(winid) and utils.isDiffFold(winid) then
         for _, id in ipairs(api.nvim_tabpage_list_wins(0)) do
             if winid ~= id and utils.isDiffFold(id) then

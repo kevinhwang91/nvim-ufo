@@ -47,6 +47,22 @@ function BufferManager:initialize()
             self.buffers[bufnr] = nil
         end
     end, disposables)
+    event:on('BufTypeChanged', function(bufnr, old, new)
+        local b = self.buffers[bufnr]
+        if b and old ~= new then
+            if new == 'terminal' or new == 'prompt' then
+                event:emit('BufDetach', bufnr)
+            else
+                b.bt = new
+            end
+        end
+    end, disposables)
+    event:on('FileTypeChanged', function(bufnr, old, new)
+        local b = self.buffers[bufnr]
+        if b and old ~= new then
+            b.ft = new
+        end
+    end, disposables)
     self.disposables = disposables
 
     for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do

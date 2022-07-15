@@ -17,18 +17,24 @@ local enabled
 local disposables = {}
 
 local function createEvents()
+    cmd('aug Ufo')
     cmd([[
-        aug Ufo
-            au!
-            au BufEnter * lua require('ufo.lib.event'):emit('BufEnter')
-            au InsertLeave * lua require('ufo.lib.event'):emit('InsertLeave')
-            au TextChanged * lua require('ufo.lib.event'):emit('TextChanged')
-            au BufWritePost * lua require('ufo.lib.event'):emit('BufWritePost')
-            au WinClosed * lua require('ufo.lib.event'):emit('WinClosed')
-            au CmdlineLeave * lua require('ufo.lib.event'):emit('CmdlineLeave')
-            au ColorScheme * lua require('ufo.lib.event'):emit('ColorScheme')
-        aug END
+        au!
+        au BufEnter * lua require('ufo.lib.event'):emit('BufEnter', vim.api.nvim_get_current_buf())
+        au InsertLeave * lua require('ufo.lib.event'):emit('InsertLeave', vim.api.nvim_get_current_buf())
+        au TextChanged * lua require('ufo.lib.event'):emit('TextChanged', vim.api.nvim_get_current_buf())
+        au BufWritePost * lua require('ufo.lib.event'):emit('BufWritePost', vim.api.nvim_get_current_buf())
+        au WinClosed * lua require('ufo.lib.event'):emit('WinClosed', tonumber(vim.fn.expand('<afile>')))
+        au CmdlineLeave * lua require('ufo.lib.event'):emit('CmdlineLeave')
+        au ColorScheme * lua require('ufo.lib.event'):emit('ColorScheme')
     ]])
+    local optionSetArgs = 'vim.api.nvim_get_current_buf(), vim.v.option_old, vim.v.option_new'
+    cmd(([[
+        au OptionSet buftype lua require('ufo.lib.event'):emit('BufTypeChanged', %s)
+        au OptionSet filetype lua require('ufo.lib.event'):emit('FileTypeChanged', %s)
+    ]]):format(optionSetArgs, optionSetArgs))
+    cmd('aug END')
+
     return disposable:create(function()
         cmd([[
             au! Ufo

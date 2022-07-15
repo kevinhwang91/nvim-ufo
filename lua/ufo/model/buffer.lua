@@ -1,19 +1,16 @@
 local event = require('ufo.lib.event')
 
 local api = vim.api
-local uv = vim.loop
 
 ---@class UfoBuffer
 ---@field bufnr number
 ---@field attached boolean
----@field hrtime number
 local Buffer = {}
 
 function Buffer:new(bufnr)
     local o = setmetatable({}, self)
     self.__index = self
     o.bufnr = bufnr
-    o.hrtime = uv.hrtime()
     o._changedtick = api.nvim_buf_get_changedtick(bufnr)
     o._lines = nil
     o._q = {}
@@ -25,6 +22,11 @@ function Buffer:dispose()
 end
 
 function Buffer:attach()
+    local bt = self:buftype()
+    if bt == 'terminal' or bt == 'prompt' then
+        self.attached = false
+        return self.attached
+    end
     ---@diagnostic disable: redefined-local, unused-local
     self.attached = api.nvim_buf_attach(self.bufnr, false, {
         on_lines = function(name, bufnr, changedtick, firstLine, lastLine,
@@ -131,27 +133,19 @@ end
 ---
 ---@return string
 function Buffer:filetype()
-    local ft = self.ft
-    if not ft then
-        ft = vim.bo[self.bufnr].ft
-        if uv.hrtime() - self.hrtime > 1e8 then
-            self.ft = ft
-        end
+    if not self.ft then
+        self.ft = vim.bo[self.bufnr].ft
     end
-    return ft
+    return self.ft
 end
 
 ---
 ---@return string
 function Buffer:buftype()
-    local bt = self.bt
-    if not bt then
-        bt = vim.bo[self.bufnr].bt
-        if uv.hrtime() - self.hrtime > 1e8 then
-            self.bt = bt
-        end
+    if not self.bt then
+        self.bt = vim.bo[self.bufnr].bt
     end
-    return bt
+    return self.bt
 end
 
 ---
