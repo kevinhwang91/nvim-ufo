@@ -15,6 +15,7 @@ local foldedline = require('ufo.model.foldedline')
 ---@field foldRanges UfoFoldingRange[]
 ---@field foldedLines UfoFoldedLine[]
 ---@field providers table
+---@field scanned boolean
 ---@field selectedProvider string
 ---@field disposables UfoDisposable
 local FoldBuffer = setmetatable({}, buffer)
@@ -76,6 +77,7 @@ function FoldBuffer:reset()
     self.requestCount = 0
     self.foldRanges = {}
     self.foldedLines = {}
+    self.scanned = false
 end
 
 function FoldBuffer:resetFoldedLines()

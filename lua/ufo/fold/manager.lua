@@ -158,22 +158,21 @@ function FoldBufferManager:applyFoldRanges(fb, winid, ranges)
     if ranges then
         if utils.mode() ~= 'n' or not utils.isWinValid(winid) or
             utils.isDiffOrMarkerFold(winid) then
-            if fb.version > 0 then
-                fb.version = changedtick
-                fb.foldRanges = ranges
-                fb.status = 'pending'
-            end
+            fb.version = changedtick
+            fb.foldRanges = ranges
+            fb.status = 'pending'
             return false
         end
     elseif changedtick ~= fb.version or not utils.isWinValid(winid) then
         return false
     end
     local rowPairs = {}
-    if fb.version == 0 then
+    if not fb.scanned then
         for _, range in ipairs(scanFoldedRanges(winid, fb:lineCount())) do
             local row, endRow = range[1], range[2]
             rowPairs[row] = endRow
         end
+        fb.scanned = true
     else
         local marks = api.nvim_buf_get_extmarks(fb.bufnr, self.ns, 0, -1, {details = true})
         for _, m in ipairs(marks) do
