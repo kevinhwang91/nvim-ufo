@@ -45,6 +45,12 @@ local function tryUpdateFold(bufnr)
     end)
 end
 
+local function setFoldText()
+    cmd([[
+        setl foldtext=v:lua.require'ufo.main'.foldtext()
+        setl fillchars+=fold:\ ]])
+end
+
 function Fold.update(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     local fb = manager:get(bufnr)
@@ -101,9 +107,7 @@ function Fold.attach(bufnr)
         return
     end
     log.debug('attach bufnr:', bufnr)
-    cmd([[
-        setl foldtext=v:lua.require'ufo.main'.foldtext()
-        setl fillchars+=fold:\ ]])
+    setFoldText()
     tryUpdateFold(bufnr)
 end
 
@@ -158,7 +162,7 @@ local function updatePendingFold(bufnr)
     end
     promise.resolve():thenCall(function()
         if utils.mode() == 'n' and fb.status == 'pending' then
-            updateFoldDebounced(bufnr)
+            updateFoldDebounced(bufnr, true)
         end
     end)
 end
@@ -187,7 +191,15 @@ function Fold:initialize(ns)
         return self
     end
     local disposables = {}
-    event:on('BufEnter', updatePendingFold, disposables)
+    event:on('BufEnter', function(bufnr)
+        bufnr = bufnr or api.nvim_get_current_buf()
+        local fb = manager:get(bufnr)
+        if not fb then
+            return
+        end
+        setFoldText()
+        updatePendingFold(bufnr)
+    end, disposables)
     event:on('InsertLeave', updateFoldFlush, disposables)
     event:on('TextChanged', updateFoldDebounced, disposables)
     event:on('BufWritePost', updateFoldFlush, disposables)
