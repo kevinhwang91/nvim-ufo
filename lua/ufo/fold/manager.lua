@@ -123,26 +123,28 @@ local function scanFoldedRanges(winid, lineCount)
     local res = {}
     local stack = {}
     local openFmt, closeFmt = '%dfoldopen', '%dfoldclose'
-    for i = 1, lineCount do
-        local skip = false
-        while #stack > 0 and i >= stack[#stack] do
-            local endLnum = table.remove(stack)
-            local c = closeFmt:format(endLnum)
-            cmd(c)
-            log.info(c)
-            skip = true
-        end
-        if not skip then
-            local endLnum = utils.foldClosedEnd(winid, i)
-            if endLnum ~= -1 then
-                table.insert(stack, endLnum)
-                table.insert(res, {i - 1, endLnum - 1})
-                local c = openFmt:format(i)
+    utils.winCall(winid, function()
+        for i = 1, lineCount do
+            local skip = false
+            while #stack > 0 and i >= stack[#stack] do
+                local endLnum = table.remove(stack)
+                local c = closeFmt:format(endLnum)
                 cmd(c)
                 log.info(c)
+                skip = true
+            end
+            if not skip then
+                local endLnum = utils.foldClosedEnd(winid, i)
+                if endLnum ~= -1 then
+                    table.insert(stack, endLnum)
+                    table.insert(res, {i - 1, endLnum - 1})
+                    local c = openFmt:format(i)
+                    cmd(c)
+                    log.info(c)
+                end
             end
         end
-    end
+    end)
     return res
 end
 
@@ -163,7 +165,7 @@ function FoldBufferManager:applyFoldRanges(fb, winid, ranges)
             end
             return false
         end
-    elseif changedtick ~= fb.version then
+    elseif changedtick ~= fb.version or not utils.isWinValid(winid) then
         return false
     end
     local rowPairs = {}
