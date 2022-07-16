@@ -1,4 +1,5 @@
 local api = vim.api
+local fn = vim.fn
 local cmd = vim.cmd
 
 local buffer     = require('ufo.model.foldbuffer')
@@ -48,10 +49,21 @@ function FoldBufferManager:initialize(namespace, selector)
     event:on('BufReload', function(bufnr)
         local fb = self:get(bufnr)
         if fb then
-            fb:reset()
-            fb:resetFoldedLines()
+            fb:dispose()
         end
     end, disposables)
+
+    local function optChanged(bufnr, old, new)
+        if old ~= new then
+            local fb = self:get(bufnr)
+            if fb then
+                fb.providers = nil
+            end
+        end
+    end
+
+    event:on('BufTypeChanged', optChanged, disposables)
+    event:on('FileTypeChanged', optChanged, disposables)
     self.disposables = disposables
     self.providerSelector = selector
     initialized = true
@@ -148,11 +160,15 @@ local function scanFoldedRanges(winid, lineCount)
 end
 
 ---
----@param fb UfoFoldBuffer
----@param winid number
+---@param bufnr number
 ---@param ranges? UfoFoldingRange[]
 ---@return boolean
-function FoldBufferManager:applyFoldRanges(fb, winid, ranges)
+function FoldBufferManager:applyFoldRanges(bufnr, ranges)
+    local fb = self:get(bufnr)
+    if not fb then
+        return false
+    end
+    local winid = fn.bufwinid(bufnr)
     local changedtick = fb:changedtick()
     if ranges then
         if utils.mode() ~= 'n' or not utils.isWinValid(winid) or

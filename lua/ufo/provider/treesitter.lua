@@ -5,6 +5,7 @@ local bufmanager = require('ufo.bufmanager')
 local foldingrange = require('ufo.model.foldingrange')
 
 local Treesitter = {}
+local hasProviders = {}
 
 local function prepareQuery(bufnr, parser, root, rootLang, queryName)
     if not root then
@@ -78,27 +79,34 @@ local function getCpatureMatchesRecursively(bufnr, parser)
             getFoldMatches(res, bufnr, parser, tree:root(), lang)
         end
     end)
-    if noQuery then
-        error('UfoFallbackException')
-    end
-    return res
+    return not noQuery, res
 end
 
 function Treesitter.getFolds(bufnr)
     if not utils.isBufLoaded(bufnr) then
         return
     end
-    local bt = bufmanager:get(bufnr):buftype()
+    local buf = bufmanager:get(bufnr)
+    local bt = buf:buftype()
     if bt ~= '' and bt ~= 'acwrite' then
         return
     end
+    local ft = buf:filetype()
+    if hasProviders[ft] == false then
+        error('UfoFallbackException')
+    end
     local parser = parsers.get_parser(bufnr)
     if not parser then
+        hasProviders[ft] = false
         error('UfoFallbackException')
     end
 
     local ranges = {}
-    local matches = getCpatureMatchesRecursively(bufnr, parser)
+    local ok, matches = getCpatureMatchesRecursively(bufnr, parser)
+    if not ok then
+        hasProviders[ft] = false
+        error('UfoFallbackException')
+    end
     for _, node in ipairs(matches) do
         local start, _, stop, stop_col = node:range()
         if stop_col == 0 then

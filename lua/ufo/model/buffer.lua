@@ -13,6 +13,7 @@ function Buffer:new(bufnr)
     o.bufnr = bufnr
     o._changedtick = api.nvim_buf_get_changedtick(bufnr)
     o._lines = nil
+    o._lineCount = nil
     o._q = {}
     return o
 end
@@ -84,9 +85,6 @@ function Buffer:buildMissingHunk()
 end
 
 function Buffer:handleChanged()
-    if #self._q == 0 then
-        return {}, 0
-    end
     for _, q in ipairs(self._q) do
         local firstLine, lastLine, lastLineUpdated = q[1], q[2], q[3]
         local delta = lastLineUpdated - lastLine
@@ -121,7 +119,6 @@ function Buffer:handleChanged()
         self._lineCount = self._lineCount + delta
     end
     self._q = {}
-    return self:buildMissingHunk()
 end
 
 ---
@@ -151,7 +148,12 @@ end
 ---
 ---@return number
 function Buffer:lineCount()
-    return self._lineCount or api.nvim_buf_line_count(self.bufnr)
+    if self._lineCount then
+        self:handleChanged()
+        return self._lineCount
+    else
+        return api.nvim_buf_line_count(self.bufnr)
+    end
 end
 
 ---@param lnum number
@@ -163,9 +165,11 @@ function Buffer:lines(lnum, endLnum)
         self._lines = api.nvim_buf_get_lines(self.bufnr, 0, -1, true)
         self._lineCount = #self._lines
         self._q = {}
+    else
+        self:handleChanged()
     end
-    local hunks, cnt = self:handleChanged()
     assert(self._lineCount >= lnum, 'index out of bounds')
+    local hunks, cnt = self:buildMissingHunk()
     endLnum = endLnum and endLnum or lnum
     if endLnum < 0 then
         endLnum = self._lineCount + endLnum + 1

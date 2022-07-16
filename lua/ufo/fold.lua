@@ -69,29 +69,42 @@ function Fold.update(bufnr)
     elseif not vim.wo[winid].foldenable or utils.isDiffOrMarkerFold(winid) then
         return promise.resolve()
     end
-    if manager:applyFoldRanges(fb, winid) then
+    if manager:applyFoldRanges(bufnr) then
         return promise.resolve()
     end
 
-    local changedtick = fb:changedtick()
+    local changedtick, ft, bt = fb:changedtick(), fb:filetype(), fb:buftype()
     fb:acquireRequest()
-    return provider.requestFoldingRange(fb.providers, bufnr):thenCall(function(res)
+
+    local function dispose(resolved)
         fb:releaseRequest()
+        local ok = ft == fb:filetype() and bt == fb:buftype()
+        if ok then
+            if resolved then
+                ok = changedtick == fb:changedtick()
+            end
+        end
+        if not ok and not fb:requested() then
+            log.debug('update fold again for bufnr:', bufnr)
+            updateFoldDebounced(bufnr)
+        end
+        return ok
+    end
+
+    return provider.requestFoldingRange(fb.providers, bufnr):thenCall(function(res)
+        if not dispose(true) then
+            return
+        end
         local selected, ranges = res[1], res[2]
         fb.selectedProvider = type(selected) == 'string' and selected or 'external'
         if not ranges or #ranges == 0 or not utils.isBufLoaded(bufnr) then
             return
         end
-        if changedtick ~= fb:changedtick() and not fb:requested() then
-            -- text is changed during asking folding ranges
-            -- update again if no other requests
-            log.debug('update fold for bufnr:', bufnr, 'again')
-            updateFoldDebounced(bufnr, true)
+        manager:applyFoldRanges(bufnr, ranges)
+    end, function(err)
+        if not dispose(false) then
             return
         end
-        manager:applyFoldRanges(fb, fn.bufwinid(bufnr), ranges)
-    end, function(err)
-        fb:releaseRequest()
         error(err)
     end)
 end
@@ -125,10 +138,11 @@ end
 updateFoldDebounced = (function()
     local lastBufnr
     local debounced = require('ufo.lib.debounce')(Fold.update, 300)
-    return function(bufnr, flush)
+    return function(bufnr, flush, onlyPending)
         bufnr = bufnr or api.nvim_get_current_buf()
         local fb = manager:get(bufnr)
-        if not fb or fb.status == 'stop' then
+        if not fb or utils.mode() ~= 'n' or
+            onlyPending and fb.status ~= 'pending' or fb.status == 'stop' then
             return
         end
         if lastBufnr ~= bufnr then
@@ -142,29 +156,9 @@ updateFoldDebounced = (function()
     end
 end)()
 
-local function updateFoldFlush(bufnr)
-    bufnr = bufnr or api.nvim_get_current_buf()
-    local fb = manager:get(bufnr)
-    if not fb then
-        return
-    end
-    promise.resolve():thenCall(function()
-        if fb.status ~= 'stop' and utils.mode() == 'n' then
-            updateFoldDebounced(bufnr, true)
-        end
-    end)
-end
-
 local function updatePendingFold(bufnr)
-    bufnr = bufnr or api.nvim_get_current_buf()
-    local fb = manager:get(bufnr)
-    if not fb then
-        return
-    end
     promise.resolve():thenCall(function()
-        if utils.mode() == 'n' and fb.status == 'pending' then
-            updateFoldDebounced(bufnr, true)
-        end
+        updateFoldDebounced(bufnr, true, true)
     end)
 end
 
@@ -201,9 +195,13 @@ function Fold:initialize(ns)
         setFoldText()
         updatePendingFold(bufnr)
     end, disposables)
-    event:on('InsertLeave', updateFoldFlush, disposables)
+    event:on('InsertLeave', function(bufnr)
+        updateFoldDebounced(bufnr, true)
+    end, disposables)
+    event:on('BufWritePost', function(bufnr)
+        updateFoldDebounced(bufnr, true)
+    end, disposables)
     event:on('TextChanged', updateFoldDebounced, disposables)
-    event:on('BufWritePost', updateFoldFlush, disposables)
     event:on('CmdlineLeave', updatePendingFold, disposables)
     event:on('WinClosed', diffWinClosed, disposables)
     event:on('BufAttach', Fold.attach, disposables)

@@ -1,7 +1,6 @@
 local api = vim.api
 
 local utils      = require('ufo.utils')
-local disposable = require('ufo.lib.disposable')
 local buffer     = require('ufo.model.buffer')
 local foldedline = require('ufo.model.foldedline')
 
@@ -17,7 +16,6 @@ local foldedline = require('ufo.model.foldedline')
 ---@field providers table
 ---@field scanned boolean
 ---@field selectedProvider string
----@field disposables UfoDisposable
 local FoldBuffer = setmetatable({}, buffer)
 FoldBuffer.__index = FoldBuffer
 
@@ -29,14 +27,13 @@ function FoldBuffer:new(buf, ns)
     o.bufnr = buf.bufnr
     o.buf = buf
     o.ns = ns
-    o.attached = true
     o:reset()
-    o.disposables = {
-        disposable:create(function()
-            o:resetFoldedLines()
-        end)
-    }
     return o
+end
+
+function FoldBuffer:dispose()
+    self:resetFoldedLines()
+    self:reset()
 end
 
 function FoldBuffer:changedtick()
@@ -61,11 +58,6 @@ end
 ---@return string[]
 function FoldBuffer:lines(lnum, endLnum)
     return self.buf:lines(lnum, endLnum)
-end
-
-function FoldBuffer:dispose()
-    disposable.disposeAll(self.disposables)
-    self.disposables = {}
 end
 
 function FoldBuffer:reset()
