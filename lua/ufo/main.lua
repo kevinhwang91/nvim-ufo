@@ -30,8 +30,8 @@ local function createEvents()
     ]])
     local optionSetArgs = 'vim.api.nvim_get_current_buf(), vim.v.option_old, vim.v.option_new'
     cmd(([[
-        au OptionSet buftype lua require('ufo.lib.event'):emit('BufTypeChanged', %s)
-        au OptionSet filetype lua require('ufo.lib.event'):emit('FileTypeChanged', %s)
+        au OptionSet buftype silent! lua require('ufo.lib.event'):emit('BufTypeChanged', %s)
+        au OptionSet filetype silent! lua require('ufo.lib.event'):emit('FileTypeChanged', %s)
     ]]):format(optionSetArgs, optionSetArgs))
     cmd('aug END')
 
