@@ -183,12 +183,9 @@ function Buffer:lines(lnum, endLnum)
         else
             for _, hunk in ipairs(hunks) do
                 local hs, he = hunk[1], hunk[2]
-                if hs <= lnum and lnum <= he or hs <= endLnum and endLnum <= he or
-                    lnum < hs or endLnum > he then
-                    local lines = api.nvim_buf_get_lines(self.bufnr, hs - 1, he, true)
-                    for i = hs, he do
-                        self._lines[i] = lines[i - hs + 1]
-                    end
+                local lines = api.nvim_buf_get_lines(self.bufnr, hs - 1, he, true)
+                for i = hs, he do
+                    self._lines[i] = lines[i - hs + 1]
                 end
             end
         end
