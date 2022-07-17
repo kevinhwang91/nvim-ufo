@@ -8,7 +8,7 @@ function Indent.getFolds(bufnr)
     if not utils.isBufLoaded(bufnr) then
         return
     end
-    local lines = bufmanager:get(bufnr):lines(0, -1)
+    local lines = bufmanager:get(bufnr):lines(1, -1)
     local sw = vim.bo[bufnr].shiftwidth
     local ts = vim.bo[bufnr].ts
     local levels = {}

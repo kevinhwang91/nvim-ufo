@@ -117,7 +117,8 @@ function Buffer:handleChanged()
             end
             self._lines = newLines
         end
-        self._lineCount = self._lineCount + delta
+        -- self._lineCount + delta may become `0`
+        self._lineCount = math.max(1, self._lineCount + delta)
     end
     self._q = {}
     return #q0 > 0
