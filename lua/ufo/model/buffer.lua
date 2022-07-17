@@ -85,6 +85,7 @@ function Buffer:buildMissingHunk()
 end
 
 function Buffer:handleChanged()
+    local q0 = self._q
     for _, q in ipairs(self._q) do
         local firstLine, lastLine, lastLineUpdated = q[1], q[2], q[3]
         local delta = lastLineUpdated - lastLine
@@ -119,6 +120,7 @@ function Buffer:handleChanged()
         self._lineCount = self._lineCount + delta
     end
     self._q = {}
+    return #q0 > 0
 end
 
 ---
@@ -161,29 +163,32 @@ end
 ---@return string[]
 function Buffer:lines(lnum, endLnum)
     local res = {}
+    local missing
     if not self._lines then
         self._lines = api.nvim_buf_get_lines(self.bufnr, 0, -1, true)
         self._lineCount = #self._lines
         self._q = {}
     else
-        self:handleChanged()
+        missing = self:handleChanged()
     end
     assert(self._lineCount >= lnum, 'index out of bounds')
-    local hunks, cnt = self:buildMissingHunk()
     endLnum = endLnum and endLnum or lnum
     if endLnum < 0 then
         endLnum = self._lineCount + endLnum + 1
     end
-    if cnt > self._lineCount / 4 and #hunks > 2 then
-        self._lines = api.nvim_buf_get_lines(self.bufnr, 0, -1, true)
-    else
-        for _, hunk in ipairs(hunks) do
-            local hs, he = hunk[1], hunk[2]
-            if hs <= lnum and lnum <= he or hs <= endLnum and endLnum <= he or
-                lnum < hs or endLnum > he then
-                local lines = api.nvim_buf_get_lines(self.bufnr, hs - 1, he, true)
-                for i = hs, he do
-                    self._lines[i] = lines[i - hs + 1]
+    if missing then
+        local hunks, cnt = self:buildMissingHunk()
+        if cnt > self._lineCount / 4 and #hunks > 2 then
+            self._lines = api.nvim_buf_get_lines(self.bufnr, 0, -1, true)
+        else
+            for _, hunk in ipairs(hunks) do
+                local hs, he = hunk[1], hunk[2]
+                if hs <= lnum and lnum <= he or hs <= endLnum and endLnum <= he or
+                    lnum < hs or endLnum > he then
+                    local lines = api.nvim_buf_get_lines(self.bufnr, hs - 1, he, true)
+                    for i = hs, he do
+                        self._lines[i] = lines[i - hs + 1]
+                    end
                 end
             end
         end
