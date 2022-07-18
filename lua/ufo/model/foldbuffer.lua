@@ -32,7 +32,7 @@ function FoldBuffer:new(buf, ns)
 end
 
 function FoldBuffer:dispose()
-    self:resetFoldedLines()
+    self:resetFoldedLines(true)
     self:reset()
 end
 
@@ -67,17 +67,45 @@ function FoldBuffer:reset()
     self.version = 0
     self.requestCount = 0
     self.foldRanges = {}
-    self.foldedLines = {}
+    self:resetFoldedLines()
     self.scanned = false
 end
 
-function FoldBuffer:resetFoldedLines()
+function FoldBuffer:resetFoldedLines(clear)
     self.foldedLines = {}
-    pcall(api.nvim_buf_clear_namespace, self.bufnr, self.ns, 0, -1)
+    for _ = 1, self:lineCount() do
+        table.insert(self.foldedLines, false)
+    end
+    if clear then
+        pcall(api.nvim_buf_clear_namespace, self.bufnr, self.ns, 0, -1)
+    end
 end
 
 function FoldBuffer:foldedLine(lnum)
-    return self.foldedLines[lnum]
+    local fl = self.foldedLines[lnum]
+    if not fl then
+        return
+    end
+    return fl
+end
+
+function FoldBuffer:handleFoldedLinesChanged(firstLine, lastLine, lastLineUpdated)
+    for i = firstLine + 1, lastLine do
+        self:openFold(i)
+    end
+    local delta = lastLineUpdated - lastLine
+    if delta > 0 then
+        for _ = 1, delta do
+            table.insert(self.foldedLines, firstLine + 1, false)
+        end
+    else
+        for _ = 1, -delta do
+            table.remove(self.foldedLines, lastLineUpdated)
+        end
+        for i = firstLine + 1, lastLineUpdated do
+            self.foldedLines[i] = false
+        end
+    end
 end
 
 function FoldBuffer:acquireRequest()
@@ -107,64 +135,27 @@ end
 ---@return boolean
 function FoldBuffer:lineNeedRender(lnum, width)
     local fl = self:foldedLine(lnum)
-    return not fl or not fl:hasVirtText() or fl:widthChanged(width) or
-        fl:textChanged(self:lines(lnum)[1])
-end
-
-function FoldBuffer:maySyncFoldedLines(winid, lnum, text)
-    local synced = false
-    local fl = self:foldedLine(lnum)
-    if fl and fl:textChanged(text) then
-        self:syncFoldedLines(winid)
-        synced = true
-    end
-    return synced
+    return not fl or not fl:hasVirtText() or fl:widthChanged(width)
 end
 
 ---
 ---@param winid number
 function FoldBuffer:syncFoldedLines(winid)
-    local newLines = {}
-    for _, fl in pairs(self.foldedLines) do
-        local mark = api.nvim_buf_get_extmark_by_id(self.bufnr, self.ns, fl.id, {})
-        local row = mark[1]
-        if row then
-            local lnum = row + 1
-            local fs = utils.foldClosed(winid, lnum)
-            if fs == lnum then
-                if newLines[lnum] then
-                    -- the newLines[lnum] assigned from previous FoldedLine must be
-                    -- fl.lnum ~= lnum, assign current FoldedLine to newLines[lnum]
-                    -- and clear previous extmark
-                    if fl.lnum == lnum then
-                        newLines[lnum]:deleteVirtText()
-                        newLines[lnum] = fl
-                    else
-                        fl:deleteVirtText()
-                    end
-                else
-                    newLines[lnum] = fl
-                    fl.lnum = lnum
-                end
-            else
-                if fs == -1 then
-                    fl:deleteVirtText()
-                else
-                    newLines[lnum] = fl
-                    fl.lnum = lnum
-                end
-            end
+    for lnum, fl in ipairs(self.foldedLines) do
+        if fl and utils.foldClosed(winid, lnum) == -1 then
+            self:openFold(lnum)
         end
     end
-    self.foldedLines = newLines
 end
 
 ---
 ---@param lnum number
 function FoldBuffer:openFold(lnum)
     local fl = self.foldedLines[lnum]
-    fl:deleteVirtText()
-    self.foldedLines[lnum] = nil
+    if fl then
+        fl:deleteVirtText()
+        self.foldedLines[lnum] = false
+    end
 end
 
 ---
@@ -186,7 +177,7 @@ function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
             return
         end
     else
-        fl = foldedline:new(self.bufnr, self.ns, lnum, text, width)
+        fl = foldedline:new(self.bufnr, self.ns, text, width)
         self.foldedLines[lnum] = fl
     end
     fl:updateVirtText(lnum, endLnum, virtText)

@@ -170,7 +170,7 @@ local function diffWinClosed(winid)
                 local bufnr = api.nvim_win_get_buf(id)
                 local fb = manager:get(bufnr)
                 if fb then
-                    fb:resetFoldedLines()
+                    fb:resetFoldedLines(true)
                     tryUpdateFold(bufnr)
                 end
             end

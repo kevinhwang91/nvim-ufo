@@ -63,7 +63,6 @@ local function onEnd(name, tick)
     for winid, data in pairs(collection or {}) do
         local bufnr = data.bufnr
         local fb = fold.get(bufnr)
-        local synced = false
         if #data.rows > 0 then
             utils.winCall(winid, function()
                 local folded = self:unHandledFoldedLnums(fb, data.rows)
@@ -86,10 +85,7 @@ local function onEnd(name, tick)
                     local lnum = folded[i]
                     if fb:lineNeedRender(lnum, width) then
                         local text = fb:lines(lnum)[1]
-                        if not synced then
-                            synced = fb:maySyncFoldedLines(winid, lnum, text)
-                        end
-                        needRedraw = synced and 3 or 1
+                        needRedraw = 1
                         log.debug('need add/update folded lnum:', lnum)
                         local endLnum = utils.foldClosedEnd(0, lnum)
 
@@ -112,8 +108,7 @@ local function onEnd(name, tick)
             end)
         end
         local lnum = api.nvim_win_get_cursor(winid)[1]
-        log.debug('synced:', synced)
-        if not synced and redrawType == 40 then
+        if redrawType == 40 then
             local lastCtx = lastContext[bufnr] or {}
             if winid == lastCtx.winid and lnum == lastCtx.lnum then
                 mode = mode and mode or utils.mode()
@@ -134,15 +129,12 @@ local function onEnd(name, tick)
     lastContext = ctx
 end
 
-function Decorator:highlightOpenFold(bufnr, lnum, markId)
+function Decorator:highlightOpenFold(fb, lnum)
     if self.openFoldHlEnabled then
-        local mark = api.nvim_buf_get_extmark_by_id(bufnr, self.ns, markId, {details = true})
-        local row, details = mark[1], mark[3]
-        if row and lnum == row + 1 then
-            local endRow = details.end_row
-            utils.highlightTimeout(bufnr, self.hlNs, 'UfoFoldedBg', row, endRow + 1,
-                                   nil, self.openFoldHlTimeout)
-        end
+        local fl = fb:foldedLine(lnum)
+        local _, endLnum = fl:range()
+        utils.highlightTimeout(fb.bufnr, self.hlNs, 'UfoFoldedBg', lnum - 1, endLnum,
+                               nil, self.openFoldHlTimeout)
     end
 end
 
@@ -156,8 +148,7 @@ function Decorator:unHandledFoldedLnums(fb, rows)
                 table.insert(folded, lnum)
             end
         elseif fb:lineIsClosed(lnum) then
-            local fl = fb.foldedLines[lnum]
-            self:highlightOpenFold(fb.bufnr, lnum, fl.id)
+            self:highlightOpenFold(fb, lnum)
             fb:openFold(lnum)
         end
         lastRow = rows[i]
@@ -167,8 +158,7 @@ function Decorator:unHandledFoldedLnums(fb, rows)
     if utils.foldClosed(0, lnum) == lnum then
         table.insert(folded, lnum)
     elseif fb:lineIsClosed(lnum) then
-        local fl = fb.foldedLines[lnum]
-        self:highlightOpenFold(fb.bufnr, lnum, fl.id)
+        self:highlightOpenFold(fb, lnum)
         fb:openFold(lnum)
     end
     return folded
@@ -234,8 +224,8 @@ function Decorator:initialize(namespace)
     self.hlNs = api.nvim_create_namespace('ufo-hl')
 
     table.insert(disposables, disposable:create(function()
-        api.nvim_set_decoration_provider(namespace, {})
-    end))
+                     api.nvim_set_decoration_provider(namespace, {})
+                 end))
     self.enableFoldEndVirtText = config.enable_fold_end_virt_text
     self.openFoldHlTimeout = config.open_fold_hl_timeout
     self.openFoldHlEnabled = self.openFoldHlTimeout > 0

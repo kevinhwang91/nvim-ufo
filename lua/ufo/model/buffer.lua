@@ -11,11 +11,16 @@ function Buffer:new(bufnr)
     local o = setmetatable({}, self)
     self.__index = self
     o.bufnr = bufnr
-    o._changedtick = api.nvim_buf_get_changedtick(bufnr)
-    o._lines = nil
-    o._lineCount = nil
-    o._q = {}
+    o:reload()
     return o
+end
+
+function Buffer:reload()
+    self._changedtick = api.nvim_buf_get_changedtick(self.bufnr)
+    self._lines = {}
+    for _ = 1, api.nvim_buf_line_count(self.bufnr) do
+        table.insert(self._lines, false)
+    end
 end
 
 function Buffer:dispose()
@@ -40,7 +45,8 @@ function Buffer:attach()
                 return
             end
             self._changedtick = changedtick
-            table.insert(self._q, {firstLine, lastLine, lastLineUpdated})
+            lastLineUpdated = math.max(1, lastLineUpdated)
+            self:handleChanged(firstLine, lastLine, lastLineUpdated)
             event:emit('BufLinesChanged', bufnr, changedtick, firstLine, lastLine,
                        lastLineUpdated, byteCount)
         end,
@@ -51,7 +57,7 @@ function Buffer:attach()
             event:emit('BufDetach', bufnr)
         end,
         on_reload = function(name, bufnr)
-            self._lines = nil
+            self:reload()
             event:emit('BufReload', bufnr)
         end
     })
@@ -62,11 +68,15 @@ function Buffer:attach()
     return self.attached
 end
 
-function Buffer:buildMissingHunk()
+---lower is less than or equal to lnum
+---@param lnum number
+---@param endLnum number
+---@return table[]
+function Buffer:buildMissingHunk(lnum, endLnum)
     local hunks = {}
     local s, e
     local cnt = 0
-    for i = 1, self._lineCount do
+    for i = lnum, endLnum do
         if not self._lines[i] then
             cnt = cnt + 1
             if not s then
@@ -81,47 +91,48 @@ function Buffer:buildMissingHunk()
     if e then
         table.insert(hunks, {s, e})
     end
-    return hunks, cnt
+    -- scan backward
+    if #hunks > 0 then
+        local firstHunks = hunks[1]
+        local fhs = firstHunks[1]
+        if fhs == lnum then
+            local i = lnum - 1
+            while i > 0 do
+                if self._lines[i] then
+                    break
+                end
+                i = i - 1
+            end
+            fhs = i + 1
+            cnt = cnt + lnum - fhs
+            firstHunks[1] = fhs
+            lnum = fhs
+        end
+    end
+    if cnt > (endLnum - lnum) / 4 and #hunks > 2 then
+        hunks = {{lnum, endLnum}}
+    end
+    return hunks
 end
 
-function Buffer:handleChanged()
-    local q0 = self._q
-    for _, q in ipairs(self._q) do
-        local firstLine, lastLine, lastLineUpdated = q[1], q[2], q[3]
-        local delta = lastLineUpdated - lastLine
-        if delta == 0 then
-            for i = firstLine + 1, lastLine do
-                self._lines[i] = nil
-            end
-        elseif firstLine == lastLineUpdated then
-            local ei = self._lineCount + delta
-            for i = firstLine + 1, ei do
-                self._lines[i] = self._lines[i - delta]
-            end
-            for i = ei + 1, self._lineCount do
-                self._lines[i] = nil
-            end
-        else
-            local newLines = {}
-            for i = 1, firstLine do
-                newLines[i] = self._lines[i]
-            end
-            local ni = firstLine + 1
-            while ni <= lastLineUpdated do
-                newLines[ni] = nil
-                ni = ni + 1
-            end
-            for i = lastLine + 1, self._lineCount do
-                newLines[ni] = self._lines[i]
-                ni = ni + 1
-            end
-            self._lines = newLines
+function Buffer:handleChanged(firstLine, lastLine, lastLineUpdated)
+    local delta = lastLineUpdated - lastLine
+    if delta == 0 then
+        for i = firstLine + 1, lastLine do
+            self._lines[i] = false
         end
-        -- self._lineCount + delta may become `0`
-        self._lineCount = math.max(1, self._lineCount + delta)
+    elseif delta > 0 then
+        for _ = 1, delta do
+            table.insert(self._lines, firstLine + 1, false)
+        end
+    else
+        for _ = 1, -delta do
+            table.remove(self._lines, lastLineUpdated)
+        end
+        for i = firstLine + 1, lastLineUpdated do
+            self._lines[i] = false
+        end
     end
-    self._q = {}
-    return #q0 > 0
 end
 
 ---
@@ -151,44 +162,25 @@ end
 ---
 ---@return number
 function Buffer:lineCount()
-    if self._lineCount then
-        self:handleChanged()
-        return self._lineCount
-    else
-        return api.nvim_buf_line_count(self.bufnr)
-    end
+    return #self._lines
 end
 
 ---@param lnum number
 ---@param endLnum? number
 ---@return string[]
 function Buffer:lines(lnum, endLnum)
+    local lineCount = self:lineCount()
+    assert(lineCount >= lnum, 'index out of bounds')
     local res = {}
-    local missing
-    if not self._lines then
-        self._lines = api.nvim_buf_get_lines(self.bufnr, 0, -1, true)
-        self._lineCount = #self._lines
-        self._q = {}
-    else
-        missing = self:handleChanged()
-    end
-    assert(self._lineCount >= lnum, 'index out of bounds')
     endLnum = endLnum and endLnum or lnum
     if endLnum < 0 then
-        endLnum = self._lineCount + endLnum + 1
+        endLnum = lineCount + endLnum + 1
     end
-    if missing then
-        local hunks, cnt = self:buildMissingHunk()
-        if cnt > self._lineCount / 4 and #hunks > 2 then
-            self._lines = api.nvim_buf_get_lines(self.bufnr, 0, -1, true)
-        else
-            for _, hunk in ipairs(hunks) do
-                local hs, he = hunk[1], hunk[2]
-                local lines = api.nvim_buf_get_lines(self.bufnr, hs - 1, he, true)
-                for i = hs, he do
-                    self._lines[i] = lines[i - hs + 1]
-                end
-            end
+    for _, hunk in ipairs(self:buildMissingHunk(lnum, endLnum)) do
+        local hs, he = hunk[1], hunk[2]
+        local lines = api.nvim_buf_get_lines(self.bufnr, hs - 1, he, true)
+        for i = hs, he do
+            self._lines[i] = lines[i - hs + 1]
         end
     end
     for i = lnum, endLnum do

@@ -64,6 +64,16 @@ function FoldBufferManager:initialize(namespace, selector)
 
     event:on('BufTypeChanged', optChanged, disposables)
     event:on('FileTypeChanged', optChanged, disposables)
+    event:on('BufLinesChanged', function(bufnr, _, firstLine, lastLine, lastLineUpdated)
+        local delta = lastLineUpdated - lastLine
+        if delta == 0 then
+            return
+        end
+        local fb = self:get(bufnr)
+        if fb then
+            fb:handleFoldedLinesChanged(firstLine, lastLine, lastLineUpdated)
+        end
+    end, disposables)
     self.disposables = disposables
     self.providerSelector = selector
     initialized = true

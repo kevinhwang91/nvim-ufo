@@ -4,19 +4,17 @@ local api = vim.api
 ---@field id number
 ---@field bufnr number
 ---@field ns number
----@field lnum number
 ---@field text? string
 ---@field width? number
 ---@field virtText? string
 local FoldedLine = {}
 
-function FoldedLine:new(bufnr, ns, lnum, text, width)
+function FoldedLine:new(bufnr, ns, text, width)
     local o = setmetatable({}, self)
     self.__index = self
     o.id = nil
     o.bufnr = bufnr
     o.ns = ns
-    o.lnum = lnum
     o.text = text
     o.width = width
     o.virtText = nil
@@ -55,6 +53,13 @@ function FoldedLine:updateVirtText(lnum, endLnum, virtText)
         hl_mode = 'combine'
     })
     self.virtText = virtText
+end
+
+function FoldedLine:range()
+    local mark = api.nvim_buf_get_extmark_by_id(self.bufnr, self.ns, self.id, {details = true})
+    local row, details = mark[1], mark[3]
+    local endRow = details.end_row
+    return row + 1, endRow + 1
 end
 
 return FoldedLine
