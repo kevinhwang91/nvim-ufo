@@ -89,23 +89,11 @@ function FoldBuffer:foldedLine(lnum)
     return fl
 end
 
-function FoldBuffer:handleFoldedLinesChanged(firstLine, lastLine, lastLineUpdated)
-    for i = firstLine + 1, lastLine do
+function FoldBuffer:handleFoldedLinesChanged(first, last, lastUpdated)
+    for i = first + 1, last do
         self:openFold(i)
     end
-    local delta = lastLineUpdated - lastLine
-    if delta > 0 then
-        for _ = 1, delta do
-            table.insert(self.foldedLines, firstLine + 1, false)
-        end
-    else
-        for _ = 1, -delta do
-            table.remove(self.foldedLines, lastLineUpdated)
-        end
-        for i = firstLine + 1, lastLineUpdated do
-            self.foldedLines[i] = false
-        end
-    end
+    self.foldedLines = self.buf:handleLinesChanged(self.foldedLines, first, last, lastUpdated)
 end
 
 function FoldBuffer:acquireRequest()

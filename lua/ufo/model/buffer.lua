@@ -45,8 +45,7 @@ function Buffer:attach()
                 return
             end
             self._changedtick = changedtick
-            lastLineUpdated = math.max(1, lastLineUpdated)
-            self:handleChanged(firstLine, lastLine, lastLineUpdated)
+            self._lines = self:handleLinesChanged(self._lines, firstLine, lastLine, lastLineUpdated)
             event:emit('BufLinesChanged', bufnr, changedtick, firstLine, lastLine,
                        lastLineUpdated, byteCount)
         end,
@@ -115,24 +114,59 @@ function Buffer:buildMissingHunk(lnum, endLnum)
     return hunks
 end
 
-function Buffer:handleChanged(firstLine, lastLine, lastLineUpdated)
+function Buffer:sliceLines(lines, firstLine, lastLine, lastLineUpdated)
+    local newLines = {}
+    for i = 1, firstLine do
+        table.insert(newLines, lines[i])
+    end
+    for _ = firstLine + 1, lastLineUpdated do
+        table.insert(newLines, false)
+    end
+    for i = lastLine + 1, #lines do
+        table.insert(newLines, lines[i])
+    end
+    return newLines
+end
+
+---
+---@param lines any[]
+---@param firstLine number
+---@param lastLine number
+---@param lastLineUpdated number
+---@return any[]
+function Buffer:handleLinesChanged(lines, firstLine, lastLine, lastLineUpdated)
     local delta = lastLineUpdated - lastLine
     if delta == 0 then
         for i = firstLine + 1, lastLine do
-            self._lines[i] = false
+            lines[i] = false
         end
     elseif delta > 0 then
-        for _ = 1, delta do
-            table.insert(self._lines, firstLine + 1, false)
+        if #lines > 800 and delta > 10 then
+            lines = self:sliceLines(lines, firstLine, lastLine, lastLineUpdated)
+        else
+            for i = firstLine + 1, lastLine do
+                lines[i] = false
+            end
+            for i = firstLine + 1, firstLine + delta do
+                table.insert(lines, i, false)
+            end
         end
     else
-        for _ = 1, -delta do
-            table.remove(self._lines, lastLineUpdated)
+        if #lines > 800 and -delta > 10 then
+            lines = self:sliceLines(lines, firstLine, lastLine, lastLineUpdated)
+        else
+            for i = lastLine, lastLineUpdated + 1, -1 do
+                table.remove(lines, i)
+            end
+            for i = firstLine + 1, lastLineUpdated do
+                lines[i] = false
+            end
         end
-        for i = firstLine + 1, lastLineUpdated do
-            self._lines[i] = false
+        if #lines == 0 then
+            lines = {false}
         end
     end
+    return lines
 end
 
 ---
