@@ -13,6 +13,7 @@ local foldedline = require('ufo.model.foldedline')
 ---@field requestCount number
 ---@field foldRanges UfoFoldingRange[]
 ---@field foldedLines UfoFoldedLine[]
+---@field foldedLineCount number
 ---@field providers table
 ---@field scanned boolean
 ---@field selectedProvider string
@@ -73,6 +74,7 @@ end
 
 function FoldBuffer:resetFoldedLines(clear)
     self.foldedLines = {}
+    self.foldedLineCount = 0
     for _ = 1, self:lineCount() do
         table.insert(self.foldedLines, false)
     end
@@ -90,6 +92,9 @@ function FoldBuffer:foldedLine(lnum)
 end
 
 function FoldBuffer:handleFoldedLinesChanged(first, last, lastUpdated)
+    if self.foldedLineCount == 0 then
+        return
+    end
     for i = first + 1, last do
         self:openFold(i)
     end
@@ -142,6 +147,7 @@ function FoldBuffer:openFold(lnum)
     local fl = self.foldedLines[lnum]
     if fl then
         fl:deleteVirtText()
+        self.foldedLineCount = self.foldedLineCount - 1
         self.foldedLines[lnum] = false
     end
 end
@@ -166,6 +172,7 @@ function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
         end
     else
         fl = foldedline:new(self.bufnr, self.ns, text, width)
+        self.foldedLineCount = self.foldedLineCount + 1
         self.foldedLines[lnum] = fl
     end
     fl:updateVirtText(lnum, endLnum, virtText)
