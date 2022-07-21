@@ -33,6 +33,9 @@ end
 
 local function request(bufnr)
     local buf = bufmanager:get(bufnr)
+    if not buf then
+        return
+    end
     local bt = buf:buftype()
     if bt ~= '' and bt ~= 'acwrite' then
         return
@@ -69,9 +72,6 @@ end
 function LSP.getFolds(bufnr)
     if not hasInitialized() then
         return initialize():thenCall(function()
-            if not utils.isBufLoaded(bufnr) then
-                return promise.resolve()
-            end
             return request(bufnr)
         end)
     end

@@ -11,13 +11,14 @@ local utils      = require('ufo.utils')
 ---@field disposables UfoDisposable[]
 local BufferManager = {
     buffers = {},
+    bufDetachSet = {},
     disposables = {}
 }
 
 local initialized
 
 local function attach(self, bufnr)
-    if not self.buffers[bufnr] then
+    if not self.buffers[bufnr] and not self.bufDetachSet[bufnr] then
         local buf = buffer:new(bufnr)
         self.buffers[bufnr] = buf
         if not buf:attach() then
@@ -93,6 +94,16 @@ function BufferManager:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}
     initialized = false
+end
+
+function BufferManager:attach(bufnr)
+    self.bufDetachSet[bufnr] = nil
+    attach(self, bufnr)
+end
+
+function BufferManager:detach(bufnr)
+    self.bufDetachSet[bufnr] = true
+    event:emit('BufDetach', bufnr)
 end
 
 return BufferManager

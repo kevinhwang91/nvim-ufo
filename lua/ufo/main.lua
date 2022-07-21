@@ -9,7 +9,6 @@ local highlight  = require('ufo.highlight')
 local preview    = require('ufo.preview')
 local disposable = require('ufo.lib.disposable')
 local bufmanager = require('ufo.bufmanager')
-local event      = require('ufo.lib.event')
 
 local enabled
 
@@ -107,12 +106,12 @@ end
 
 function M.attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
-    event:emit('BufEnter', bufnr)
+    bufmanager:attach(bufnr)
 end
 
 function M.detach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
-    event:emit('BufDetach', bufnr)
+    bufmanager:detach(bufnr)
 end
 
 function M.enableFold(bufnr)

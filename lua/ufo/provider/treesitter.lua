@@ -1,6 +1,5 @@
 local parsers = require('nvim-treesitter.parsers')
 local query = require('nvim-treesitter.query')
-local utils = require('ufo.utils')
 local bufmanager = require('ufo.bufmanager')
 local foldingrange = require('ufo.model.foldingrange')
 
@@ -83,10 +82,10 @@ local function getCpatureMatchesRecursively(bufnr, parser)
 end
 
 function Treesitter.getFolds(bufnr)
-    if not utils.isBufLoaded(bufnr) then
+    local buf = bufmanager:get(bufnr)
+    if not buf then
         return
     end
-    local buf = bufmanager:get(bufnr)
     local bt = buf:buftype()
     if bt ~= '' and bt ~= 'acwrite' then
         return
