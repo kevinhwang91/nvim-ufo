@@ -134,14 +134,13 @@ function FloatWin:display(targetWinid, height, text, enter)
         self.winblend = self.config.winblend
         local wo = vim.wo[self.winid]
         wo.wrap = false
-        wo.spell, wo.list = false, false
+        wo.spell, wo.list = false, true
         wo.nu, wo.rnu = false, false
         wo.fen, wo.fdm, wo.fdc = false, 'manual', '0'
         wo.cursorline = false
         wo.signcolumn, wo.colorcolumn = 'no', ''
         wo.winhl = self.config.winhighlight
         wo.winblend = self.winblend
-        wo.sidescrolloff = 0
     end
     vim.bo[self.bufnr].modifiable = true
     api.nvim_buf_set_lines(self.bufnr, 0, -1, true, text)

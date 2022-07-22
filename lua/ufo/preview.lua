@@ -218,6 +218,9 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
     local text = bufmanager:get(curBufnr):lines(lnum, endLnum)
     local height = math.min(#text, maxHeight or 20)
     floatwin:display(api.nvim_get_current_win(), height, text, enter)
+    utils.winCall(floatwin.winid, function()
+        cmd('norm! ze')
+    end)
     render.mapHighlightLimitByRange(curBufnr, floatwin.bufnr,
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
                                     text, self.ns)
