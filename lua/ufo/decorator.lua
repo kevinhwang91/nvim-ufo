@@ -224,8 +224,8 @@ function Decorator:initialize(namespace)
     self.hlNs = api.nvim_create_namespace('ufo-hl')
 
     table.insert(disposables, disposable:create(function()
-                     api.nvim_set_decoration_provider(namespace, {})
-                 end))
+        api.nvim_set_decoration_provider(namespace, {})
+    end))
     self.enableFoldEndVirtText = config.enable_fold_end_virt_text
     self.openFoldHlTimeout = config.open_fold_hl_timeout
     self.openFoldHlEnabled = self.openFoldHlTimeout > 0

@@ -1,6 +1,5 @@
 local api = vim.api
 local fn = vim.fn
-local cmd = vim.cmd
 
 local buffer     = require('ufo.model.foldbuffer')
 local event      = require('ufo.lib.event')
@@ -139,35 +138,6 @@ function FoldBufferManager:isFoldMethodsDisabled(fb)
     return not fb.providers or fb.providers[1] == ''
 end
 
-local function scanFoldedRanges(winid, lineCount)
-    local res = {}
-    local stack = {}
-    local openFmt, closeFmt = '%dfoldopen', '%dfoldclose'
-    utils.winCall(winid, function()
-        for i = 1, lineCount do
-            local skip = false
-            while #stack > 0 and i >= stack[#stack] do
-                local endLnum = table.remove(stack)
-                local c = closeFmt:format(endLnum)
-                cmd(c)
-                log.info(c)
-                skip = true
-            end
-            if not skip then
-                local endLnum = utils.foldClosedEnd(winid, i)
-                if endLnum ~= -1 then
-                    table.insert(stack, endLnum)
-                    table.insert(res, {i - 1, endLnum - 1})
-                    local c = openFmt:format(i)
-                    cmd(c)
-                    log.info(c)
-                end
-            end
-        end
-    end)
-    return res
-end
-
 ---
 ---@param bufnr number
 ---@param ranges? UfoFoldingRange[]
@@ -192,7 +162,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     end
     local rowPairs = {}
     if not fb.scanned then
-        for _, range in ipairs(scanFoldedRanges(winid, fb:lineCount())) do
+        for _, range in ipairs(fb:scanFoldedRanges(winid)) do
             local row, endRow = range[1], range[2]
             rowPairs[row] = endRow
         end

@@ -28,11 +28,11 @@ local function prepareQuery(bufnr, parser, root, rootLang, queryName)
     end
 
     return query.get_query(rootLang, queryName), {
-      root = root,
-      source = bufnr,
-      start = range[1],
-      -- The end row is exclusive so we need to add 1 to it.
-      stop = range[3] + 1,
+        root = root,
+        source = bufnr,
+        start = range[1],
+        -- The end row is exclusive so we need to add 1 to it.
+        stop = range[3] + 1,
     }
 end
 

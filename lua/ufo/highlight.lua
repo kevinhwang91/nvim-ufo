@@ -23,7 +23,8 @@ local function resetHighlightGroup()
             end
             rawset(tbl, k, hl)
             return hl
-        end})
+        end
+    })
     local ok, hl = pcall(api.nvim_get_hl_by_name, 'Folded', termguicolors)
     if ok and hl.background then
         if termguicolors then

@@ -1,4 +1,5 @@
 local api = vim.api
+local cmd = vim.cmd
 
 local utils      = require('ufo.utils')
 local buffer     = require('ufo.model.buffer')
@@ -176,6 +177,34 @@ function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
         self.foldedLines[lnum] = fl
     end
     fl:updateVirtText(lnum, endLnum, virtText)
+end
+
+function FoldBuffer:scanFoldedRanges(winid, s, e)
+    local res = {}
+    local stack = {}
+    local openFmt, closeFmt = '%dfoldopen', '%dfoldclose'
+    s, e = s or 1, self:lineCount()
+    utils.winCall(winid, function()
+        for i = s, e do
+            local skip = false
+            while #stack > 0 and i >= stack[#stack] do
+                local endLnum = table.remove(stack)
+                local c = closeFmt:format(endLnum)
+                cmd(c)
+                skip = true
+            end
+            if not skip then
+                local endLnum = utils.foldClosedEnd(winid, i)
+                if endLnum ~= -1 then
+                    table.insert(stack, endLnum)
+                    table.insert(res, {i - 1, endLnum - 1})
+                    local c = openFmt:format(i)
+                    cmd(c)
+                end
+            end
+        end
+    end)
+    return res
 end
 
 return FoldBuffer
