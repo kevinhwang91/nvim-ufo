@@ -28,7 +28,6 @@
 	"type.castNumberToInteger": true,
 	"type.weakUnionCheck": true,
 	"workspace.library": [
-		"$VIMRUNTIME/lua/vim",
 		"$VIM/site/pack/packer/start/emmylua-nvim",
 		"$VIM/site/pack/packer/start/promise-async/typings"
 	]

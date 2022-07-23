@@ -18,7 +18,7 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
   - [Minimal configuration](#minimal-configuration)
   - [Usage](#usage)
 - [Documentation](#documentation)
-  - [How does nvim-ufo get the folds?](#how-does-nvim-ufo-get-the-folds?)
+  - [How does nvim-ufo get the folds?](#how-does-nvim-ufo-get-the-folds)
   - [Setup and description](#setup-and-description)
   - [Preview function table](#preview-function-table)
   - [Commands](#commands)
