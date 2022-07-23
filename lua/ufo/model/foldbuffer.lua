@@ -1,5 +1,6 @@
 local api = vim.api
 local cmd = vim.cmd
+local fn = vim.fn
 
 local utils      = require('ufo.utils')
 local buffer     = require('ufo.model.buffer')
@@ -182,15 +183,15 @@ end
 function FoldBuffer:scanFoldedRanges(winid, s, e)
     local res = {}
     local stack = {}
-    local openFmt, closeFmt = '%dfoldopen', '%dfoldclose'
-    s, e = s or 1, self:lineCount()
+    s, e = s or 1, e or self:lineCount()
+    local winView = fn.winsaveview()
     utils.winCall(winid, function()
         for i = s, e do
             local skip = false
             while #stack > 0 and i >= stack[#stack] do
                 local endLnum = table.remove(stack)
-                local c = closeFmt:format(endLnum)
-                cmd(c)
+                api.nvim_win_set_cursor(winid, {endLnum, 0})
+                cmd('norm! zc')
                 skip = true
             end
             if not skip then
@@ -198,12 +199,13 @@ function FoldBuffer:scanFoldedRanges(winid, s, e)
                 if endLnum ~= -1 then
                     table.insert(stack, endLnum)
                     table.insert(res, {i - 1, endLnum - 1})
-                    local c = openFmt:format(i)
-                    cmd(c)
+                    api.nvim_win_set_cursor(winid, {i, 0})
+                    cmd('norm! zo')
                 end
             end
         end
     end)
+    fn.winrestview(winView)
     return res
 end
 

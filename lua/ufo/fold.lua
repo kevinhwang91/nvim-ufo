@@ -84,11 +84,12 @@ function Fold.update(bufnr)
                 ok = changedtick == fb:changedtick()
             end
         end
-        if not ok and not fb:requested() then
+        local requested = fb:requested()
+        if not ok and not requested then
             log.debug('update fold again for bufnr:', bufnr)
             updateFoldDebounced(bufnr)
         end
-        return ok
+        return ok and not requested
     end
 
     return provider.requestFoldingRange(fb.providers, bufnr):thenCall(function(res)
