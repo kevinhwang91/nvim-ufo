@@ -171,7 +171,10 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
         local marks = api.nvim_buf_get_extmarks(fb.bufnr, self.ns, 0, -1, {details = true})
         for _, m in ipairs(marks) do
             local row, endRow = m[2], m[4].end_row
-            rowPairs[row] = endRow
+            -- extmark may give backwards range
+            if row <= endRow then
+                rowPairs[row] = endRow
+            end
         end
     end
     fb.version = changedtick
