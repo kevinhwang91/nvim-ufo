@@ -44,6 +44,12 @@ function Buffer:attach()
             if firstLine == lastLine and lastLine == lastLineUpdated and byteCount == 0 then
                 return
             end
+            -- TODO upstream bug
+            -- set foldmethod=expr && change lines from floating window will fire `on_lines`,
+            -- skip if changedtick is unchanged
+            if self._changedtick == changedtick then
+                return
+            end
             self._changedtick = changedtick
             self._lines = self:handleLinesChanged(self._lines, firstLine, lastLine, lastLineUpdated)
             event:emit('BufLinesChanged', bufnr, changedtick, firstLine, lastLine,
