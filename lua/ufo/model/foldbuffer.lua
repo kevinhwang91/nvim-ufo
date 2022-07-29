@@ -143,6 +143,23 @@ function FoldBuffer:syncFoldedLines(winid)
     end
 end
 
+function FoldBuffer:getRangesFromExtmarks()
+    local res = {}
+    if self.foldedLineCount == 0 then
+        return res
+    end
+    local marks = api.nvim_buf_get_extmarks(self.bufnr, self.ns, 0, -1, {details = true})
+    for _, m in ipairs(marks) do
+        local row, endRow = m[2], m[4].end_row
+        -- extmark may give backward range
+        if row > endRow then
+            error(('expected forward range, got row: %d, endRow: %d'):format(row, endRow))
+        end
+        table.insert(res, {row, endRow})
+    end
+    return res
+end
+
 ---
 ---@param lnum number
 function FoldBuffer:openFold(lnum)

@@ -60,6 +60,9 @@ function Fold.update(bufnr)
     end
     fb.status = 'start'
     if manager:isFoldMethodsDisabled(fb) then
+        if not pcall(fb.getRangesFromExtmarks, fb) then
+            fb:resetFoldedLines(true)
+        end
         return promise.resolve()
     end
     local winid = fn.bufwinid(bufnr)

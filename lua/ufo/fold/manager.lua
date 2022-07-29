@@ -174,18 +174,16 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
         rowPairs = self:getRowPairsByScanning(fb, winid)
         fb.scanned = true
     else
-        local marks = api.nvim_buf_get_extmarks(fb.bufnr, self.ns, 0, -1, {details = true})
-        for _, m in ipairs(marks) do
-            local row, endRow = m[2], m[4].end_row
-            -- extmark may give backward range
-            if row > endRow then
-                log.info('backward range:', row, endRow)
-                fb:resetFoldedLines(true)
-                rowPairs = self:getRowPairsByScanning(fb, winid)
-                break
-            else
+        local ok, res = pcall(function()
+            for _, range in ipairs(fb:getRangesFromExtmarks()) do
+                local row, endRow = range[1], range[2]
                 rowPairs[row] = endRow
             end
+        end)
+        if not ok then
+            log.info(res)
+            fb:resetFoldedLines(true)
+            rowPairs = self:getRowPairsByScanning(fb, winid)
         end
     end
     fb.version = changedtick
