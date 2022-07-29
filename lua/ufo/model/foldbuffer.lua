@@ -201,8 +201,8 @@ function FoldBuffer:scanFoldedRanges(winid, s, e)
     local res = {}
     local stack = {}
     s, e = s or 1, e or self:lineCount()
-    local winView = fn.winsaveview()
     utils.winCall(winid, function()
+        local winView = fn.winsaveview()
         for i = s, e do
             local skip = false
             while #stack > 0 and i >= stack[#stack] do
@@ -221,8 +221,8 @@ function FoldBuffer:scanFoldedRanges(winid, s, e)
                 end
             end
         end
+        fn.winrestview(winView)
     end)
-    fn.winrestview(winView)
     return res
 end
 
