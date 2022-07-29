@@ -138,6 +138,15 @@ function FoldBufferManager:isFoldMethodsDisabled(fb)
     return not fb.providers or fb.providers[1] == ''
 end
 
+function FoldBufferManager:getRowPairsByScanning(fb, winid)
+    local rowPairs = {}
+    for _, range in ipairs(fb:scanFoldedRanges(winid)) do
+        local row, endRow = range[1], range[2]
+        rowPairs[row] = endRow
+    end
+    return rowPairs
+end
+
 ---
 ---@param bufnr number
 ---@param ranges? UfoFoldingRange[]
@@ -162,17 +171,19 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     end
     local rowPairs = {}
     if not fb.scanned then
-        for _, range in ipairs(fb:scanFoldedRanges(winid)) do
-            local row, endRow = range[1], range[2]
-            rowPairs[row] = endRow
-        end
+        rowPairs = self:getRowPairsByScanning(fb, winid)
         fb.scanned = true
     else
         local marks = api.nvim_buf_get_extmarks(fb.bufnr, self.ns, 0, -1, {details = true})
         for _, m in ipairs(marks) do
             local row, endRow = m[2], m[4].end_row
-            -- extmark may give backwards range
-            if row <= endRow then
+            -- extmark may give backward range
+            if row > endRow then
+                log.info('backward range:', row, endRow)
+                fb:resetFoldedLines(true)
+                rowPairs = self:getRowPairsByScanning(fb, winid)
+                break
+            else
                 rowPairs[row] = endRow
             end
         end
