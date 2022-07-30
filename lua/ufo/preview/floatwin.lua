@@ -20,52 +20,54 @@ local utils = require('ufo.utils')
 ---@field showScrollBar boolean
 local FloatWin = {}
 
--- upLine, rightLine, bottomLine, LeftLine
 local defaultBorder = {
-    none    = {false, false, false, false},
-    single  = {true, true, true, true},
-    double  = {true, true, true, true},
-    rounded = {true, true, true, true},
-    solid   = {true, true, true, true},
-    shadow  = {false, true, true, false},
+    none    = {'', '', '', '', '', '', '', ''},
+    single  = {'┌', '─', '┐', '│', '┘', '─', '└', '│'},
+    double  = {'╔', '═', '╗', '║', '╝', '═', '╚', '║'},
+    rounded = {'╭', '─', '╮', '│', '╯', '─', '╰', '│'},
+    solid   = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    shadow  = {'', '', {' ', 'FloatShadowThrough'}, {' ', 'FloatShadow'},
+               {' ', 'FloatShadow'}, {' ', 'FloatShadow'}, {' ', 'FloatShadowThrough'}, ''},
 }
 
 local function borderHasLine(border, index)
-    local tBorder = type(border)
-    if tBorder == 'string' then
-        return (defaultBorder[border])[index]
-    elseif tBorder == 'table' then
-        local s = border[2 * index]
+    local s = border[index]
+    if type(s) == 'string' then
         return s ~= ''
+    else
+        return s[1] ~= ''
     end
 end
 
 function FloatWin:borderHasUpLine()
-    return borderHasLine(self.border, 1)
-end
-
-function FloatWin:borderHasRightLine()
     return borderHasLine(self.border, 2)
 end
 
+function FloatWin:borderHasRightLine()
+    return borderHasLine(self.border, 4)
+end
+
 function FloatWin:borderHasBottomLine()
-    return borderHasLine(self.border, 3)
+    return borderHasLine(self.border, 6)
 end
 
 function FloatWin:borderHasLeftLine()
-    return borderHasLine(self.border, 4)
+    return borderHasLine(self.border, 8)
 end
 
 function FloatWin:build(targetWinid, height, border)
     local winfo = utils.getWinInfo(targetWinid)
-    local top = utils.winCall(targetWinid, fn.winline) - 1
-    local bot = winfo.height - top
-    self.border = border
-    if bot < height and bot < top then
-        self.height = math.min(height, top)
-        self.row = math.min(2, bot - (self.border == 'none' and 0 or 1)) - self.height
+    local above = utils.winCall(targetWinid, fn.winline) - 1
+    local below = winfo.height - above
+    self.border = type(border) == 'string' and vim.deepcopy(defaultBorder[border]) or border
+    if below < height and below < above then
+        self.height = math.min(height, above)
+        self.row = below - self.height
     else
-        self.height = math.min(height, bot)
+        if self:borderHasUpLine() and fn.screenrow() == 1 then
+            self.border[1], self.border[2], self.border[3] = '', '', ''
+        end
+        self.height = math.min(height, below)
         self.row = 0
     end
     self.col = 0
