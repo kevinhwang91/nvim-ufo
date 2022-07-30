@@ -64,9 +64,6 @@ function FoldBufferManager:initialize(namespace, selector)
     event:on('BufTypeChanged', optChanged, disposables)
     event:on('FileTypeChanged', optChanged, disposables)
     event:on('BufLinesChanged', function(bufnr, _, firstLine, lastLine, lastLineUpdated)
-        if lastLineUpdated - lastLine == 0 then
-            return
-        end
         local fb = self:get(bufnr)
         if fb then
             fb:handleFoldedLinesChanged(firstLine, lastLine, lastLineUpdated)

@@ -97,8 +97,17 @@ function FoldBuffer:handleFoldedLinesChanged(first, last, lastUpdated)
     if self.foldedLineCount == 0 then
         return
     end
+    local didOpen = false
     for i = first + 1, last do
-        self:openFold(i)
+        didOpen = self:openFold(i) or didOpen
+    end
+    if didOpen and lastUpdated > first then
+        local winid = fn.bufwinid(self.bufnr)
+        if winid ~= -1 then
+            utils.winCall(winid, function()
+                cmd(('sil! %d,%dfoldopen!'):format(first + 1, lastUpdated))
+            end)
+        end
     end
     self.foldedLines = self.buf:handleLinesChanged(self.foldedLines, first, last, lastUpdated)
 end
@@ -162,6 +171,7 @@ end
 
 ---
 ---@param lnum number
+---@return boolean
 function FoldBuffer:openFold(lnum)
     local fl = self.foldedLines[lnum]
     if fl then
@@ -169,6 +179,7 @@ function FoldBuffer:openFold(lnum)
         self.foldedLineCount = self.foldedLineCount - 1
         self.foldedLines[lnum] = false
     end
+    return not not fl
 end
 
 ---
@@ -177,6 +188,7 @@ end
 ---@param text? string
 ---@param virtText? string
 ---@param width? number
+---@return boolean
 function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
     local fl = self.foldedLines[lnum]
     if fl then
@@ -187,7 +199,7 @@ function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
             fl.text = text
         end
         if not width and not text then
-            return
+            return false
         end
     else
         fl = foldedline:new(self.bufnr, self.ns, text, width)
@@ -195,6 +207,7 @@ function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
         self.foldedLines[lnum] = fl
     end
     fl:updateVirtText(lnum, endLnum, virtText)
+    return true
 end
 
 function FoldBuffer:scanFoldedRanges(winid, s, e)
