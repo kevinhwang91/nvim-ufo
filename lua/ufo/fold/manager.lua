@@ -52,7 +52,7 @@ function FoldBufferManager:initialize(namespace, selector)
         end
     end, disposables)
 
-    local function optChanged(bufnr, old, new)
+    local function optChanged(bufnr, new, old)
         if old ~= new then
             local fb = self:get(bufnr)
             if fb then

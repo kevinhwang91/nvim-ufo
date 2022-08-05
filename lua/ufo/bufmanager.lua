@@ -48,7 +48,7 @@ function BufferManager:initialize()
             self.buffers[bufnr] = nil
         end
     end, disposables)
-    event:on('BufTypeChanged', function(bufnr, old, new)
+    event:on('BufTypeChanged', function(bufnr, new, old)
         local b = self.buffers[bufnr]
         if b and old ~= new then
             if new == 'terminal' or new == 'prompt' then
@@ -58,7 +58,7 @@ function BufferManager:initialize()
             end
         end
     end, disposables)
-    event:on('FileTypeChanged', function(bufnr, old, new)
+    event:on('FileTypeChanged', function(bufnr, new, old)
         local b = self.buffers[bufnr]
         if b and old ~= new then
             b.ft = new
