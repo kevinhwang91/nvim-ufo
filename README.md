@@ -142,7 +142,7 @@ For example, Changing the text in a buffer will request the providers for folds.
     },
     provider_selector = {
         description = [[A function as a selector for fold providers. For now, there are
-                    'lsp', 'treesitter' and 'indent' providers]],
+                    'lsp' and 'treesitter' as main provider, 'indent' as fallback provider]],
         default = nil
     },
     fold_virt_text_handler = {
