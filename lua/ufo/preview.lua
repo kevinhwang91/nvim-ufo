@@ -211,11 +211,10 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
     if floatwin.bufnr then
         api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
     end
-    local lineCount = buf:lineCount()
     if nextLineIncluded ~= false then
-        endLnum = lineCount == endLnum and endLnum or (endLnum + 1)
+        endLnum = buf:lineCount() == endLnum and endLnum or (endLnum + 1)
     end
-    local text = bufmanager:get(curBufnr):lines(lnum, endLnum)
+    local text = buf:lines(lnum, endLnum)
     local height = math.min(#text, maxHeight or 20)
     floatwin:display(api.nvim_get_current_win(), height, text, enter)
     utils.winCall(floatwin.winid, function()
