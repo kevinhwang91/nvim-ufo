@@ -38,6 +38,12 @@ function M.openAllFolds()
     return require('ufo.action').openAllFolds()
 end
 
+---Close the folds with a higher level, `v:count` as a default level
+---@param level? number virtual fold level
+function M.closeFoldsWith(level)
+    return require('ufo.action').closeFolds(level or vim.v.count)
+end
+
 ---Inspect ufo information by bufnr
 ---@param bufnr? number current buffer default
 function M.inspect(bufnr)

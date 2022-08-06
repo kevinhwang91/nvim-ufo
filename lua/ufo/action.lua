@@ -98,6 +98,57 @@ function M.goNextClosedFold()
     end
 end
 
+function M.closeFolds(level)
+    if level == 0 then
+        M.closeAllFolds()
+        return
+    end
+    local curBufnr = api.nvim_get_current_buf()
+    local fb = require('ufo.fold').get(curBufnr)
+    if fb and #fb.foldRanges == 0 then
+        return
+    end
+    local ranges = {}
+    for _, fr in ipairs(fb.foldRanges) do
+        table.insert(ranges, {fr.startLine + 1, fr.endLine + 1})
+    end
+    table.sort(ranges, function(a, b)
+        return a[1] == b[1] and a[2] < b[2] or a[1] < b[1]
+    end)
+    local stack = {}
+    local res = {}
+    local function pop(range)
+        while #stack > 0 do
+            local outRange = stack[#stack]
+            local osl, oel = outRange[1], outRange[2]
+            local sl, el = range[1], range[2]
+            if osl <= sl and el <= oel then
+                break
+            end
+            if #stack > level then
+                table.insert(res, stack[#stack])
+            end
+            table.remove(stack)
+        end
+    end
+
+    for _, range in ipairs(ranges) do
+        pop(range)
+        table.insert(stack, range)
+    end
+    pop({0, 0})
+
+    if #res == 0 then
+        return
+    end
+    local cmds = {'silent! %foldopen!'}
+    local fmt = 'silent! %d,%dfoldclose'
+    for _, range in ipairs(res) do
+        table.insert(cmds, fmt:format(range[1], range[2]))
+    end
+    cmd(table.concat(cmds, '|'))
+end
+
 function M.closeAllFolds()
     cmd('silent! %foldclose!')
     local curBufnr = api.nvim_get_current_buf()
