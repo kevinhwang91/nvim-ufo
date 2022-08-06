@@ -50,7 +50,7 @@ function ScrollBar:update(topline)
         topline = utils.getWinInfo(self:floatWinid()).topline
     end
     self.topline = topline
-    local barSize = math.floor(self.height * self.height / self.lineCount)
+    local barSize = math.max(1, math.floor(self.height * self.height / self.lineCount))
 
     local barPos = math.ceil(self.height * topline / self.lineCount)
     if barPos + barSize > self.height then
