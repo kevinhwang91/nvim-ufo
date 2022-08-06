@@ -138,9 +138,6 @@ function M.closeFolds(level)
     end
     pop({0, 0})
 
-    if #res == 0 then
-        return
-    end
     local cmds = {'silent! %foldopen!'}
     local fmt = 'silent! %d,%dfoldclose'
     for _, range in ipairs(res) do
