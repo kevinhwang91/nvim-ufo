@@ -1,17 +1,9 @@
-const { events, languages, commands, workspace, wait, CancellationTokenSource, Disposable } = require('coc.nvim')
+const { languages, commands, workspace, wait, CancellationTokenSource, Disposable } = require('coc.nvim')
 
 
 exports.activate = async context => {
 	let { logger, subscriptions } = context
 	let nvim = workspace.nvim
-	let bufTokenSources = new Map()
-	events.on(['TextChanged', 'InsertLeave', 'BufWritePost'], (bufnr) => {
-		let tokenSource = bufTokenSources.get(bufnr)
-		if (tokenSource) {
-			tokenSource.cancel()
-			bufTokenSources.delete(bufnr)
-		}
-	}, null, subscriptions)
 	subscriptions.push(commands.registerCommand('ufo.foldingRange', async (bufnr, kind) => {
 		let doc = workspace.getDocument(bufnr)
 		if (!doc || !doc.attached) {
@@ -34,11 +26,9 @@ exports.activate = async context => {
 		}
 		await doc.synchronize()
 		let tokenSource = new CancellationTokenSource()
-		bufTokenSources.set(bufnr, tokenSource)
 		let { token } = tokenSource
 		let ranges = await languages.provideFoldingRanges(textDocument, {}, token)
-		bufTokenSources.delete(bufnr)
-		if (!ranges || !ranges.length || token.isCancellationRequested) {
+		if (!ranges || !ranges.length) {
 			return []
 		}
 		ranges = ranges.filter(o => (!kind || kind == o.kind) && o.startLine < o.endLine)
