@@ -1,9 +1,5 @@
 {
 	"$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
-	"IntelliSense.traceBeSetted": true,
-	"IntelliSense.traceFieldInject": true,
-	"IntelliSense.traceLocalSet": true,
-	"IntelliSense.traceReturn": true,
 	"completion.callSnippet": "Replace",
 	"completion.displayContext": 50,
 	"completion.keywordSnippet": "Disable",

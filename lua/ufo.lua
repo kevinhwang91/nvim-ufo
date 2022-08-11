@@ -30,7 +30,7 @@ end
 
 ---Close all folds but keep foldlevel
 function M.closeAllFolds()
-    return require('ufo.action').closeAllFolds()
+    return M.closeFoldsWith(0)
 end
 
 ---Open all folds but keep foldlevel
@@ -38,8 +38,9 @@ function M.openAllFolds()
     return require('ufo.action').openAllFolds()
 end
 
----Close the folds with a higher level, `v:count` as a default level
----@param level? number virtual fold level
+---Close the folds with a higher level,
+---Like run `set foldlevel=level` but keep foldlevel
+---@param level? number fold level, `v:count` as a default level
 function M.closeFoldsWith(level)
     return require('ufo.action').closeFolds(level or vim.v.count)
 end

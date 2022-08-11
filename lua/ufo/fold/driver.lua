@@ -79,7 +79,7 @@ function FoldDriverNonFFI:createFolds(winid, ranges, rowPairs)
             return a[1] == b[1] and a[2] < b[2] or a[1] > b[1]
         end)
         for _, r in ipairs(foldRanges) do
-            table.insert(cmds, ('%d,%d:fold'):format(r[1], r[2]))
+            table.insert(cmds, ('%d,%dfold'):format(r[1], r[2]))
         end
         cmd(table.concat(cmds, '|'))
     end)

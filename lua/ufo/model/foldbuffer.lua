@@ -215,13 +215,11 @@ function FoldBuffer:scanFoldedRanges(winid, s, e)
     local stack = {}
     s, e = s or 1, e or self:lineCount()
     utils.winCall(winid, function()
-        local winView = fn.winsaveview()
         for i = s, e do
             local skip = false
             while #stack > 0 and i >= stack[#stack] do
                 local endLnum = table.remove(stack)
-                api.nvim_win_set_cursor(winid, {endLnum, 0})
-                cmd('norm! zc')
+                cmd(endLnum .. 'foldclose')
                 skip = true
             end
             if not skip then
@@ -229,12 +227,10 @@ function FoldBuffer:scanFoldedRanges(winid, s, e)
                 if endLnum ~= -1 then
                     table.insert(stack, endLnum)
                     table.insert(res, {i - 1, endLnum - 1})
-                    api.nvim_win_set_cursor(winid, {i, 0})
-                    cmd('norm! zo')
+                    cmd(i .. 'foldopen')
                 end
             end
         end
-        fn.winrestview(winView)
     end)
     return res
 end

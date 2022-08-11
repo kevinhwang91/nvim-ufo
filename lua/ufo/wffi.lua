@@ -40,11 +40,11 @@ end
 
 ---
 ---@param winid number
----@param posList number[]
-function M.createFolds(winid, posList)
+---@param ranges number[]
+function M.createFolds(winid, ranges)
     local wp = findWin(winid)
     local s, e = CPos_T(), CPos_T()
-    for _, p in ipairs(posList) do
+    for _, p in ipairs(ranges) do
         s.lnum = p[1]
         e.lnum = p[2]
         C.foldCreate(wp, s, e)
