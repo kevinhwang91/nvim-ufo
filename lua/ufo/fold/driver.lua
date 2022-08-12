@@ -23,18 +23,23 @@ end
 function FoldDriverFFI:createFolds(winid, ranges, rowPairs)
     utils.winCall(winid, function()
         local foldRanges = {}
-        local foldLevel = vim.wo.foldlevel
+        local wo = vim.wo[winid]
+        local foldLevel = wo.foldlevel
         self._wffi.clearFolds(winid)
-        for _, f in ipairs(ranges) do
-            local startLine, endLine = f.startLine, f.endLine
-            if not rowPairs[startLine] then
+        -- just check the last range only to filter out same ranges
+        local lastStartLine, lastEndLine
+        for _, r in ipairs(ranges) do
+            local startLine, endLine = r.startLine, r.endLine
+            if not rowPairs[startLine] and
+                (lastStartLine ~= startLine or lastEndLine ~= endLine) then
+                lastStartLine, lastEndLine = startLine, endLine
                 table.insert(foldRanges, {startLine + 1, endLine + 1})
             end
         end
         self._wffi.createFolds(winid, foldRanges)
-        vim.wo.foldmethod = 'manual'
-        vim.wo.foldenable = true
-        vim.wo.foldlevel = foldLevel
+        wo.foldmethod = 'manual'
+        wo.foldenable = true
+        wo.foldlevel = foldLevel
         foldRanges = {}
         for row, endRow in pairs(rowPairs) do
             table.insert(foldRanges, {row + 1, endRow + 1})
@@ -59,9 +64,12 @@ end
 function FoldDriverNonFFI:createFolds(winid, ranges, rowPairs)
     utils.winCall(winid, function()
         local cmds = {}
+        local lastStartLine, lastEndLine
         for _, r in ipairs(ranges) do
-            if not rowPairs[r.startLine] then
-                table.insert(cmds, ('%d,%d:fold'):format(r.startLine + 1, r.endLine + 1))
+            local startLine, endLine = r.startLine, r.endLine
+            if not rowPairs[startLine] and
+                (lastStartLine ~= startLine or lastEndLine ~= endLine) then
+                table.insert(cmds, ('%d,%d:fold'):format(startLine + 1, endLine + 1))
             end
         end
         local winView = fn.winsaveview()
