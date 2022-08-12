@@ -5,9 +5,9 @@ local api = vim.api
 local M = {}
 
 ---Peek the folded line under cursor, any motions in the normal window will close the floating window.
----@param maxHeight? number max height for floating window, default 20
----@param nextLineIncluded? boolean include the next line of last line of closed fold, default true
----@param enter? boolean enter the floating window, default false
+---@param maxHeight? number max height for floating window, default value is 20
+---@param nextLineIncluded? boolean include the next line of last line of closed fold, default is true
+---@param enter? boolean enter the floating window, default value is false
 ---@return number? winid, number? bufnr return the winid and bufnr if successful, otherwise return nil
 function M.peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
     return require('ufo.preview'):peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
@@ -39,14 +39,14 @@ function M.openAllFolds()
 end
 
 ---Close the folds with a higher level,
----Like run `set foldlevel=level` but keep foldlevel
----@param level? number fold level, `v:count` as a default level
+---Like execute `set foldlevel=level` but keep foldlevel
+---@param level? number fold level, `v:count` by default
 function M.closeFoldsWith(level)
     return require('ufo.action').closeFolds(level or vim.v.count)
 end
 
 ---Inspect ufo information by bufnr
----@param bufnr? number current buffer default
+---@param bufnr? number buffer number, current buffer by default
 function M.inspect(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     local msg = require('ufo.main').inspectBuf(bufnr)
@@ -68,33 +68,33 @@ function M.disable()
 end
 
 ---Check whether the buffer has been attached
----@param bufnr? number current buffer default
+---@param bufnr? number buffer number, current buffer by default
 ---@return boolean
 function M.hasAttached(bufnr)
     return require('ufo.main').hasAttached(bufnr)
 end
 
 ---Attach bufnr to enable all features
----@param bufnr? number current buffer default
+---@param bufnr? number buffer number, current buffer by default
 function M.attach(bufnr)
     require('ufo.main').attach(bufnr)
 end
 
 ---Detach bufnr to disable all features
----@param bufnr? number current buffer default
+---@param bufnr? number buffer number, current buffer by default
 function M.detach(bufnr)
     require('ufo.main').detach(bufnr)
 end
 
 ---Enable to get folds and update them at once
----@param bufnr? number current buffer default
+---@param bufnr? number buffer number, current buffer by default
 ---@return string|'start'|'pending'|'stop' status
 function M.enableFold(bufnr)
     return require('ufo.main').enableFold(bufnr)
 end
 
 ---Disable to get folds
----@param bufnr? number current buffer default
+---@param bufnr? number buffer number, current buffer by default
 ---@return string|'start'|'pending'|'stop' status
 function M.disableFold(bufnr)
     return require('ufo.main').disableFold(bufnr)

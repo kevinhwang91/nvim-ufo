@@ -35,7 +35,7 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 - Penetrate color for folded lines like other modern editors/IDEs
 - Never block Neovim
 - Adding folds high accuracy with Folding Range in LSP
-- Support Fallback and customize strategy for fold provider
+- Support fallback and customize strategy for fold provider
 - Peek folded line and jump the desired location with less redraw
 
 ## Quickstart
@@ -68,14 +68,14 @@ vim.o.foldenable = true
 vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
 vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
 
--- option 1: coc.nvim as LSP client
+-- Option 1: coc.nvim as LSP client
 use {'neoclide/coc.nvim', branch = 'master', run = 'yarn install --frozen-lockfile'}
 require('ufo').setup()
 --
 
--- option 2: nvim lsp as LSP client
--- tell the server the capability of foldingRange
--- nvim hasn't added foldingRange to default capabilities, users must add it manually
+-- Option 2: nvim lsp as LSP client
+-- Tell the server the capability of foldingRange,
+-- Neovim hasn't added foldingRange to default capabilities, users must add it manually
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities.textDocument.foldingRange = {
     dynamicRegistration = false,
@@ -91,7 +91,9 @@ end
 require('ufo').setup()
 --
 
--- option 3: treesitter as a main provider instead
+-- Option 3: treesitter as a main provider instead
+-- Only depend on `nvim-treesitter/queries/filetype/folds.scm`,
+-- performance and stability are better than `foldmethod=nvim_treesitter#foldexpr()`
 use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'}
 require('ufo').setup({
     provider_selector = function(bufnr, filetype, buftype)
@@ -100,7 +102,7 @@ require('ufo').setup({
 })
 --
 
--- option 4: disable all providers for all buffers
+-- Option 4: disable all providers for all buffers
 -- Not recommend, AFAIK, the ufo's providers are the best performance in Neovim
 require('ufo').setup({
     provider_selector = function(bufnr, filetype, buftype)
@@ -113,11 +115,15 @@ require('ufo').setup({
 
 Use fold as usual.
 
-If use a provider of ufo, must set a large value for `foldlevel`, this is the limitation of
+Using a provider of ufo, must set a large value for `foldlevel`, this is the limitation of
 `foldmethod=manual`. A small value may close fold automatically if the fold ranges updated.
 
-After running `zR` and `zM` normal commands will change the `foldlevel`, ufo provide the API to
-open/close all folds but keep `foldlevel`, need to remap them.
+After running `zR` and `zM` normal commands will change the `foldlevel`, ufo provide the APIs
+`openAllFolds`/`closeAllFolds` to open/close all folds but keep `foldlevel` value, need to remap
+them.
+
+Like `zR` and `zM`, if you used `zr` and `zm` before, please use `closeFoldsWith` API to close folds
+like `set foldlevel=n` but keep `foldlevel` value.
 
 ## Documentation
 
@@ -276,6 +282,10 @@ require('ufo').setup({
         return ftMap[filetype]
     end
 })
+vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
+vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
+vim.keymap.set('n', 'zr', require('ufo').openAllFolds)
+vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith) -- closeAllFolds == closeFoldsWith(0)
 vim.keymap.set('n', 'K', function()
     local winid = require('ufo').peekFoldedLinesUnderCursor()
     if not winid then
