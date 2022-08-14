@@ -20,14 +20,29 @@ local function selectProviderWithFt()
     })
 end
 
-local function selectProviderWithFunc()
+-- lsp->treesitter->indent
+local function selectProviderWithChainByDefault()
+    local ftMap = {
+        vim = 'indent',
+        python = {'indent'},
+        git = ''
+    }
     require('ufo').setup({
         provider_selector = function(bufnr, filetype, buftype)
-            -- use indent provider for c fieltype
-            if filetype == 'c' then
-                return function()
-                    return require('ufo').getFolds('indent', bufnr)
+            return ftMap[filetype] or function()
+                local function handleFallbackException(err, providerName)
+                    if type(err) == 'string' and err:match('UfoFallbackException') then
+                        return require('ufo').getFolds(providerName, bufnr)
+                    else
+                        return require('promise').reject(err)
+                    end
                 end
+
+                return require('ufo').getFolds('lsp', bufnr):catch(function(err)
+                    return handleFallbackException(err, 'treesitter')
+                end):catch(function(err)
+                    return handleFallbackException(err, 'indent')
+                end)
             end
         end
     })

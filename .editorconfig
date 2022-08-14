@@ -15,7 +15,7 @@ quote_style = single
 remove_empty_header_and_footer_lines_in_function = true
 remove_expression_list_finish_comma= true
 
-[*.json]
+[*.json,*.jsonc]
 indent_style = tab
 
 [*.js]
