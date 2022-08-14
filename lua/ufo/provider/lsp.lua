@@ -34,11 +34,11 @@ end
 local function request(bufnr)
     local buf = bufmanager:get(bufnr)
     if not buf then
-        return
+        return promise.resolve()
     end
     local bt = buf:buftype()
     if bt ~= '' and bt ~= 'acwrite' then
-        return
+        return promise.resolve()
     end
     local ft = buf:filetype()
     local hasProvider = hasProviders[ft]
