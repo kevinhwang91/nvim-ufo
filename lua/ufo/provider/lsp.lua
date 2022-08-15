@@ -42,8 +42,10 @@ local function request(bufnr)
     end
     local ft = buf:filetype()
     local hasProvider = hasProviders[ft]
+    local firstCheckFt = false
     if hasProvider == nil then
         if not providerTimestamp[ft] then
+            firstCheckFt = true
             providerTimestamp[ft] = uv.hrtime()
         else
             -- after 20 seconds
@@ -55,7 +57,15 @@ local function request(bufnr)
         end
     end
     if provider.initialized and hasProvider ~= false then
-        local p = provider.requestFoldingRange(bufnr)
+        local p
+        if firstCheckFt then
+            -- wait for the server, is 200ms enough?
+            p = utils.wait(200):thenCall(function()
+                return provider.requestFoldingRange(bufnr)
+            end)
+        else
+            p = provider.requestFoldingRange(bufnr)
+        end
         if hasProvider == nil then
             p = p:thenCall(function(value)
                 hasProviders[ft] = true

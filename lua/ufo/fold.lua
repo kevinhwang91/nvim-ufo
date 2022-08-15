@@ -101,6 +101,7 @@ function Fold.update(bufnr)
         end
         local selected, ranges = res[1], res[2]
         fb.selectedProvider = type(selected) == 'string' and selected or 'external'
+        log.info('selected provider:', fb.selectedProvider)
         if not ranges or #ranges == 0 or not utils.isBufLoaded(bufnr) then
             return
         end
