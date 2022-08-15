@@ -1,5 +1,6 @@
 ---@diagnostic disable: unused-local, unused-function, undefined-field
 
+-----------------------------------------providerSelector-------------------------------------------
 local function selectProviderWithFt()
     local ftMap = {
         vim = 'indent',
@@ -51,6 +52,9 @@ local function selectProviderWithChainByDefault()
     })
 end
 
+-----------------------------------------providerSelector-------------------------------------------
+
+------------------------------------------enhanceAction---------------------------------------------
 local function peekOrHover()
     local winid = require('ufo').peekFoldedLinesUnderCursor()
     if not winid then
@@ -61,6 +65,19 @@ local function peekOrHover()
     end
 end
 
+local function goPreviousClosedAndPeek()
+    require('ufo').goPreviousClosedFold()
+    require('ufo').peekFoldedLinesUnderCursor()
+end
+
+local function goNextClosedAndPeek()
+    require('ufo').goNextClosedFold()
+    require('ufo').peekFoldedLinesUnderCursor()
+end
+
+------------------------------------------enhanceAction---------------------------------------------
+
+---------------------------------------setFoldVirtTextHandler---------------------------------------
 local handler = function(virtText, lnum, endLnum, width, truncate)
     local newVirtText = {}
     local suffix = ('  %d '):format(endLnum - lnum)
@@ -102,3 +119,5 @@ local function customizeBufFoldText()
     local bufnr = vim.api.nvim_get_current_buf()
     require('ufo').setFoldVirtTextHandler(bufnr, handler)
 end
+
+---------------------------------------setFoldVirtTextHandler---------------------------------------
