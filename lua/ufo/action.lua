@@ -4,6 +4,7 @@ local fn = vim.fn
 
 local utils = require('ufo.utils')
 local event = require('ufo.lib.event')
+local fold = require('ufo.fold')
 local promise = require('promise')
 
 local M = {}
@@ -103,9 +104,9 @@ end
 function M.closeFolds(level)
     cmd('silent! %foldclose!')
     local curBufnr = api.nvim_get_current_buf()
-    local fb = require('ufo.fold').get(curBufnr)
-    for _, fr in ipairs(fb.foldRanges) do
-        fb:closeFold(fr.startLine + 1, fr.endLine + 1)
+    local fb = fold.get(curBufnr)
+    for _, range in ipairs(fb.foldRanges) do
+        fb:closeFold(range.startLine + 1, range.endLine + 1)
     end
     if level == 0 then
         return
@@ -157,6 +158,30 @@ function M.closeFolds(level)
     promise.resolve():thenCall(function()
         event:emit('setOpenFoldHl')
     end)
+end
+
+function M.openFoldsExceptKinds(kinds)
+    M.openAllFolds()
+    local curBufnr = api.nvim_get_current_buf()
+    local fb = fold.get(curBufnr)
+    local res = {}
+    for _, range in ipairs(fb.foldRanges) do
+        if range.kind and vim.tbl_contains(kinds, range.kind) then
+            local startLnum, endLnum = range.startLine + 1, range.endLine + 1
+            fb:closeFold(startLnum, endLnum)
+            table.insert(res, {startLnum, endLnum})
+        end
+    end
+    table.sort(res, function(a, b)
+        return a[1] == b[1] and a[2] < b[2] or a[1] > b[1]
+    end)
+    local cmds = {}
+    for _, range in ipairs(res) do
+        table.insert(cmds, range[1] .. 'foldclose')
+    end
+    if #cmds > 0 then
+        cmd(table.concat(cmds, '|'))
+    end
 end
 
 function M.openAllFolds()

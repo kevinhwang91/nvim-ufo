@@ -45,6 +45,13 @@ function M.closeFoldsWith(level)
     return require('ufo.action').closeFolds(level or vim.v.count)
 end
 
+---Open folds except specified kinds
+---@param kinds? UfoFoldingRangeKind[] kind in ranges, `config.close_fold_kinds` by default
+function M.openFoldsExceptKinds(kinds)
+    kinds = kinds or require('ufo.config').close_fold_kinds
+    return require('ufo.action').openFoldsExceptKinds(kinds)
+end
+
 ---Inspect ufo information by bufnr
 ---@param bufnr? number buffer number, current buffer by default
 function M.inspect(bufnr)
