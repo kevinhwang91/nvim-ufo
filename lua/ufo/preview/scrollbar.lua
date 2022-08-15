@@ -79,6 +79,7 @@ end
 
 function ScrollBar:display()
     if not self.showScrollBar then
+        self:close()
         return
     end
     local wopts = self:build()
