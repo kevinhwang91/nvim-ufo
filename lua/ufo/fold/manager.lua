@@ -1,4 +1,3 @@
-local api = vim.api
 local fn = vim.fn
 
 local buffer     = require('ufo.model.foldbuffer')
@@ -12,6 +11,7 @@ local log        = require('ufo.lib.log')
 ---@class UfoFoldBufferManager
 ---@field buffers UfoFoldBuffer[]
 ---@field providerSelector function
+---@field closeKinds UfoFoldingRangeKind[]
 ---@field disposables UfoDisposable[]
 local FoldBufferManager = {
     buffers = {},
@@ -23,13 +23,15 @@ local initialized
 ---
 ---@param namespace number
 ---@param selector function
+---@param closeKinds UfoFoldingRangeKind[]
 ---@return UfoFoldBufferManager
-function FoldBufferManager:initialize(namespace, selector)
+function FoldBufferManager:initialize(namespace, selector, closeKinds)
     if initialized then
         return self
     end
     self.ns = namespace
     self.providerSelector = selector
+    self.closeKinds = closeKinds
     local disposables = {
         disposable:create(function()
             for _, fb in pairs(self.buffers) do
@@ -170,6 +172,13 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     local rowPairs = {}
     if not fb.scanned then
         rowPairs = self:getRowPairsByScanning(fb, winid)
+        for _, range in ipairs(ranges or fb.foldRanges) do
+            if range.kind and vim.tbl_contains(self.closeKinds, range.kind) then
+                local startLine, endLine = range.startLine, range.endLine
+                rowPairs[startLine] = endLine
+                fb:closeFold(startLine + 1, endLine + 1)
+            end
+        end
         fb.scanned = true
     else
         local ok, res = pcall(function()

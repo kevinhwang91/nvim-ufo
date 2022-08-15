@@ -1,9 +1,14 @@
+---@class UfoFoldingRangeKind
+---| 'comment'
+---| 'imports'
+---| 'region'
+
 ---@class UfoFoldingRange
 ---@field startLine number
 ---@field startCharacter? number
 ---@field endLine number
 ---@field endCharacter? number
----@field kind? 'comment'|'imports'|'region'
+---@field kind? UfoFoldingRangeKind
 local FoldingRange = {}
 
 function FoldingRange.new(startLine, endLine, startCharacter, endCharacter, kind)

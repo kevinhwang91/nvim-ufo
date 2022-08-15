@@ -209,7 +209,8 @@ function Fold:initialize(ns)
     event:on('CmdlineLeave', updatePendingFold, disposables)
     event:on('WinClosed', diffWinClosed, disposables)
     event:on('BufAttach', Fold.attach, disposables)
-    table.insert(disposables, manager:initialize(ns, config.provider_selector))
+    table.insert(disposables, manager:initialize(ns, config.provider_selector,
+                                                 config.close_fold_kinds))
     self.disposables = disposables
     initialized = true
     return self

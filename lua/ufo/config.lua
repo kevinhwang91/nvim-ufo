@@ -1,12 +1,14 @@
 ---@class UfoConfig
 ---@field provider_selector? function
 ---@field open_fold_hl_timeout number
+---@field close_fold_kinds UfoFoldingRangeKind[]
 ---@field fold_virt_text_handler? function A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
 ---@field enable_fold_end_virt_text boolean
 ---@field preview table
 local def = {
     open_fold_hl_timeout = 400,
     provider_selector = nil,
+    close_fold_kinds = {},
     fold_virt_text_handler = nil,
     enable_fold_end_virt_text = false,
     preview = {
@@ -57,6 +59,7 @@ local function init()
     vim.validate({
         open_fold_hl_timeout = {Config.open_fold_hl_timeout, 'number'},
         provider_selector = {Config.provider_selector, 'function', true},
+        close_fold_kinds = {Config.close_fold_kinds, 'table'},
         fold_virt_text_handler = {Config.fold_virt_text_handler, 'function', true},
         preview_mappings = {Config.preview.mappings, 'table'}
     })

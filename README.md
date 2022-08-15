@@ -151,6 +151,12 @@ For example, Changing the text in a buffer will request the providers for folds.
                     'lsp' and 'treesitter' as main provider, 'indent' as fallback provider]],
         default = nil
     },
+    close_fold_kinds = {
+        description = [[After the buffer is displayed (opened for the first time), close the
+                    folds whose range with `kind` field is included in this option.
+                    For now, only 'lsp' provider contain 'comment', 'imports' and 'region'.]],
+        default = {}
+    },
     fold_virt_text_handler = {
         description = [[A function customize fold virt text, see ### Customize fold text]],
         default = nil
@@ -260,6 +266,7 @@ local ftMap = {
 }
 require('ufo').setup({
     open_fold_hl_timeout = 150,
+    close_fold_kinds = {'imports', 'comment'},
     preview = {
         win_config = {
             border = {'', '─', '', '', '', '─', '', ''},
