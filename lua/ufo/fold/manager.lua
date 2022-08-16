@@ -1,4 +1,5 @@
 local fn = vim.fn
+local api = vim.api
 
 local buffer     = require('ufo.model.foldbuffer')
 local event      = require('ufo.lib.event')
@@ -170,6 +171,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
         return false
     end
     local rowPairs = {}
+    local isFirstApply = not fb.scanned
     if not fb.scanned then
         rowPairs = self:getRowPairsByScanning(fb, winid)
         for _, range in ipairs(ranges or fb.foldRanges) do
@@ -197,9 +199,24 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     if ranges then
         fb.foldRanges = ranges
     end
+
+    local winView, wrow
+    -- topline may changed after applying folds, resotre topline to save our eyes
+    if isFirstApply and api.nvim_get_current_win() == winid and
+        not vim.tbl_isempty(rowPairs) then
+        winView = fn.winsaveview()
+        wrow = fn.winline() - 1
+    end
     log.info('apply fold ranges:', fb.foldRanges)
     log.info('apply fold rowPairs:', rowPairs)
     driver:createFolds(winid, fb.foldRanges, rowPairs)
+    if winView then
+        local newWrow = fn.winline() - 1
+        if newWrow ~= wrow then
+            winView.topline, winView.topfill = utils.evaluateTopline(winid, winView.lnum, wrow)
+            fn.winrestview(winView)
+        end
+    end
     return true
 end
 

@@ -28,47 +28,6 @@ local Preview = {
     keyMessages = nil
 }
 
-local function evaluateTopline(winid, line, lsizes)
-    local topline
-    local iStart, iEnd = line - 1, math.max(1, line - lsizes)
-    local lsizeSum = 0
-    local i = iStart
-    local lsizeObj = lsize:new(winid)
-    local len = lsizes - lsizeObj:fillSize(line)
-    log.info('winid:', winid, 'line:', line, 'lsizes:', lsizes, 'len:', len)
-    local size
-    while lsizeSum < len and i >= iEnd do
-        local lnum = utils.foldClosed(winid, i)
-        log.info('lnum:', lnum, 'i:', i)
-        if lnum == -1 then
-            size = lsizeObj:size(i)
-        else
-            size = 1
-            iEnd = math.max(1, iEnd + lnum - i)
-            i = lnum
-        end
-        lsizeSum = lsizeSum + size
-        log.info('size:', size, 'lsizeSum:', lsizeSum)
-        topline = i
-        i = i - 1
-    end
-    if not topline then
-        topline = line
-    end
-    -- extraOff lines is need to be showed near the topline
-    local topfill = lsizeObj:fillSize(topline)
-    local extraOff = lsizeSum - len
-    if extraOff > 0 then
-        if topfill < extraOff then
-            topline = topline + 1
-        else
-            topfill = topfill - extraOff
-        end
-    end
-    log.info('topline:', topline, 'topfill:', topfill)
-    return topline, topfill
-end
-
 function Preview:trace(bufnr)
     local floatWinid = floatwin.winid
     local fWinConfig = api.nvim_win_get_config(floatWinid)
@@ -92,7 +51,7 @@ function Preview:trace(bufnr)
     lnum = utils.foldClosed(0, lnum) + fLnum - 1
     local lineSize = fWrow + wrow
     cmd('norm! m`zO')
-    local topline, topfill = evaluateTopline(self.winid, lnum, lineSize)
+    local topline, topfill = utils.evaluateTopline(self.winid, lnum, lineSize)
     fn.winrestview({
         lnum = lnum,
         col = col,

@@ -292,5 +292,51 @@ M.highlightTimeout = (function()
     end
 end)()
 
+---
+---@param winid number
+---@param line number
+---@param lsizes number
+---@return number, number
+function M.evaluateTopline(winid, line, lsizes)
+    local log = require('ufo.lib.log')
+    local topline
+    local iStart, iEnd = line - 1, math.max(1, line - lsizes)
+    local lsizeSum = 0
+    local i = iStart
+    local lsizeObj = require('ufo.model.linesize'):new(winid)
+    local len = lsizes - lsizeObj:fillSize(line)
+    log.info('winid:', winid, 'line:', line, 'lsizes:', lsizes, 'len:', len)
+    local size
+    while lsizeSum < len and i >= iEnd do
+        local lnum = M.foldClosed(winid, i)
+        log.info('lnum:', lnum, 'i:', i)
+        if lnum == -1 then
+            size = lsizeObj:size(i)
+        else
+            size = 1
+            iEnd = math.max(1, iEnd + lnum - i)
+            i = lnum
+        end
+        lsizeSum = lsizeSum + size
+        log.info('size:', size, 'lsizeSum:', lsizeSum)
+        topline = i
+        i = i - 1
+    end
+    if not topline then
+        topline = line
+    end
+    -- extraOff lines is need to be showed near the topline
+    local topfill = lsizeObj:fillSize(topline)
+    local extraOff = lsizeSum - len
+    if extraOff > 0 then
+        if topfill < extraOff then
+            topline = topline + 1
+        else
+            topfill = topfill - extraOff
+        end
+    end
+    log.info('topline:', topline, 'topfill:', topfill)
+    return topline, topfill
+end
 
 return M
