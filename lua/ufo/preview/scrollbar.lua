@@ -1,5 +1,6 @@
 local api = vim.api
 local fn = vim.fn
+local cmd = vim.cmd
 
 local utils = require('ufo.utils')
 local extmark = require('ufo.render.extmark')
@@ -96,6 +97,8 @@ function ScrollBar:display()
         end
         vim.bo[self.bufnr].modifiable = true
         vim.bo[self.bufnr].bufhidden = 'hide'
+        -- it is relative to floating window, need to redraw to make floating window validate
+        cmd('redraw')
         ScrollBar:open(self.bufnr, wopts)
         local wo = vim.wo[self.winid]
         wo.winhl = 'Normal:UfoPreviewSbar'

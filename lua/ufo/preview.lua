@@ -7,12 +7,10 @@ local render     = require('ufo.render')
 local utils      = require('ufo.utils')
 local floatwin   = require('ufo.preview.floatwin')
 local scrollbar  = require('ufo.preview.scrollbar')
-local lsize      = require('ufo.model.linesize')
 local keymap     = require('ufo.preview.keymap')
 local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 local config     = require('ufo.config')
-local log        = require('ufo.lib.log')
 local bufmanager = require('ufo.bufmanager')
 
 local initialized
@@ -126,8 +124,8 @@ function Preview:attach(bufnr, foldedLnum)
         event:emit('setOpenFoldHl')
     end))
 
-    local winView = fn.winsaveview()
     self.winid = fn.bufwinid(bufnr)
+    local winView = utils.winCall(self.winid, fn.winsaveview)
     self.bufnr = bufnr
     self.lnum = winView.lnum
     self.col = winView.col
@@ -182,9 +180,7 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
     render.mapHighlightLimitByRange(curBufnr, floatwin.bufnr,
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
                                     text, self.ns)
-    promise.resolve():thenCall(function()
-        scrollbar:display()
-    end)
+    scrollbar:display()
     self:attach(curBufnr, lnum)
     return floatwin.winid, floatwin.bufnr
 end

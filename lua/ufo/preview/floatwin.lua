@@ -64,7 +64,7 @@ function FloatWin:build(targetWinid, height, border)
         self.height = math.min(height, above)
         self.row = below - self.height
     else
-        if self:borderHasUpLine() and fn.screenrow() == 1 then
+        if self:borderHasUpLine() and fn.screenrow() == 1 and above == 0 then
             self.border[1], self.border[2], self.border[3] = '', '', ''
         end
         self.height = math.min(height, below)
@@ -139,7 +139,7 @@ function FloatWin:display(targetWinid, height, text, enter)
         wo.spell, wo.list = false, true
         wo.nu, wo.rnu = false, false
         wo.fen, wo.fdm, wo.fdc = false, 'manual', '0'
-        wo.cursorline = false
+        wo.cursorline = enter == true
         wo.signcolumn, wo.colorcolumn = 'no', ''
         wo.winhl = self.config.winhighlight
         wo.winblend = self.winblend
