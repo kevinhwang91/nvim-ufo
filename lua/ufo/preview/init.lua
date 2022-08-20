@@ -231,7 +231,7 @@ function Preview:initialize(namespace)
     local conf = vim.deepcopy(config.preview)
     self.keyMessages = conf.mappings
     local disposables = {}
-    table.insert(disposable, floatwin:initialize(namespace, conf.win_config))
+    table.insert(disposables, floatwin:initialize(namespace, conf.win_config))
     table.insert(disposables, scrollbar)
     self.ns = namespace
     self.disposables = disposables
