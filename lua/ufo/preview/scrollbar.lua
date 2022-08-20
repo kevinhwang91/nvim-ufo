@@ -57,7 +57,12 @@ function ScrollBar:update(topline)
     end
 
     local barPos = math.ceil(self.height * topline / self.lineCount)
-    if barPos + barSize > self.height then
+    local size = barPos + barSize - 1
+    if size == self.height then
+        if self.topline + self.height - 1 < self.lineCount then
+            barPos = barPos - 1
+        end
+    elseif size > self.height then
         barPos = self.height - barSize + 1
     end
 
