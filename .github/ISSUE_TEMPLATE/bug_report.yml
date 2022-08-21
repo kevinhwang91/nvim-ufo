@@ -43,7 +43,7 @@ body:
         vim.keymap.set('n', 'zR', ufo.openAllFolds)
         vim.keymap.set('n', 'zM', ufo.closeAllFolds)
         ```
-        `nvim --clean -u mini.lua`
+        `nvim --clean +'so mini.lua'`
 
         1.
         2.
