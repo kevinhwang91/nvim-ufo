@@ -3,6 +3,7 @@ local cmd = vim.cmd
 local api = vim.api
 
 local utils      = require('ufo.utils')
+local provider   = require('ufo.provider')
 local fold       = require('ufo.fold')
 local decorator  = require('ufo.decorator')
 local highlight  = require('ufo.highlight')
@@ -63,6 +64,7 @@ function M.enable()
     disposables = {}
     table.insert(disposables, createEvents())
     table.insert(disposables, highlight:initialize())
+    table.insert(disposables, provider:initialize())
     table.insert(disposables, fold:initialize(ns))
     table.insert(disposables, decorator:initialize(ns))
     table.insert(disposables, preview:initialize(ns))

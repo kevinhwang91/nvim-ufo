@@ -5,26 +5,25 @@ local utils      = require('ufo.utils')
 local log        = require('ufo.lib.log')
 local bufmanager = require('ufo.bufmanager')
 
----@class UfoLSPProvider
-local LSP = {}
-
 ---@class UfoLSPProviderContext
 ---@field timestamp number
 ---@field count number
 
-local provider
-local hasProviders = {}
+---@class UfoLSPProvider
+---@field provider table
+---@field hasProviders table<string, boolean>
+---@field providerContext table<string, UfoLSPProviderContext>
+local LSP = {
+    hasProviders = {},
+    providerContext = {}
+}
 
 
----@type table<string, UfoLSPProviderContext>
-local providerContext = {}
-
-
-local function hasInitialized()
-    return provider and provider.initialized
+function LSP:hasInitialized()
+    return self.provider and self.provider.initialized
 end
 
-local function initialize()
+function LSP:initialize()
     return utils.wait(1500):thenCall(function()
         local cocInitlized = vim.g.coc_service_initialized
         local module
@@ -36,11 +35,11 @@ local function initialize()
             module = 'fastfailure'
         end
         log.debug(('using %s as a lsp provider'):format(module))
-        provider = require('ufo.provider.lsp.' .. module)
+        self.provider = require('ufo.provider.lsp.' .. module)
     end)
 end
 
-local function request(bufnr)
+function LSP:request(bufnr)
     local buf = bufmanager:get(bufnr)
     if not buf then
         return promise.resolve()
@@ -50,22 +49,23 @@ local function request(bufnr)
         return promise.resolve()
     end
     local ft = buf:filetype()
-    local hasProvider = hasProviders[ft]
+    local hasProvider = self.hasProviders[ft]
     local firstCheckFt = false
     if hasProvider == nil then
-        local context = providerContext[ft]
+        local context = self.providerContext[ft]
         if not context then
             firstCheckFt = true
-            providerContext[ft] = {timestamp = uv.hrtime(), count = 0}
+            self.providerContext[ft] = {timestamp = uv.hrtime(), count = 0}
         else
             -- after 120 seconds and count is greater than 5
             if uv.hrtime() - context.timestamp > 1.2e11 and context.count >= 5 then
-                hasProviders[ft] = false
+                self.hasProviders[ft] = false
                 hasProvider = false
-                providerContext[ft] = nil
+                self.providerContext[ft] = nil
             end
         end
     end
+    local provider = self.provider
     if provider.initialized and hasProvider ~= false then
         local p
         if firstCheckFt then
@@ -78,13 +78,13 @@ local function request(bufnr)
         end
         if hasProvider == nil then
             p = p:thenCall(function(value)
-                hasProviders[ft] = true
-                providerContext[ft] = nil
+                self.hasProviders[ft] = true
+                self.providerContext[ft] = nil
                 return value
             end, function(reason)
-                local context = providerContext[ft]
+                local context = self.providerContext[ft]
                 if context then
-                    providerContext[ft].count = context.count + 1
+                    self.providerContext[ft].count = context.count + 1
                 end
                 return promise.reject(reason)
             end)
@@ -96,12 +96,19 @@ local function request(bufnr)
 end
 
 function LSP.getFolds(bufnr)
-    if not hasInitialized() then
-        return initialize():thenCall(function()
-            return request(bufnr)
+    local self = LSP
+    if not self:hasInitialized() then
+        return self:initialize():thenCall(function()
+            return self:request(bufnr)
         end)
     end
-    return request(bufnr)
+    return self:request(bufnr)
+end
+
+function LSP:dispose()
+    self.provider = nil
+    self.hasProviders = {}
+    self.providerContext = {}
 end
 
 return LSP

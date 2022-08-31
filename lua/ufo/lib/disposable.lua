@@ -6,7 +6,9 @@ local Disposable = {}
 ---@param disposables UfoDisposable[]
 function Disposable.disposeAll(disposables)
     for _, item in ipairs(disposables) do
-        item:dispose()
+        if item.dispose then
+            item:dispose()
+        end
     end
 end
 

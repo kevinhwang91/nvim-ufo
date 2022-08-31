@@ -95,7 +95,7 @@ function Fold.update(bufnr)
         return ok and not requested
     end
 
-    return provider.requestFoldingRange(fb.providers, bufnr):thenCall(function(res)
+    return provider:requestFoldingRange(fb.providers, bufnr):thenCall(function(res)
         if not dispose(true) then
             return
         end

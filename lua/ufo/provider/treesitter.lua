@@ -3,8 +3,11 @@ local query = require('nvim-treesitter.query')
 local bufmanager = require('ufo.bufmanager')
 local foldingrange = require('ufo.model.foldingrange')
 
-local Treesitter = {}
-local hasProviders = {}
+---@class UfoTreesitterProvider
+---@field hasProviders table<string, boolean>
+local Treesitter = {
+    hasProviders = {}
+}
 
 local function prepareQuery(bufnr, parser, root, rootLang, queryName)
     if not root then
@@ -90,20 +93,21 @@ function Treesitter.getFolds(bufnr)
     if bt ~= '' and bt ~= 'acwrite' then
         return
     end
+    local self = Treesitter
     local ft = buf:filetype()
-    if hasProviders[ft] == false then
+    if self.hasProviders[ft] == false then
         error('UfoFallbackException')
     end
     local parser = parsers.get_parser(bufnr)
     if not parser then
-        hasProviders[ft] = false
+        self.hasProviders[ft] = false
         error('UfoFallbackException')
     end
 
     local ranges = {}
     local ok, matches = getCpatureMatchesRecursively(bufnr, parser)
     if not ok then
-        hasProviders[ft] = false
+        self.hasProviders[ft] = false
         error('UfoFallbackException')
     end
     for _, node in ipairs(matches) do
@@ -117,6 +121,10 @@ function Treesitter.getFolds(bufnr)
     end
     foldingrange.sortRanges(ranges)
     return ranges
+end
+
+function Treesitter:dispose()
+    self.hasProviders = {}
 end
 
 return Treesitter
