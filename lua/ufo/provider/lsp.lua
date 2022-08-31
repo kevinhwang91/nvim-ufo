@@ -5,10 +5,19 @@ local utils      = require('ufo.utils')
 local log        = require('ufo.lib.log')
 local bufmanager = require('ufo.bufmanager')
 
-local LSP               = {}
+---@class UfoLSPProvider
+local LSP = {}
+
+---@class UfoLSPProviderContext
+---@field timestamp number
+---@field count number
+
 local provider
-local hasProviders      = {}
-local providerTimestamp = {}
+local hasProviders = {}
+
+
+---@type table<string, UfoLSPProviderContext>
+local providerContext = {}
 
 
 local function hasInitialized()
@@ -44,15 +53,16 @@ local function request(bufnr)
     local hasProvider = hasProviders[ft]
     local firstCheckFt = false
     if hasProvider == nil then
-        if not providerTimestamp[ft] then
+        local context = providerContext[ft]
+        if not context then
             firstCheckFt = true
-            providerTimestamp[ft] = uv.hrtime()
+            providerContext[ft] = {timestamp = uv.hrtime(), count = 0}
         else
-            -- after 20 seconds
-            if uv.hrtime() - providerTimestamp[ft] > 2e10 then
+            -- after 120 seconds and count is greater than 5
+            if uv.hrtime() - context.timestamp > 1.2e11 and context.count >= 5 then
                 hasProviders[ft] = false
                 hasProvider = false
-                providerTimestamp[ft] = nil
+                providerContext[ft] = nil
             end
         end
     end
@@ -69,8 +79,14 @@ local function request(bufnr)
         if hasProvider == nil then
             p = p:thenCall(function(value)
                 hasProviders[ft] = true
-                providerTimestamp[ft] = nil
+                providerContext[ft] = nil
                 return value
+            end, function(reason)
+                local context = providerContext[ft]
+                if context then
+                    providerContext[ft].count = context.count + 1
+                end
+                return promise.reject(reason)
             end)
         end
         return p
