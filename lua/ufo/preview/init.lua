@@ -165,7 +165,7 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
         return
     end
     local endLnum = utils.foldClosedEnd(0, lnum)
-    if floatwin.bufnr then
+    if utils.isBufLoaded(floatwin.bufnr) then
         api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
     end
     if nextLineIncluded ~= false then

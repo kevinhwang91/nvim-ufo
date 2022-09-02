@@ -172,6 +172,8 @@ end
 
 function FloatWin:dispose()
     pcall(api.nvim_buf_delete, self.bufnr, {force = true})
+    self.winid = nil
+    self.bufnr = nil
 end
 
 return FloatWin
