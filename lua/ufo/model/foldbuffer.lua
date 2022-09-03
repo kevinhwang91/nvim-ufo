@@ -190,6 +190,10 @@ end
 ---@param width? number
 ---@return boolean
 function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
+    endLnum = math.min(endLnum, self:lineCount())
+    if endLnum < lnum then
+        return false
+    end
     local fl = self.foldedLines[lnum]
     if fl then
         if width and fl:widthChanged(width) then
