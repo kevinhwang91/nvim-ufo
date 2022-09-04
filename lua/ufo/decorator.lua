@@ -90,13 +90,20 @@ local function onEnd(name, tick)
                         local endLnum = utils.foldClosedEnd(0, lnum)
 
                         local handler = self:getVirtTextHandler(bufnr)
-                        local virtText = render.getVirtText(bufnr, text, width, lnum, syntax, nss)
+                        local virtTexts = config.enable_on_demand_virt_texts
+                            and setmetatable({}, {
+                                __index = function(_, _lnum)
+                                    local _text = fb:lines(_lnum)[1]
+                                    return render.getVirtText(bufnr, _text, width, _lnum, syntax, nss)
+                                end,
+                            })
+                            or render.getVirtText(bufnr, text, width, lnum, syntax, nss)
                         local endVirtText
                         if self.enableFoldEndVirtText then
                             local endText = fb:lines(endLnum)[1]
                             endVirtText = render.getVirtText(bufnr, endText, width, endLnum, syntax, nss)
                         end
-                        virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
+                        local virtText = handler(virtTexts, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
                             winid = winid,
                             text = text,

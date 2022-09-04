@@ -11,6 +11,7 @@ local def = {
     close_fold_kinds = {},
     fold_virt_text_handler = nil,
     enable_fold_end_virt_text = false,
+    enable_on_demand_virt_texts = false,
     preview = {
         win_config = {
             border = 'rounded',
