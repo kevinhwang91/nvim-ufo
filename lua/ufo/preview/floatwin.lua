@@ -11,6 +11,7 @@ local utils = require('ufo.utils')
 ---@field bufnr number
 ---@field width number
 ---@field height number
+---@field anchor string|'SW'|'NW'
 ---@field row number
 ---@field col number
 ---@field zindex number
@@ -91,7 +92,7 @@ function FloatWin:build(targetWinid, height, border, isAbove)
     if self:borderHasRightLine() then
         self.width = self.width - 1
     end
-    local anchor = isAbove and 'SW' or 'NW'
+    self.anchor = isAbove and 'SW' or 'NW'
     self.zindex = 51
     return {
         border = self.border,
@@ -99,7 +100,7 @@ function FloatWin:build(targetWinid, height, border, isAbove)
         focusable = true,
         width = self.width,
         height = self.height,
-        anchor = anchor,
+        anchor = self.anchor,
         row = self.row,
         col = self.col,
         noautocmd = true,

@@ -31,8 +31,19 @@ function Preview:trace(bufnr)
     local fWinConfig = api.nvim_win_get_config(floatWinid)
     -- fWinConfig.row is a table value converted from a floating-point
     local wrow = tonumber(fWinConfig.row[vim.val_idx])
-    if floatwin:borderHasUpLine() then
-        wrow = wrow + 1
+    if fWinConfig.anchor == 'SW' then
+        wrow = wrow - fWinConfig.height
+        if wrow < 0 then
+            wrow = floatwin:borderHasUpLine() and 1 or 0
+        else
+            if floatwin:borderHasBottomLine() then
+                wrow = wrow - 1
+            end
+        end
+    else
+        if floatwin:borderHasUpLine() then
+            wrow = wrow + 1
+        end
     end
     local fLnum, fCol, fWrow
     utils.winCall(floatWinid, function()
