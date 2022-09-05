@@ -45,6 +45,7 @@ end
 ---@param topline? number
 function ScrollBar:update(topline)
     if not self.showScrollBar then
+        self.winid = nil
         return
     end
     if not topline then
@@ -117,6 +118,7 @@ function ScrollBar:display()
     api.nvim_buf_set_lines(self.bufnr, 0, -1, true, lines)
     vim.bo[self.bufnr].modifiable = false
     self:update()
+    return self.winid
 end
 
 return ScrollBar

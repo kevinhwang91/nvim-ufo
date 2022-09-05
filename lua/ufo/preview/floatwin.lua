@@ -55,32 +55,43 @@ function FloatWin:borderHasLeftLine()
     return borderHasLine(self.border, 8)
 end
 
-function FloatWin:build(targetWinid, height, border)
+function FloatWin:build(targetWinid, height, border, isAbove)
     local winfo = utils.getWinInfo(targetWinid)
-    local above = utils.winCall(targetWinid, fn.winline) - 1
-    local below = winfo.height - above
+    local aboveLine = utils.winCall(targetWinid, fn.winline) - 1
+    local belowLine = winfo.height - aboveLine
     self.border = type(border) == 'string' and vim.deepcopy(defaultBorder[border]) or border
-    if below < height and below < above then
-        self.height = math.min(height, above)
-        self.row = below - self.height
-    else
-        if self:borderHasUpLine() and fn.screenrow() == 1 and above == 0 then
-            self.border[1], self.border[2], self.border[3] = '', '', ''
+    if isAbove then
+        if aboveLine < height and belowLine > aboveLine then
+            self.height = math.min(height, belowLine)
+            self.row = aboveLine - self.height
+        else
+            self.height = math.min(height, aboveLine)
+            self.row = 1
         end
-        self.height = math.min(height, below)
-        self.row = 0
+    else
+        if belowLine < height and belowLine < aboveLine then
+            self.height = math.min(height, aboveLine)
+            self.row = belowLine - self.height
+        else
+            if self:borderHasUpLine() and fn.screenrow() == 1 and aboveLine == 0 then
+                self.border[1], self.border[2], self.border[3] = '', '', ''
+            end
+            self.height = math.min(height, belowLine)
+            self.row = 0
+        end
     end
     self.col = 0
     self.width = winfo.width - winfo.textoff
     if self:borderHasLeftLine() then
         self.col = self.col - 1
     end
-    if self:borderHasUpLine() then
+    if not isAbove and self:borderHasUpLine() then
         self.row = self.row - 1
     end
     if self:borderHasRightLine() then
         self.width = self.width - 1
     end
+    local anchor = isAbove and 'SW' or 'NW'
     self.zindex = 51
     return {
         border = self.border,
@@ -88,7 +99,7 @@ function FloatWin:build(targetWinid, height, border)
         focusable = true,
         width = self.width,
         height = self.height,
-        anchor = 'NW',
+        anchor = anchor,
         row = self.row,
         col = self.col,
         noautocmd = true,
@@ -113,10 +124,12 @@ function FloatWin:close()
     if self:validate() then
         api.nvim_win_close(self.winid, true)
     end
+    self.winid = nil
 end
 
-function FloatWin:display(targetWinid, height, text, enter)
-    local wopts = self:build(targetWinid, height, self.config.border)
+function FloatWin:display(targetWinid, text, enter, isAbove)
+    local height = math.min(self.config.maxheight, #text)
+    local wopts = self:build(targetWinid, height, self.config.border, isAbove)
     if self:validate() then
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)

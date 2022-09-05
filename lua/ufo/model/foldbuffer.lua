@@ -14,7 +14,7 @@ local foldedline = require('ufo.model.foldedline')
 ---@field version number
 ---@field requestCount number
 ---@field foldRanges UfoFoldingRange[]
----@field foldedLines UfoFoldedLine[]
+---@field foldedLines table<number, UfoFoldedLine>
 ---@field foldedLineCount number
 ---@field providers table
 ---@field scanned boolean
@@ -91,6 +91,19 @@ function FoldBuffer:foldedLine(lnum)
         return
     end
     return fl
+end
+
+---
+---@param lnum number 1-index
+---@return UfoFoldingRangeKind|''
+function FoldBuffer:lineKind(lnum)
+    local row = lnum - 1
+    for _, range in ipairs(self.foldRanges) do
+        if row >= range.startLine and row <= range.endLine then
+            return range.kind
+        end
+    end
+    return ''
 end
 
 function FoldBuffer:handleFoldedLinesChanged(first, last, lastUpdated)

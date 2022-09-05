@@ -15,7 +15,8 @@ local def = {
         win_config = {
             border = 'rounded',
             winblend = 12,
-            winhighlight = 'Normal:Normal'
+            winhighlight = 'Normal:Normal',
+            maxheight = 20
         },
         mappings = {
             scrollB = '',

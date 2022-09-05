@@ -5,12 +5,11 @@ local api = vim.api
 local M = {}
 
 ---Peek the folded line under cursor, any motions in the normal window will close the floating window.
----@param maxHeight? number max height for floating window, default value is 20
----@param nextLineIncluded? boolean include the next line of last line of closed fold, default is true
 ---@param enter? boolean enter the floating window, default value is false
----@return number? winid, number? bufnr return the winid and bufnr if successful, otherwise return nil
-function M.peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
-    return require('ufo.preview'):peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
+---@param nextLineIncluded? boolean include the next line of last line of closed fold, default is true
+---@return number? winid return the winid if successful, otherwise return nil
+function M.peekFoldedLinesUnderCursor(enter, nextLineIncluded)
+    return require('ufo.preview'):peekFoldedLinesUnderCursor(enter, nextLineIncluded)
 end
 
 ---Go to previous start fold. Neovim can't go to previous start fold directly, it's an extra motion.

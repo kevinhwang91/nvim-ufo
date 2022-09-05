@@ -186,6 +186,10 @@ For example, Changing the text in a buffer will request the providers for folds.
                 description = [[The winhighlight for preview window, `:h winhighlight`]],
                 default = 'Normal:Normal',
             },
+            maxheight = {
+                description = [[The max height of preview window]],
+                default = 20,
+            }
         },
         mappings = {
             description = [[The table for {function = key}]],

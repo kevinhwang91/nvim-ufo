@@ -11,7 +11,7 @@ local keymap     = require('ufo.preview.keymap')
 local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 local config     = require('ufo.config')
-local bufmanager = require('ufo.bufmanager')
+local fold       = require('ufo.fold')
 
 local initialized
 
@@ -148,14 +148,13 @@ function Preview:attach(bufnr, foldedLnum)
 end
 
 ---
----@param maxHeight? number
----@param nextLineIncluded? boolean
 ---@param enter? boolean
----@return number? winid, number? bufnr
-function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
+---@param nextLineIncluded? boolean
+---@return number? floatwinId
+function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     local curBufnr = api.nvim_get_current_buf()
-    local buf = bufmanager:get(curBufnr)
-    if not buf then
+    local fb = fold.get(curBufnr)
+    if not fb then
         -- buffer is detached
         return
     end
@@ -168,12 +167,13 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
     if utils.isBufLoaded(floatwin.bufnr) then
         api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
     end
-    if nextLineIncluded ~= false then
-        endLnum = buf:lineCount() == endLnum and endLnum or (endLnum + 1)
+    local kind = fb:lineKind(lnum)
+    local isAbove = kind == 'comment'
+    if not isAbove and nextLineIncluded ~= false then
+        endLnum = fb:lineCount() == endLnum and endLnum or (endLnum + 1)
     end
-    local text = buf:lines(lnum, endLnum)
-    local height = math.min(#text, maxHeight or 20)
-    floatwin:display(api.nvim_get_current_win(), height, text, enter)
+    local text = fb:lines(lnum, endLnum)
+    floatwin:display(api.nvim_get_current_win(), text, enter, isAbove)
     utils.winCall(floatwin.winid, function()
         cmd('norm! ze')
     end)
@@ -182,7 +182,7 @@ function Preview:peekFoldedLinesUnderCursor(maxHeight, nextLineIncluded, enter)
                                     text, self.ns)
     scrollbar:display()
     self:attach(curBufnr, lnum)
-    return floatwin.winid, floatwin.bufnr
+    return floatwin.winid
 end
 
 function Preview.validate()
