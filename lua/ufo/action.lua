@@ -77,6 +77,7 @@ function M.goPreviousClosedFold()
         end
     end
     if lnum then
+        cmd('norm! m`')
         api.nvim_win_set_cursor(0, {lnum, 0})
     end
 end
@@ -97,6 +98,7 @@ function M.goNextClosedFold()
         end
     end
     if lnum then
+        cmd('norm! m`')
         api.nvim_win_set_cursor(0, {lnum, 0})
     end
 end
