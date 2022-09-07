@@ -107,6 +107,9 @@ function M.closeFolds(level)
     cmd('silent! %foldclose!')
     local curBufnr = api.nvim_get_current_buf()
     local fb = fold.get(curBufnr)
+    if not fb then
+        return
+    end
     for _, range in ipairs(fb.foldRanges) do
         fb:closeFold(range.startLine + 1, range.endLine + 1)
     end
@@ -166,6 +169,9 @@ function M.openFoldsExceptKinds(kinds)
     M.openAllFolds()
     local curBufnr = api.nvim_get_current_buf()
     local fb = fold.get(curBufnr)
+    if not fb then
+        return
+    end
     local res = {}
     for _, range in ipairs(fb.foldRanges) do
         if range.kind and vim.tbl_contains(kinds, range.kind) then
