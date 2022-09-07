@@ -90,6 +90,7 @@ local function onEnd(name, tick)
                         local endLnum = utils.foldClosedEnd(0, lnum)
 
                         local handler = self:getVirtTextHandler(bufnr)
+                        local _virtText = render.getVirtText(bufnr, text, width, lnum, syntax, nss)
                         local virtTexts = config.enable_on_demand_virt_texts
                             and setmetatable({}, {
                                 __index = function(_, _lnum)
@@ -98,17 +99,22 @@ local function onEnd(name, tick)
                                     return render.getVirtText(bufnr, _text, width, _lnum, syntax, nss)
                                 end,
                             })
-                            or render.getVirtText(bufnr, text, width, lnum, syntax, nss)
+                            or setmetatable({}, {
+                                __index = function()
+                                    error("Please set `true` to `enable_on_demand_virt_texts` to access `virt_texts`")
+                                end,
+                            })
                         local endVirtText
                         if self.enableFoldEndVirtText then
                             local endText = fb:lines(endLnum)[1]
                             endVirtText = render.getVirtText(bufnr, endText, width, endLnum, syntax, nss)
                         end
-                        local virtText = handler(virtTexts, lnum, endLnum, width, utils.truncateStrByWidth, {
+                        local virtText = handler(_virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
                             winid = winid,
                             text = text,
-                            end_virt_text = endVirtText
+                            virt_texts = virtTexts,
+                            end_virt_text = endVirtText,
                         })
                         fb:closeFold(lnum, endLnum, text, virtText, width)
                     end
