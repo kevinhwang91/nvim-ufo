@@ -152,7 +152,7 @@ local function inspectVirtTextForFoldedLines()
         enable_get_fold_virt_text_func = true,
         fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate, ctx)
             for i = lnum, endLnum do
-                print(i, vim.inspect(ctx.get_virt_text_func(i)))
+                print('lnum: ', i, ', virtText: ', vim.inspect(ctx.get_virt_text_func(i)))
             end
             return virtText
         end
