@@ -161,10 +161,10 @@ For example, Changing the text in a buffer will request the providers for folds.
         description = [[A function customize fold virt text, see ### Customize fold text]],
         default = nil
     },
-    enable_fold_end_virt_text = {
-        description = [[Enable to capture the virtual text for the fold end lnum and assign the
-                    result to `end_virt_text` field of ctx table as 6th parameter in
-                    `fold_virt_text_handler`]],
+    enable_get_fold_virt_text_func = {
+        description = [[Enable a function with `lnum` as a parameter to capture the virtual text
+                    for the folded lines and export the function to `get_virt_text_func` field of
+                    ctx table as 6th parameter in `fold_virt_text_handler`]],
         default = false
     },
     preview = {

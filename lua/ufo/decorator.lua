@@ -90,31 +90,28 @@ local function onEnd(name, tick)
                         local endLnum = utils.foldClosedEnd(0, lnum)
 
                         local handler = self:getVirtTextHandler(bufnr)
-                        local _virtText = render.getVirtText(bufnr, text, width, lnum, syntax, nss)
-                        local virtTexts = config.enable_on_demand_virt_texts
-                            and setmetatable({}, {
-                                __index = function(_, _lnum)
-                                    assert(lnum <= _lnum and _lnum <= endLnum, "Index out of folded range: " .. _lnum)
-                                    local _text = fb:lines(_lnum)[1]
-                                    return render.getVirtText(bufnr, _text, width, _lnum, syntax, nss)
-                                end,
-                            })
-                            or setmetatable({}, {
-                                __index = function()
-                                    error("Please set `true` to `enable_on_demand_virt_texts` to access `virt_texts`")
-                                end,
-                            })
+                        local limitedText = utils.truncateStrByWidth(text, width)
+                        local virtText = render.getVirtText(bufnr, limitedText, lnum, syntax, nss)
+                        local getVirtTextFunc
+                        if self.enableGetFoldVirtTextFunc then
+                            getVirtTextFunc = function(l)
+                                assert(lnum <= l and l <= endLnum,
+                                       ('expected lnum range from %d to %d'):format(lnum, endLnum))
+                                local line = fb:lines(l)[1]
+                                return render.getVirtText(bufnr, line, l, syntax, nss)
+                            end
+                        end
                         local endVirtText
                         if self.enableFoldEndVirtText then
                             local endText = fb:lines(endLnum)[1]
-                            endVirtText = render.getVirtText(bufnr, endText, width, endLnum, syntax, nss)
+                            endVirtText = render.getVirtText(bufnr, endText, endLnum, syntax, nss)
                         end
-                        local virtText = handler(_virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
+                        virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
                             bufnr = bufnr,
                             winid = winid,
                             text = text,
-                            virt_texts = virtTexts,
                             end_virt_text = endVirtText,
+                            get_virt_text_func = getVirtTextFunc
                         })
                         fb:closeFold(lnum, endLnum, text, virtText, width)
                     end
@@ -240,6 +237,9 @@ function Decorator:initialize(namespace)
     table.insert(disposables, disposable:create(function()
         api.nvim_set_decoration_provider(namespace, {})
     end))
+    self.enableGetFoldVirtTextFunc = config.enable_get_fold_virt_text_func
+    ---@deprecated
+    ---@diagnostic disable-next-line: undefined-field
     self.enableFoldEndVirtText = config.enable_fold_end_virt_text
     self.openFoldHlTimeout = config.open_fold_hl_timeout
     self.openFoldHlEnabled = self.openFoldHlTimeout > 0
