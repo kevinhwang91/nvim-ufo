@@ -283,14 +283,11 @@ require('ufo').setup({
         }
     },
     provider_selector = function(bufnr, filetype, buftype)
-        -- return a string type use internal providers
-        -- return a string in a table like a string type
-        -- return empty string '' will disable any providers
-        -- return `nil` will use default value {'lsp', 'indent'}
-
         -- if you prefer treesitter provider rather than lsp,
         -- return ftMap[filetype] or {'treesitter', 'indent'}
         return ftMap[filetype]
+
+        -- refer to ./doc/example.lua for detail
     end
 })
 vim.keymap.set('n', 'zR', require('ufo').openAllFolds)

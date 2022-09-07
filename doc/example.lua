@@ -9,10 +9,12 @@ local function selectProviderWithFt()
     }
     require('ufo').setup({
         provider_selector = function(bufnr, filetype, buftype)
-            -- return a string type use ufo providers
-            -- return a string in a table like a string type
-            -- return empty string '' will disable any providers
-            -- return `nil` will use default value {'lsp', 'indent'}
+            -- return a table with string elements: 1st is name of main provider, 2nd is fallback
+            -- return a string type: use ufo inner providers
+            -- return a string in a table: like a string type above
+            -- return empty string '': disable any providers
+            -- return `nil`: use default value {'lsp', 'indent'}
+            -- return a function: it will be involved and expected return `UfoFoldingRange[]|Promise`
 
             -- if you prefer treesitter provider rather than lsp,
             -- return ftMap[filetype] or {'treesitter', 'indent'}
@@ -29,6 +31,8 @@ local function selectProviderWithChainByDefault()
         git = ''
     }
 
+    ---@param bufnr number
+    ---@return Promise
     local function customizeSelector(bufnr)
         local function handleFallbackException(err, providerName)
             if type(err) == 'string' and err:match('UfoFallbackException') then
@@ -48,6 +52,29 @@ local function selectProviderWithChainByDefault()
     require('ufo').setup({
         provider_selector = function(bufnr, filetype, buftype)
             return ftMap[filetype] or customizeSelector
+        end
+    })
+end
+
+local function selectProviderWithFunction()
+    ---@param bufnr number
+    ---@return UfoFoldingRange[]
+    local function customizeSelector(bufnr)
+        local res = {}
+        table.insert(res, {startLine = 1, endLine = 3})
+        table.insert(res, {startLine = 5, endLine = 10})
+        return res
+    end
+
+    local ftMap = {
+        vim = 'indent',
+        python = {'indent'},
+        git = customizeSelector
+    }
+
+    require('ufo').setup({
+        provider_selector = function(bufnr, filetype, buftype)
+            return ftMap[filetype]
         end
     })
 end

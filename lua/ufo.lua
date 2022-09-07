@@ -109,7 +109,7 @@ end
 ---Get foldingRange from the ufo internal providers by name
 ---@param providerName string
 ---@param bufnr number
----@return UfoFoldingRange|Promise
+---@return UfoFoldingRange[]|Promise
 function M.getFolds(providerName, bufnr)
     local ok, res = pcall(require, 'ufo.provider.' .. providerName)
     assert(ok, ([[Can't find %s provider]]):format(providerName))
