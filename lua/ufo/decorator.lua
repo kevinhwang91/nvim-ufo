@@ -93,6 +93,7 @@ local function onEnd(name, tick)
                         local virtTexts = config.enable_on_demand_virt_texts
                             and setmetatable({}, {
                                 __index = function(_, _lnum)
+                                    assert(lnum <= _lnum and _lnum <= endLnum, "Index out of folded range: " .. _lnum)
                                     local _text = fb:lines(_lnum)[1]
                                     return render.getVirtText(bufnr, _text, width, _lnum, syntax, nss)
                                 end,
