@@ -92,9 +92,9 @@ local function onEnd(name, tick)
                         local handler = self:getVirtTextHandler(bufnr)
                         local limitedText = utils.truncateStrByWidth(text, width)
                         local virtText = render.getVirtText(bufnr, limitedText, lnum, syntax, nss)
-                        local getVirtTextFunc
+                        local getFoldVirtText
                         if self.enableGetFoldVirtTextFunc then
-                            getVirtTextFunc = function(l)
+                            getFoldVirtText = function(l)
                                 assert(type(l) == "number", "expected a number, got " .. type(l))
                                 assert(lnum <= l and l <= endLnum,
                                        ('expected lnum range from %d to %d, got %d'):format(lnum, endLnum, l))
@@ -112,7 +112,7 @@ local function onEnd(name, tick)
                             winid = winid,
                             text = text,
                             end_virt_text = endVirtText,
-                            get_virt_text_func = getVirtTextFunc
+                            get_fold_virt_text = getFoldVirtText
                         })
                         fb:closeFold(lnum, endLnum, text, virtText, width)
                     end
