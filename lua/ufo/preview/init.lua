@@ -17,6 +17,7 @@ local initialized
 
 ---@class UfoPreview
 local Preview = {
+    detachDisposables = nil,
     winid = nil,
     bufnr = nil,
     lnum = nil,
@@ -119,12 +120,12 @@ local function onBufRemap(bufnr, str)
 end
 
 function Preview:attach(bufnr, foldedLnum)
+    self:detach()
     local disposables = {}
     event:on('WinClosed', function()
         promise.resolve():thenCall(function()
             if not self.validate() then
-                disposable.disposeAll(disposables)
-                disposables = {}
+                self:detach()
                 self.close()
             end
         end)
@@ -149,6 +150,7 @@ function Preview:attach(bufnr, foldedLnum)
         self.col = nil
         self.topline = nil
         self.foldedLnum = nil
+        self.detachDisposables = nil
     end))
     table.insert(disposables, keymap:attach(bufnr, floatwin.bufnr, self.ns, self.keyMessages, {
         trace = self.keyMessages.trace,
@@ -156,6 +158,13 @@ function Preview:attach(bufnr, foldedLnum)
         close = self.keyMessages.close,
         ['2click'] = '<2-LeftMouse>'
     }))
+    self.detachDisposables = disposables
+end
+
+function Preview:detach()
+    if self.detachDisposables then
+        disposable.disposeAll(self.detachDisposables)
+    end
 end
 
 ---
