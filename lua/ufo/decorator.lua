@@ -95,7 +95,7 @@ local function onEnd(name, tick)
                         local getFoldVirtText
                         if self.enableGetFoldVirtTextFunc then
                             getFoldVirtText = function(l)
-                                assert(type(l) == "number", "expected a number, got " .. type(l))
+                                assert(type(l) == 'number', 'expected a number, got ' .. type(l))
                                 assert(lnum <= l and l <= endLnum,
                                        ('expected lnum range from %d to %d, got %d'):format(lnum, endLnum, l))
                                 local line = fb:lines(l)[1]
