@@ -24,13 +24,10 @@ local initialized
 local Decorator = {}
 
 local collection
-local redrawType
 local bufnrSet
-local lastContext
 
 ---@diagnostic disable-next-line: unused-local
-local function onStart(name, tick, redrawT)
-    redrawType = redrawT
+local function onStart(name, tick)
     collection = {}
     bufnrSet = {}
 end
@@ -56,16 +53,15 @@ end
 
 ---@diagnostic disable-next-line: unused-local
 local function onEnd(name, tick)
-    local nss, mode
-    local needRedraw = nil
-    local ctx = {}
+    local nss
+    local needRedraw = false
     local self = Decorator
     for winid, data in pairs(collection or {}) do
         local bufnr = data.bufnr
         local fb = fold.get(bufnr)
         if #data.rows > 0 then
             utils.winCall(winid, function()
-                local folded = self:unHandledFoldedLnums(fb, data.rows)
+                local folded = self:unHandledFoldedLnums(fb, winid, data.rows)
                 log.debug('unhandled folded lnum:', folded)
                 if #folded == 0 then
                     return
@@ -85,7 +81,7 @@ local function onEnd(name, tick)
                     local lnum = folded[i]
                     if fb:lineNeedRender(lnum, width) then
                         local text = fb:lines(lnum)[1]
-                        needRedraw = 1
+                        needRedraw = true
                         log.debug('need add/update folded lnum:', lnum)
                         local endLnum = utils.foldClosedEnd(0, lnum)
 
@@ -119,26 +115,12 @@ local function onEnd(name, tick)
                 end
             end)
         end
-        local lnum = api.nvim_win_get_cursor(winid)[1]
-        if redrawType == 40 then
-            local lastCtx = lastContext[bufnr] or {}
-            if winid == lastCtx.winid and lnum == lastCtx.lnum then
-                mode = mode and mode or utils.mode()
-                if mode == 'n' then
-                    fb:syncFoldedLines(winid)
-                    needRedraw = needRedraw and 3 or 2
-                end
-            end
-        end
-        ctx[bufnr] = {lnum = lnum, winid = winid}
     end
     if needRedraw then
-        log.debug('need redraw, type:', needRedraw)
         cmd('redraw')
     end
     collection = nil
     bufnrSet = nil
-    lastContext = ctx
 end
 
 function Decorator:highlightOpenFold(fb, lnum)
@@ -150,9 +132,10 @@ function Decorator:highlightOpenFold(fb, lnum)
     end
 end
 
-function Decorator:unHandledFoldedLnums(fb, rows)
+function Decorator:unHandledFoldedLnums(fb, winid, rows)
     local lastRow = rows[1]
     local folded = {}
+    local didOpen = false
     for i = 2, #rows do
         local lnum = lastRow + 1
         if rows[i] > lnum then
@@ -161,7 +144,7 @@ function Decorator:unHandledFoldedLnums(fb, rows)
             end
         elseif fb:lineIsClosed(lnum) then
             self:highlightOpenFold(fb, lnum)
-            fb:openFold(lnum)
+            didOpen = fb:openFold(lnum) or didOpen
         end
         lastRow = rows[i]
     end
@@ -171,7 +154,11 @@ function Decorator:unHandledFoldedLnums(fb, rows)
         table.insert(folded, lnum)
     elseif fb:lineIsClosed(lnum) then
         self:highlightOpenFold(fb, lnum)
-        fb:openFold(lnum)
+        didOpen = fb:openFold(lnum) or didOpen
+    end
+
+    if didOpen then
+        fb:syncFoldedLines(winid)
     end
     return folded
 end
@@ -263,7 +250,6 @@ function Decorator:initialize(namespace)
         self.virtTextHandlers[bufnr] = nil
     end, disposables)
     self.disposables = disposables
-    lastContext = {}
     initialized = true
     return self
 end

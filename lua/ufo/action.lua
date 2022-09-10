@@ -3,9 +3,7 @@ local cmd = vim.cmd
 local fn = vim.fn
 
 local utils = require('ufo.utils')
-local event = require('ufo.lib.event')
 local fold = require('ufo.fold')
-local promise = require('promise')
 
 local M = {}
 
@@ -136,6 +134,7 @@ function M.closeFolds(level)
                     end
                     stack[i][2] = true
                     table.insert(cmds, lnum .. 'foldopen')
+                    fb:openFold(lnum)
                 end
                 if #cmds > 0 then
                     cmd(table.concat(cmds, '|'))
@@ -159,10 +158,6 @@ function M.closeFolds(level)
             lastEndLnum = math.max(lastEndLnum, endLnum)
         end
     end
-    event:emit('setOpenFoldHl', false)
-    promise.resolve():thenCall(function()
-        event:emit('setOpenFoldHl')
-    end)
 end
 
 function M.openFoldsExceptKinds(kinds)

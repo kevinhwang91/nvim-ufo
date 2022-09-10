@@ -58,9 +58,14 @@ function Preview:trace(bufnr)
     end)
     api.nvim_set_current_win(self.winid)
     local lnum, col = api.nvim_win_get_cursor(self.winid)[1], fCol
-    lnum = utils.foldClosed(0, lnum) + fLnum - 1
+    local startLnum = utils.foldClosed(0, lnum)
+    local fb = fold.get(self.bufnr)
+    if fb then
+        fb:openFold(startLnum)
+    end
     local lineSize = fWrow + wrow
     cmd('norm! m`zO')
+    lnum = startLnum + fLnum - 1
     local topline, topfill = utils.evaluateTopline(self.winid, lnum, lineSize)
     fn.winrestview({
         lnum = lnum,
