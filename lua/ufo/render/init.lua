@@ -1,7 +1,6 @@
 local api = vim.api
 local fn = vim.fn
 
-local utils      = require('ufo.utils')
 local highlight  = require('ufo.highlight')
 local extmark    = require('ufo.render.extmark')
 local treesitter = require('ufo.render.treesitter')
@@ -81,8 +80,7 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
     end
 end
 
-function M.getVirtText(bufnr, text, width, lnum, syntax, namespaces)
-    text = utils.truncateStrByWidth(text, width)
+function M.getVirtText(bufnr, text, lnum, syntax, namespaces)
     local len = #text
     if len == 0 then
         return {{'', 'UfoFoldedFg'}}

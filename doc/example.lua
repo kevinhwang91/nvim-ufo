@@ -147,4 +147,16 @@ local function customizeBufFoldText()
     require('ufo').setFoldVirtTextHandler(bufnr, handler)
 end
 
+local function inspectVirtTextForFoldedLines()
+    require('ufo').setup({
+        enable_get_fold_virt_text = true,
+        fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate, ctx)
+            for i = lnum, endLnum do
+                print('lnum: ', i, ', virtText: ', vim.inspect(ctx.get_fold_virt_text(i)))
+            end
+            return virtText
+        end
+    })
+end
+
 ---------------------------------------setFoldVirtTextHandler---------------------------------------
