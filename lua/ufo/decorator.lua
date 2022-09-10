@@ -93,7 +93,7 @@ local function onEnd(name, tick)
                         local limitedText = utils.truncateStrByWidth(text, width)
                         local virtText = render.getVirtText(bufnr, limitedText, lnum, syntax, nss)
                         local getFoldVirtText
-                        if self.enableGetFoldVirtTextFunc then
+                        if self.enableGetFoldVirtText then
                             getFoldVirtText = function(l)
                                 assert(type(l) == 'number', 'expected a number, got ' .. type(l))
                                 assert(lnum <= l and l <= endLnum,
@@ -238,7 +238,7 @@ function Decorator:initialize(namespace)
     table.insert(disposables, disposable:create(function()
         api.nvim_set_decoration_provider(namespace, {})
     end))
-    self.enableGetFoldVirtTextFunc = config.enable_get_fold_virt_text_func
+    self.enableGetFoldVirtText = config.enable_get_fold_virt_text
     ---@deprecated
     ---@diagnostic disable-next-line: undefined-field
     self.enableFoldEndVirtText = config.enable_fold_end_virt_text

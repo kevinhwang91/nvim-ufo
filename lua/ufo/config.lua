@@ -3,14 +3,14 @@
 ---@field open_fold_hl_timeout number
 ---@field close_fold_kinds UfoFoldingRangeKind[]
 ---@field fold_virt_text_handler? function A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
----@field enable_get_fold_virt_text_func boolean
+---@field enable_get_fold_virt_text boolean
 ---@field preview table
 local def = {
     open_fold_hl_timeout = 400,
     provider_selector = nil,
     close_fold_kinds = {},
     fold_virt_text_handler = nil,
-    enable_get_fold_virt_text_func = false,
+    enable_get_fold_virt_text = false,
     preview = {
         win_config = {
             border = 'rounded',
