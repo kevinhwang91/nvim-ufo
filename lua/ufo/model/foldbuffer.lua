@@ -14,7 +14,7 @@ local foldedline = require('ufo.model.foldedline')
 ---@field version number
 ---@field requestCount number
 ---@field foldRanges UfoFoldingRange[]
----@field foldedLines table<number, UfoFoldedLine>
+---@field foldedLines table<number, UfoFoldedLine|boolean> A list of UfoFoldedLine or boolean
 ---@field foldedLineCount number
 ---@field providers table
 ---@field scanned boolean
@@ -108,6 +108,9 @@ end
 
 function FoldBuffer:handleFoldedLinesChanged(first, last, lastUpdated)
     if self.foldedLineCount == 0 then
+        if self:lineCount() ~= #self.foldedLines then
+            self:resetFoldedLines()
+        end
         return
     end
     local didOpen = false

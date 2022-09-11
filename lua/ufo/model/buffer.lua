@@ -5,6 +5,7 @@ local api = vim.api
 ---@class UfoBuffer
 ---@field bufnr number
 ---@field attached boolean
+---@field _lines table<number, string|boolean> A list of string or boolean
 local Buffer = {}
 
 function Buffer:new(bufnr)
