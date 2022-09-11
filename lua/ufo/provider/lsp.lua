@@ -69,8 +69,8 @@ function LSP:request(bufnr)
     if provider.initialized and hasProvider ~= false then
         local p
         if firstCheckFt then
-            -- wait for the server, is 200ms enough?
-            p = utils.wait(200):thenCall(function()
+            -- wait for the server, is 500ms enough?
+            p = utils.wait(500):thenCall(function()
                 return provider.requestFoldingRange(bufnr)
             end)
         else
