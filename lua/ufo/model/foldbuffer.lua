@@ -108,9 +108,6 @@ end
 
 function FoldBuffer:handleFoldedLinesChanged(first, last, lastUpdated)
     if self.foldedLineCount == 0 then
-        if self:lineCount() ~= #self.foldedLines then
-            self:resetFoldedLines()
-        end
         return
     end
     local didOpen = false
@@ -206,7 +203,8 @@ end
 ---@param width? number
 ---@return boolean
 function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
-    endLnum = math.min(endLnum, self:lineCount())
+    local lineCount = self:lineCount()
+    endLnum = math.min(endLnum, lineCount)
     if endLnum < lnum then
         return false
     end
@@ -222,6 +220,9 @@ function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
             return false
         end
     else
+        if self.foldedLineCount == 0 and lineCount ~= #self.foldedLines then
+            self:resetFoldedLines()
+        end
         fl = foldedline:new(self.bufnr, self.ns, text, width)
         self.foldedLineCount = self.foldedLineCount + 1
         self.foldedLines[lnum] = fl
