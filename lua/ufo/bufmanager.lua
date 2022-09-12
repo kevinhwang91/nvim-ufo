@@ -37,6 +37,7 @@ function BufferManager:initialize()
             b:dispose()
         end
         self.buffers = {}
+        self.bufDetachSet = {}
     end))
     event:on('BufEnter', function(bufnr)
         attach(self, bufnr or api.nvim_get_current_buf())
