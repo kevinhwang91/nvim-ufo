@@ -1,13 +1,16 @@
 local uv = vim.loop
 
-local promise    = require('promise')
-local log        = require('ufo.lib.log')
-local disposable = require('ufo.lib.disposable')
+local promise = require('promise')
+local log     = require('ufo.lib.log')
 
 ---@class Provider UfoProvider
+---@field modulePathPrefix string
+---@field innerProviders string[]
 ---@field modules table
----@field disposables table
-local Provider = {}
+local Provider = {
+    modulePathPrefix = 'ufo.provider.',
+    innerProviders = {'lsp', 'treesitter', 'indent'}
+}
 
 local function needFallback(reason)
     return type(reason) == 'string' and reason:match('UfoFallbackException')
@@ -56,14 +59,10 @@ function Provider:requestFoldingRange(providers, bufnr)
 end
 
 function Provider:initialize()
-    self.disposables = {}
     self.modules = setmetatable({}, {
     __index = function(t, k)
         local ok, res = pcall(require, 'ufo.provider.' .. k)
         assert(ok, ([[Can't find a module in `ufo.provider.%s`]]):format(k))
-        if res.dispose then
-            table.insert(self.disposables, res)
-        end
         rawset(t, k, res)
         return res
     end
@@ -72,7 +71,12 @@ function Provider:initialize()
 end
 
 function Provider:dispose()
-    disposable.disposeAll(self.disposables)
+    for _, name in ipairs(self.innerProviders) do
+        local module = _G.package.loaded['ufo.provider.' .. name]
+        if module and module.dispose then
+            module:dispose()
+        end
+    end
 end
 
 return Provider
