@@ -61,7 +61,7 @@ end
 function Provider:initialize()
     self.modules = setmetatable({}, {
     __index = function(t, k)
-        local ok, res = pcall(require, 'ufo.provider.' .. k)
+        local ok, res = pcall(require, self.modulePathPrefix .. k)
         assert(ok, ([[Can't find a module in `ufo.provider.%s`]]):format(k))
         rawset(t, k, res)
         return res
@@ -72,7 +72,7 @@ end
 
 function Provider:dispose()
     for _, name in ipairs(self.innerProviders) do
-        local module = _G.package.loaded['ufo.provider.' .. name]
+        local module = _G.package.loaded[self.modulePathPrefix .. name]
         if module and module.dispose then
             module:dispose()
         end
