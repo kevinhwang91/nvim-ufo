@@ -241,78 +241,40 @@ function M.isBufLoaded(bufnr)
     return bufnr and type(bufnr) == 'number' and bufnr > 0 and api.nvim_buf_is_loaded(bufnr)
 end
 
-M.highlightTimeout = (function()
-    local function doUnPack(pos)
-        vim.validate({
-            pos = {
-                pos, function(p)
-                    local t = type(p)
-                    return t == 'table' or t == 'number'
-                end, 'must be table or number type'
-            }
-        })
-        local row, col
-        if type(pos) == 'table' then
-            row, col = unpack(pos)
-        else
-            row = pos
-        end
-        col = col or 0
-        return row, col
-    end
+---@param winid number
+---@param hlGoup string
+---@param start number
+---@param finish number
+---@param delay? number
+---@return Promise
+function M.highlightLinesTimeout(winid, hlGoup, start, finish, delay)
+    vim.validate({
+        winid = {winid, 'number'},
+        hlGoup = {hlGoup, 'string'},
+        start = {start, 'number'},
+        finish = {finish, 'number'},
+        delay = {delay, 'number', true}
+    })
+    local prior = 10
 
-    local function rangeToRegion(row, col, endRow, endCol)
-        local region = {}
-        if row > endRow or (row == endCol and col >= endCol) then
-            return region
+    local ids = {}
+    local l = {}
+    for i = start, finish do
+        table.insert(l, {i})
+        if i % 8 == 0 then
+            table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
+            l = {}
         end
-        if row == endRow then
-            region[row] = {col, endCol}
-            return region
-        end
-        region[row] = {col, -1}
-        for i = row + 1, endRow - 1 do
-            region[i] = {0, -1}
-        end
-        if endCol > 0 then
-            region[endRow] = {0, endCol}
-        end
-        return region
     end
-
-    ---@param bufnr number
-    ---@param ns number
-    ---@param hlGoup string
-    ---@param start number
-    ---@param finish number
-    ---@param opt? table
-    ---@param delay? number
-    ---@return Promise
-    return function(bufnr, ns, hlGoup, start, finish, opt, delay)
-        local row, col = doUnPack(start)
-        local endRow, endCol = doUnPack(finish)
-        local o = {hl_group = hlGoup}
-        o = opt and vim.tbl_deep_extend('keep', o, opt) or o
-        local ids = {}
-        local region = rangeToRegion(row, col, endRow, endCol)
-        for sr, range in pairs(region) do
-            local sc, ec = range[1], range[2]
-            local er
-            if ec == -1 then
-                er = sr + 1
-                ec = 0
-            end
-            o.end_row = er
-            o.end_col = ec
-            table.insert(ids, api.nvim_buf_set_extmark(bufnr, ns, sr, sc, o))
-        end
-        return M.wait(delay or 300):thenCall(function()
-            for _, id in ipairs(ids) do
-                pcall(api.nvim_buf_del_extmark, bufnr, ns, id)
-            end
-        end)
+    if #l > 0 then
+        table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
     end
-end)()
+    return M.wait(delay or 300):thenCall(function()
+        for _, id in ipairs(ids) do
+            pcall(fn.matchdelete, id, winid)
+        end
+    end)
+end
 
 ---
 ---@param winid number

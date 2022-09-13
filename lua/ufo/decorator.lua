@@ -15,7 +15,6 @@ local initialized
 
 ---@class UfoDecorator
 ---@field ns number
----@field hlNs number
 ---@field virtTextHandler? UfoFoldVirtTextHandler[]
 ---@field enableFoldEndVirtText boolean
 ---@field openFoldHlTimeout number
@@ -25,6 +24,7 @@ local Decorator = {}
 
 local collection
 local bufnrSet
+local lastWinid
 
 ---@diagnostic disable-next-line: unused-local
 local function onStart(name, tick)
@@ -126,14 +126,14 @@ local function onEnd(name, tick)
     end
     collection = nil
     bufnrSet = nil
+    lastWinid = api.nvim_get_current_win()
 end
 
-function Decorator:highlightOpenFold(fb, lnum)
+function Decorator:highlightOpenFold(fb, winid, lnum)
     if self.openFoldHlEnabled then
         local fl = fb:foldedLine(lnum)
         local _, endLnum = fl:range()
-        utils.highlightTimeout(fb.bufnr, self.hlNs, 'UfoFoldedBg', lnum - 1, endLnum,
-                               nil, self.openFoldHlTimeout)
+        utils.highlightLinesTimeout(winid, 'UfoFoldedBg', lnum, endLnum, self.openFoldHlTimeout)
     end
 end
 
@@ -148,7 +148,9 @@ function Decorator:unHandledFoldedLnums(fb, winid, rows)
                 table.insert(folded, lnum)
             end
         elseif fb:lineIsClosed(lnum) then
-            self:highlightOpenFold(fb, lnum)
+            if winid == lastWinid then
+                self:highlightOpenFold(fb, winid, lnum)
+            end
             didOpen = fb:openFold(lnum) or didOpen
         end
         lastRow = rows[i]
@@ -158,7 +160,9 @@ function Decorator:unHandledFoldedLnums(fb, winid, rows)
     if utils.foldClosed(0, lnum) == lnum then
         table.insert(folded, lnum)
     elseif fb:lineIsClosed(lnum) then
-        self:highlightOpenFold(fb, lnum)
+        if winid == lastWinid then
+            self:highlightOpenFold(fb, winid, lnum)
+        end
         didOpen = fb:openFold(lnum) or didOpen
     end
 
@@ -225,7 +229,6 @@ function Decorator:initialize(namespace)
         on_end = onEnd
     })
     self.ns = namespace
-    self.hlNs = api.nvim_create_namespace('ufo-hl')
 
     table.insert(disposables, disposable:create(function()
         api.nvim_set_decoration_provider(namespace, {})
