@@ -24,7 +24,7 @@ local updateFoldDebounced
 ---@return Promise
 local function tryUpdateFold(bufnr)
     return async(function()
-        local winid = fn.bufwinid(bufnr)
+        local winid = utils.getWinByBuf(bufnr)
         if not utils.isWinValid(winid) then
             return
         end
@@ -65,7 +65,7 @@ function Fold.update(bufnr)
         end
         return promise.resolve()
     end
-    local winid = fn.bufwinid(bufnr)
+    local winid = utils.getWinByBuf(bufnr)
     if winid == -1 then
         fb.status = 'pending'
         return promise.resolve()

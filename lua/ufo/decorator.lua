@@ -34,6 +34,11 @@ end
 
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
+    if api.nvim_get_current_buf() == bufnr then
+        if api.nvim_get_current_win() ~= winid then
+            return false
+        end
+    end
     if bufnrSet[bufnr] or not fold.get(bufnr) or not vim.wo[winid].foldenable then
         collection[winid] = nil
         return false

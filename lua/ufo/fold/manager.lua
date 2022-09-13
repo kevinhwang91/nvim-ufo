@@ -157,7 +157,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     if not fb then
         return false
     end
-    local winid = fn.bufwinid(bufnr)
+    local winid = utils.getWinByBuf(bufnr)
     local changedtick = fb:changedtick()
     if ranges then
         if utils.mode() ~= 'n' or not utils.isWinValid(winid) or

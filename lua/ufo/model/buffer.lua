@@ -1,44 +1,8 @@
 local event = require('ufo.lib.event')
 
 local api = vim.api
-local uv = vim.loop
-
----@class UfoBuffersDetaching
----@field buffers table<number, number[]>
-local BuffersDetaching = {
-    buffers = {}
-}
-
-function BuffersDetaching:insert(bufnr, id)
-    local ids = self.buffers[bufnr] or {}
-    table.insert(ids, id)
-    self.buffers[bufnr] = ids
-end
-
-function BuffersDetaching:remove(bufnr, id)
-    local res = false
-    local ids = self.buffers[bufnr]
-    if ids then
-        for i, oId in ipairs(ids) do
-            if id == oId then
-                table.remove(ids, i)
-                res = true
-                break
-            end
-        end
-        if #ids == 0 then
-            self.buffers[bufnr] = nil
-        end
-    end
-    return res
-end
-
-function BuffersDetaching:clear(bufnr)
-    self.buffers[bufnr] = nil
-end
 
 ---@class UfoBuffer
----@field id number
 ---@field bufnr number
 ---@field attached boolean
 ---@field _lines table<number, string|boolean> A list of string or boolean
@@ -47,7 +11,7 @@ local Buffer = {}
 function Buffer:new(bufnr)
     local o = setmetatable({}, self)
     self.__index = self
-    o.id = uv.hrtime()
+    o.id = vim.loop.hrtime()
     o.bufnr = bufnr
     o:reload()
     return o
@@ -63,24 +27,18 @@ end
 
 function Buffer:dispose()
     self.attached = false
-    BuffersDetaching:insert(self.bufnr, self.id)
 end
 
 function Buffer:attach()
     local bt = self:buftype()
     if bt == 'terminal' or bt == 'prompt' then
-        self.attached = false
-        return self.attached
+        return false
     end
     ---@diagnostic disable: redefined-local, unused-local
     self.attached = api.nvim_buf_attach(self.bufnr, false, {
         on_lines = function(name, bufnr, changedtick, firstLine, lastLine,
                             lastLineUpdated, byteCount)
             if not self.attached then
-                -- buffer reattach issue
-                if BuffersDetaching:remove(bufnr, self.id) then
-                    event:emit('BufDetach', bufnr)
-                end
                 return true
             end
             if firstLine == lastLine and lastLine == lastLineUpdated and byteCount == 0 then
@@ -110,7 +68,6 @@ function Buffer:attach()
     })
     ---@diagnostic enable: redefined-local, unused-local
     if self.attached then
-        BuffersDetaching:clear(self.bufnr)
         event:emit('BufAttach', self.bufnr)
     end
     return self.attached

@@ -115,7 +115,7 @@ function FoldBuffer:handleFoldedLinesChanged(first, last, lastUpdated)
         didOpen = self:openFold(i) or didOpen
     end
     if didOpen and lastUpdated > first then
-        local winid = fn.bufwinid(self.bufnr)
+        local winid = utils.getWinByBuf(self.bufnr)
         if winid ~= -1 then
             utils.winCall(winid, function()
                 cmd(('sil! %d,%dfoldopen!'):format(first + 1, lastUpdated))

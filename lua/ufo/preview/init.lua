@@ -141,7 +141,7 @@ function Preview:attach(bufnr, foldedLnum)
         event:emit('setOpenFoldHl')
     end))
 
-    self.winid = fn.bufwinid(bufnr)
+    self.winid = utils.getWinByBuf(bufnr)
     local winView = utils.winCall(self.winid, fn.winsaveview)
     self.bufnr = bufnr
     self.lnum = winView.lnum

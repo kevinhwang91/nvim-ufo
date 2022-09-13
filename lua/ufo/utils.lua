@@ -34,6 +34,28 @@ function M.mode()
 end
 
 ---
+---@param bufnr number
+---@return number, number[]?
+function M.getWinByBuf(bufnr)
+    local curBufnr = api.nvim_get_current_buf()
+    bufnr = bufnr or curBufnr
+    local winids = {}
+    for _, winid in ipairs(api.nvim_list_wins()) do
+        if bufnr == api.nvim_win_get_buf(winid) then
+            table.insert(winids, winid)
+        end
+    end
+    if #winids == 0 then
+        return -1
+    elseif #winids == 1 then
+        return winids[1]
+    else
+        local winid = curBufnr == bufnr and api.nvim_get_current_win() or winids[1]
+        return winid, winids
+    end
+end
+
+---
 ---@param winid number
 ---@param f fun(): any
 ---@return any
