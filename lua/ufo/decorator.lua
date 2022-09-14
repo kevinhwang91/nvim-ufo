@@ -237,6 +237,11 @@ function Decorator:initialize(namespace)
     ---@deprecated
     ---@diagnostic disable-next-line: undefined-field
     self.enableFoldEndVirtText = config.enable_fold_end_virt_text
+    if self.enableFoldEndVirtText ~= nil then
+        vim.notify('`enable_fold_end_virt_text` is deprecated, ' ..
+            'please use `enable_get_fold_virt_text` instead and refer to `doc/example.lua` to use.',
+            vim.log.levels.WARN)
+    end
     self.openFoldHlTimeout = config.open_fold_hl_timeout
     self.openFoldHlEnabled = self.openFoldHlTimeout > 0
     event:on('setOpenFoldHl', function(val)
