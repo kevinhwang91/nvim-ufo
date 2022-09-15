@@ -107,13 +107,18 @@ function M.disableFold(bufnr)
 end
 
 ---Get foldingRange from the ufo internal providers by name
----@param providerName string
 ---@param bufnr number
+---@param providerName string|'lsp'|'treesitter'|'indent'
 ---@return UfoFoldingRange[]|Promise
-function M.getFolds(providerName, bufnr)
-    local ok, res = pcall(require, 'ufo.provider.' .. providerName)
-    assert(ok, ([[Can't find %s provider]]):format(providerName))
-    return res.getFolds(bufnr)
+function M.getFolds(bufnr, providerName)
+    if type(bufnr) == 'string' and type(providerName) == 'number' then
+        ---@deprecated
+        ---@diagnostic disable-next-line: cast-local-type
+        --TODO signature is changed (swap parameters), notify deprecated in next released
+        bufnr, providerName = providerName, bufnr
+    end
+    local func = require('ufo.provider'):getFunction(providerName)
+    return func(bufnr)
 end
 
 ---Setup configuration and enable ufo
@@ -154,7 +159,6 @@ end
 ---truncate('1你2好', 5) return '1你2'
 ---truncate('1你2好', 6) return '1你2好'
 ---truncate('1你2好', 7) return '1你2好'
----truncate('1你2好', 8) return '1你2好'
 ---@param ctx UfoFoldVirtTextHandlerContext the context used by ufo, export to caller
 
 ---@alias UfoFoldVirtTextHandler fun(virtText: ExtmarkVirtTextChunk[], lnum: number, endLnum: number, width: number, truncate: fun(str: string, width: number), ctx: UfoFoldVirtTextHandlerContext): ExtmarkVirtTextChunk

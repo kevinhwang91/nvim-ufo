@@ -62,7 +62,7 @@ function Provider:initialize()
     self.modules = setmetatable({}, {
     __index = function(t, k)
         local ok, res = pcall(require, self.modulePathPrefix .. k)
-        assert(ok, ([[Can't find a module in `ufo.provider.%s`]]):format(k))
+        assert(ok, ([[Can't find a module in `%s%s`]]):format(self.modulePathPrefix, k))
         rawset(t, k, res)
         return res
     end
