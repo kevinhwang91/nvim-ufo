@@ -5,6 +5,7 @@
 ---@field info fun(...)
 ---@field warn fun(...)
 ---@field error fun(...)
+---@field path string
 local Log = {}
 local fn = vim.fn
 local uv = vim.loop
@@ -69,7 +70,7 @@ end
 
 local function init()
     local logDir = fn.stdpath('cache')
-    local logFile = table.concat({logDir, 'ufo.log'}, pathSep())
+    Log.path = table.concat({logDir, 'ufo.log'}, pathSep())
     local logDateFmt = '%y-%m-%d %T'
 
     fn.mkdir(logDir, 'p')
@@ -92,7 +93,7 @@ local function init()
             local info = debug.getinfo(2, 'Sl')
             local linfo = info.short_src:match('[^/]*$') .. ':' .. info.currentline
 
-            local fp = assert(io.open(logFile, 'a+'))
+            local fp = assert(io.open(Log.path, 'a+'))
             local str = string.format('[%s] [%s] %s : %s\n', os.date(logDateFmt), l, linfo, msg)
             fp:write(str)
             fp:close()

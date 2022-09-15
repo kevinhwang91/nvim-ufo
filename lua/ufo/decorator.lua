@@ -25,6 +25,7 @@ local Decorator = {}
 local collection
 local bufnrSet
 local lastWinid
+local handlerErrorMsg
 
 ---@diagnostic disable-next-line: unused-local
 local function onStart(name, tick)
@@ -89,7 +90,6 @@ local function onEnd(name, tick)
                         needRedraw = true
                         log.debug('need add/update folded lnum:', lnum)
                         local endLnum = utils.foldClosedEnd(0, lnum)
-
                         local handler = self:getVirtTextHandler(bufnr)
                         local limitedText = utils.truncateStrByWidth(text, width)
                         local virtText = render.getVirtText(bufnr, limitedText, lnum, syntax, nss)
@@ -108,14 +108,20 @@ local function onEnd(name, tick)
                             local endText = fb:lines(endLnum)[1]
                             endVirtText = render.getVirtText(bufnr, endText, endLnum, syntax, nss)
                         end
-                        virtText = handler(virtText, lnum, endLnum, width, utils.truncateStrByWidth, {
-                            bufnr = bufnr,
-                            winid = winid,
-                            text = text,
-                            end_virt_text = endVirtText,
-                            get_fold_virt_text = getFoldVirtText
-                        })
-                        fb:closeFold(lnum, endLnum, text, virtText, width)
+                        local ok, res = pcall(handler, virtText, lnum, endLnum, width,
+                            utils.truncateStrByWidth, {
+                                bufnr = bufnr,
+                                winid = winid,
+                                text = text,
+                                end_virt_text = endVirtText,
+                                get_fold_virt_text = getFoldVirtText
+                            })
+                        if ok then
+                            fb:closeFold(lnum, endLnum, text, res, width)
+                        else
+                            fb:closeFold(lnum, endLnum, text, {{handlerErrorMsg, 'Error'}}, width)
+                            log.error(res)
+                        end
                     end
                 end
             end)
@@ -259,6 +265,7 @@ function Decorator:initialize(namespace)
             return virtTextHandler
         end
     })
+    handlerErrorMsg = ([[!Error in user's handler, check out `%s`]]):format(log.path)
     event:on('BufDetach', function(bufnr)
         self.virtTextHandlers[bufnr] = nil
     end, disposables)
