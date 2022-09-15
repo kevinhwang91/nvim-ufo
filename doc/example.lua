@@ -102,6 +102,20 @@ local function goNextClosedAndPeek()
     require('ufo').peekFoldedLinesUnderCursor()
 end
 
+local function applyFoldsAndThenCloseAllFolds(providerName)
+    require('async')(function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        -- make sure buffer is attached
+        require('ufo').attach(bufnr)
+        -- getFolds return Promise if providerName == 'lsp'
+        local ranges = await(require('ufo').getFolds(bufnr, providerName))
+        local ok = require('ufo').applyFolds(bufnr, ranges)
+        if ok then
+            require('ufo').closeAllFolds()
+        end
+    end)
+end
+
 ------------------------------------------enhanceAction---------------------------------------------
 
 ---------------------------------------setFoldVirtTextHandler---------------------------------------

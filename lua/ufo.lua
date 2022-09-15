@@ -121,6 +121,11 @@ function M.getFolds(bufnr, providerName)
     return func(bufnr)
 end
 
+function M.applyFolds(bufnr, ranges)
+    vim.validate({bufnr = {bufnr, 'number', true}, ranges = {ranges, 'table'}})
+    return require('ufo.fold').apply(bufnr, ranges)
+end
+
 ---Setup configuration and enable ufo
 ---@param opts? UfoConfig
 function M.setup(opts)

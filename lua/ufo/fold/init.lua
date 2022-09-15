@@ -120,6 +120,10 @@ function Fold.get(bufnr)
     return manager:get(bufnr)
 end
 
+function Fold.apply(bufnr, ranges)
+    return manager:applyFoldRanges(bufnr, ranges)
+end
+
 function Fold.attach(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     if not manager:attach(bufnr) then
