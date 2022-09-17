@@ -136,10 +136,13 @@ local function onEnd(name, tick)
 end
 
 function Decorator:highlightOpenFold(fb, winid, lnum)
-    if self.openFoldHlEnabled then
+    if self.openFoldHlEnabled and winid == lastWinid then
         local fl = fb:foldedLine(lnum)
         local _, endLnum = fl:range()
-        utils.highlightLinesTimeout(winid, 'UfoFoldedBg', lnum, endLnum, self.openFoldHlTimeout)
+        local _, winids = utils.getWinByBuf(fb.bufnr)
+        local shared = not not winids
+        utils.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', lnum, endLnum,
+                                        self.openFoldHlTimeout, shared)
     end
 end
 
@@ -154,9 +157,7 @@ function Decorator:unHandledFoldedLnums(fb, winid, rows)
                 table.insert(folded, lnum)
             end
         elseif fb:lineIsClosed(lnum) then
-            if winid == lastWinid then
-                self:highlightOpenFold(fb, winid, lnum)
-            end
+            self:highlightOpenFold(fb, winid, lnum)
             didOpen = fb:openFold(lnum) or didOpen
         end
         lastRow = rows[i]
@@ -166,9 +167,7 @@ function Decorator:unHandledFoldedLnums(fb, winid, rows)
     if utils.foldClosed(0, lnum) == lnum then
         table.insert(folded, lnum)
     elseif fb:lineIsClosed(lnum) then
-        if winid == lastWinid then
-            self:highlightOpenFold(fb, winid, lnum)
-        end
+        self:highlightOpenFold(fb, winid, lnum)
         didOpen = fb:openFold(lnum) or didOpen
     end
 

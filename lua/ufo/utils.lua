@@ -37,8 +37,11 @@ end
 ---@param bufnr number
 ---@return number, number[]?
 function M.getWinByBuf(bufnr)
-    local curBufnr = api.nvim_get_current_buf()
-    bufnr = bufnr or curBufnr
+    local curBufnr
+    if not bufnr then
+        curBufnr = api.nvim_get_current_buf()
+        bufnr = curBufnr
+    end
     local winids = {}
     for _, winid in ipairs(api.nvim_list_wins()) do
         if bufnr == api.nvim_win_get_buf(winid) then
@@ -50,6 +53,9 @@ function M.getWinByBuf(bufnr)
     elseif #winids == 1 then
         return winids[1]
     else
+        if not curBufnr then
+            curBufnr = api.nvim_get_current_buf()
+        end
         local winid = curBufnr == bufnr and api.nvim_get_current_win() or winids[1]
         return winid, winids
     end
@@ -241,39 +247,62 @@ function M.isBufLoaded(bufnr)
     return bufnr and type(bufnr) == 'number' and bufnr > 0 and api.nvim_buf_is_loaded(bufnr)
 end
 
----@param winid number
+local ns = api.nvim_create_namespace('ufo-hl')
+
+---Prefer use nvim_buf_set_extmark rather than matchaddpos, only use matchaddpos if buffer is shared
+---with multiple windows in current tabpage.
+---Check out https://github.com/neovim/neovim/issues/20208 for detail.
+---@param handle number
 ---@param hlGoup string
 ---@param start number
 ---@param finish number
 ---@param delay? number
+---@param shared? boolean
 ---@return Promise
-function M.highlightLinesTimeout(winid, hlGoup, start, finish, delay)
+function M.highlightLinesWithTimeout(handle, hlGoup, start, finish, delay, shared)
     vim.validate({
-        winid = {winid, 'number'},
+        handle = {handle, 'number'},
         hlGoup = {hlGoup, 'string'},
         start = {start, 'number'},
         finish = {finish, 'number'},
-        delay = {delay, 'number', true}
+        delay = {delay, 'number', true},
+        shared = {shared, 'boolean', true},
     })
-    local prior = 10
-
     local ids = {}
-    local l = {}
-    for i = start, finish do
-        table.insert(l, {i})
-        if i % 8 == 0 then
+    local onFulfilled
+    if shared then
+        local prior = 10
+        local l = {}
+        for i = start, finish do
+            table.insert(l, {i})
+            if i % 8 == 0 then
+                table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
+                l = {}
+            end
+        end
+        if #l > 0 then
             table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
-            l = {}
+        end
+        onFulfilled = function()
+            for _, id in ipairs(ids) do
+                pcall(fn.matchdelete, id, handle)
+            end
+        end
+    else
+        local o = {hl_group = hlGoup}
+        for i = start, finish do
+            local row, col = i - 1, 0
+            o.end_row = i
+            o.end_col = 0
+            table.insert(ids, api.nvim_buf_set_extmark(handle, ns, row, col, o))
+        end
+        onFulfilled = function()
+            for _, id in ipairs(ids) do
+                pcall(api.nvim_buf_del_extmark, handle, ns, id)
+            end
         end
     end
-    if #l > 0 then
-        table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
-    end
-    return M.wait(delay or 300):thenCall(function()
-        for _, id in ipairs(ids) do
-            pcall(fn.matchdelete, id, winid)
-        end
-    end)
+    return M.wait(delay or 300):thenCall(onFulfilled)
 end
 
 ---
