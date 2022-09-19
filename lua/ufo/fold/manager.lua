@@ -160,16 +160,15 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     local winid = utils.getWinByBuf(bufnr)
     local changedtick = fb:changedtick()
     if ranges then
-        if not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) then
-            local mode = utils.mode()
+        local mode = utils.mode()
+        if not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) or
             -- TODO
             -- open a buffer through terminal will get a `t` mode
-            if mode ~= 'n' and (mode ~= 't' or fb:buftype() == 'terminal') then
-                fb.version = changedtick
-                fb.foldRanges = ranges
-                fb.status = 'pending'
-                return false
-            end
+            mode ~= 'n' and (mode ~= 't' or fb:buftype() == 'terminal') then
+            fb.version = changedtick
+            fb.foldRanges = ranges
+            fb.status = 'pending'
+            return false
         end
     elseif changedtick ~= fb.version or not utils.isWinValid(winid) then
         return false
