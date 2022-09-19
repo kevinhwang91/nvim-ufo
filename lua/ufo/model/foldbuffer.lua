@@ -94,9 +94,13 @@ function FoldBuffer:foldedLine(lnum)
 end
 
 ---
+---@param winid number
 ---@param lnum number 1-index
 ---@return UfoFoldingRangeKind|''
-function FoldBuffer:lineKind(lnum)
+function FoldBuffer:lineKind(winid, lnum)
+    if utils.isDiffOrMarkerFold(winid) then
+        return ''
+    end
     local row = lnum - 1
     for _, range in ipairs(self.foldRanges) do
         if row >= range.startLine and row <= range.endLine then

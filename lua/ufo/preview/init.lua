@@ -192,7 +192,8 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     if utils.isBufLoaded(floatwin.bufnr) then
         api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
     end
-    local kind = fb:lineKind(lnum)
+    local curWinid = api.nvim_get_current_win()
+    local kind = fb:lineKind(curWinid, lnum)
     local isAbove = kind == 'comment'
     if not isAbove and nextLineIncluded ~= false then
         endLnum = fb:lineCount() == endLnum and endLnum or (endLnum + 1)
