@@ -21,7 +21,7 @@ exports.activate = async context => {
 		if (!languages.hasProvider('foldingRange', textDocument)) {
 			await wait(500)
 			if (!languages.hasProvider('foldingRange', textDocument)) {
-				throw new Error('UfoFallbackException')
+				throw 'UfoFallbackException'
 			}
 		}
 		await doc.synchronize()

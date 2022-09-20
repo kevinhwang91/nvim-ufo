@@ -7,7 +7,7 @@
 	"main": "coc-extension/index.js",
 	"type": "commonjs",
 	"engines": {
-		"coc": "^0.0.81"
+		"coc": "^0.0.82"
 	},
 	"activationEvents": [
 		"*"

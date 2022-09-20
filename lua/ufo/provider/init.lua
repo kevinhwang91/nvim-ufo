@@ -45,7 +45,7 @@ function Provider:requestFoldingRange(providers, bufnr)
                 return {main, nil}
             end
         else
-            error(reason)
+            return promise.reject(reason)
         end
     end)
     if log.isEnabled('debug') then

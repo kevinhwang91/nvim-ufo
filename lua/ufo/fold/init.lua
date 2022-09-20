@@ -110,7 +110,7 @@ function Fold.update(bufnr)
         if not dispose(false) then
             return
         end
-        error(err)
+        promise.reject(err)
     end)
 end
 
