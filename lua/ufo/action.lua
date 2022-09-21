@@ -161,10 +161,10 @@ function M.closeFolds(level)
 end
 
 function M.openFoldsExceptKinds(kinds)
-    M.openAllFolds()
+    cmd('silent! %foldopen!')
     local curBufnr = api.nvim_get_current_buf()
     local fb = fold.get(curBufnr)
-    if not fb then
+    if not fb or type(kinds) ~= 'table' or #kinds == 0 then
         return
     end
     local res = {}
@@ -185,10 +185,6 @@ function M.openFoldsExceptKinds(kinds)
     if #cmds > 0 then
         cmd(table.concat(cmds, '|'))
     end
-end
-
-function M.openAllFolds()
-    cmd('silent! %foldopen!')
 end
 
 return M

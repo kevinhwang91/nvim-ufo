@@ -18,7 +18,8 @@ end
 ---@param lnum number
 ---@return number
 function M.plinesWin(winid, lnum)
-    return C.plines_win(findWin(winid), lnum, true)
+    local wp = findWin(winid)
+    return C.plines_win(wp, lnum, true)
 end
 
 ---
@@ -27,7 +28,8 @@ end
 ---@param winheight boolean
 ---@return number
 function M.plinesWinNofill(winid, lnum, winheight)
-    return C.plines_win_nofill(findWin(winid), lnum, winheight)
+    local wp = findWin(winid)
+    return C.plines_win_nofill(wp, lnum, winheight)
 end
 
 ---

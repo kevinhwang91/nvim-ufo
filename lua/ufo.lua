@@ -34,7 +34,7 @@ end
 
 ---Open all folds but keep foldlevel
 function M.openAllFolds()
-    return require('ufo.action').openAllFolds()
+    return require('ufo.action').openFoldsExceptKinds()
 end
 
 ---Close the folds with a higher level,

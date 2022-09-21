@@ -313,21 +313,21 @@ end
 function M.evaluateTopline(winid, line, lsizes)
     local log = require('ufo.lib.log')
     local topline
-    local iStart, iEnd = line - 1, math.max(1, line - lsizes)
+    local iStart = M.foldClosed(winid, line)
+    iStart = iStart == -1 and line or iStart
     local lsizeSum = 0
-    local i = iStart
+    local i = iStart - 1
     local lsizeObj = require('ufo.model.linesize'):new(winid)
     local len = lsizes - lsizeObj:fillSize(line)
     log.info('winid:', winid, 'line:', line, 'lsizes:', lsizes, 'len:', len)
     local size
-    while lsizeSum < len and i >= iEnd do
+    while lsizeSum < len and i > 0 do
         local lnum = M.foldClosed(winid, i)
         log.info('lnum:', lnum, 'i:', i)
         if lnum == -1 then
             size = lsizeObj:size(i)
         else
             size = 1
-            iEnd = math.max(1, iEnd + lnum - i)
             i = lnum
         end
         lsizeSum = lsizeSum + size
@@ -336,7 +336,7 @@ function M.evaluateTopline(winid, line, lsizes)
         i = i - 1
     end
     if not topline then
-        topline = line
+        topline = iStart
     end
     -- extraOff lines is need to be showed near the topline
     local topfill = lsizeObj:fillSize(topline)
