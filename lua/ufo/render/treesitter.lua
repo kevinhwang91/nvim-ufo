@@ -25,6 +25,8 @@ function M.getHighlightByRange(bufnr, startRange, endRange)
             return
         end
         local iter = query:query():iter_captures(root, data.bufnr, row, endRow + 1)
+        -- Record the last range and priority
+        local lsr, lsc, ler, lec, lpriority, last
         for capture, node, metadata in iter do
             if not capture then
                 break
@@ -39,7 +41,16 @@ function M.getHighlightByRange(bufnr, startRange, endRange)
                 if er > endRow or er == endRow and ec > endCol then
                     er, ec = endRow, endCol
                 end
-                table.insert(res, {sr, sc, er, ec, hlId, priority})
+                -- Overlap highlighting if range is equal to last's
+                if lsr == sr and lsc == sc and ler == er and lec == ec then
+                    if lpriority <= priority then
+                        last[5], last[6] = hlId, priority
+                    end
+                else
+                    last = {sr, sc, er, ec, hlId, priority}
+                    table.insert(res, last)
+                end
+                lsr, lsc, ler, lec, lpriority = sr, sc, er, ec, priority
             end
         end
     end)
