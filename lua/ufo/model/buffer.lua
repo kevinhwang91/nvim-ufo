@@ -27,6 +27,8 @@ end
 
 function Buffer:dispose()
     self.attached = false
+    self.bt = nil
+    self.ft = nil
 end
 
 function Buffer:attach()

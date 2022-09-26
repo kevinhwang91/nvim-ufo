@@ -1,6 +1,5 @@
 local api = vim.api
 local cmd = vim.cmd
-local fn = vim.fn
 
 local utils      = require('ufo.utils')
 local buffer     = require('ufo.model.buffer')
