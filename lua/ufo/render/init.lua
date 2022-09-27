@@ -39,6 +39,16 @@ local function syntaxToRowHighlightRange(res, lnum, startCol, endCol)
     table.insert(res, {lnum, lastIndex, endCol, lastHlId})
 end
 
+local function mapMarkers(bufnr, startRow, marks, hlGroups, ns)
+    for _, m in ipairs(marks) do
+        if next(hlGroups[m[5]]) then
+            m[1] = m[1] - startRow
+            m[3] = m[3] - startRow
+            extmark.setHighlight(bufnr, ns, m[1], m[2], m[3], m[4], m[5], m[6])
+        end
+    end
+end
+
 function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, text, ns)
     local startRow, startCol = startRange[1], startRange[1]
     local endRow, endCol = endRange[1], endRange[2]
@@ -48,18 +58,11 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
             table.insert(nss, namespace)
         end
     end
-    local marks = extmark.getHighlightByRange(srcBufnr, startRange, endRange, nss)
-    for _, m in ipairs(marks) do
-        m[1] = m[1] - startRow
-        m[3] = m[3] - startRow
-        extmark.setHighlight(dstBufnr, ns, m[1], m[2], m[3], m[4], m[5], m[6])
-    end
-    marks = treesitter.getHighlightByRange(srcBufnr, startRange, endRange)
-    for _, m in ipairs(marks) do
-        m[1] = m[1] - startRow
-        m[3] = m[3] - startRow
-        extmark.setHighlight(dstBufnr, ns, m[1], m[2], m[3], m[4], m[5], m[6])
-    end
+    local hlGroups = highlight.hlGroups()
+    local marks = extmark.getHighlightsByRange(srcBufnr, startRange, endRange, nss)
+    mapMarkers(dstBufnr, startRow, marks, hlGroups, ns)
+    marks = treesitter.getHighlightsByRange(srcBufnr, startRange, endRange, hlGroups)
+    mapMarkers(dstBufnr, startRow, marks, hlGroups, ns)
     if vim.bo[srcBufnr].syntax ~= '' then
         api.nvim_buf_call(srcBufnr, function()
             local res = {}
@@ -87,12 +90,12 @@ function M.getVirtText(bufnr, text, lnum, syntax, namespaces)
     end
     local prioritySlots = {}
     local hlGroupSlots = {}
-    local marks = extmark.getHighlightByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
+    local marks = extmark.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
     local hlGroups = highlight.hlGroups()
     for _, m in ipairs(marks) do
         fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
     end
-    marks = treesitter.getHighlightByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
+    marks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
     for _, m in ipairs(marks) do
         fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
     end

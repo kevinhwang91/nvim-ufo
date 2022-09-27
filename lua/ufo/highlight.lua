@@ -6,6 +6,8 @@ local api = vim.api
 ---@class UfoHighlight
 local Highlight = {}
 local initialized
+
+---@type table<number|string, table>
 local hlGroups
 
 local function resetHighlightGroup()
@@ -18,7 +20,7 @@ local function resetHighlightGroup()
             else
                 ok, hl = pcall(api.nvim_get_hl_by_name, k, termguicolors)
             end
-            if not ok then
+            if not ok or hl[vim.type_idx] == vim.types.dictionary then
                 hl = {}
             end
             rawset(tbl, k, hl)

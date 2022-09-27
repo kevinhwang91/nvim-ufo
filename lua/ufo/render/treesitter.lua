@@ -2,7 +2,13 @@ local highlighter = require('vim.treesitter.highlighter')
 
 local M = {}
 
-function M.getHighlightByRange(bufnr, startRange, endRange)
+---
+---@param bufnr number
+---@param startRange number
+---@param endRange number
+---@param hlGroups? table<number|string, table>
+---@return table
+function M.getHighlightsByRange(bufnr, startRange, endRange, hlGroups)
     local data = highlighter.active[bufnr]
     if not data then
         return {}
@@ -41,16 +47,20 @@ function M.getHighlightByRange(bufnr, startRange, endRange)
                 if er > endRow or er == endRow and ec > endCol then
                     er, ec = endRow, endCol
                 end
-                -- Overlap highlighting if range is equal to last's
-                if lsr == sr and lsc == sc and ler == er and lec == ec then
-                    if lpriority <= priority then
-                        last[5], last[6] = hlId, priority
+                if hlGroups then
+                    -- Overlap highlighting if range is equal to last's
+                    if lsr == sr and lsc == sc and ler == er and lec == ec then
+                        if hlGroups[hlId].foreground and lpriority <= priority then
+                            last[5], last[6] = hlId, priority
+                        end
+                    else
+                        last = {sr, sc, er, ec, hlId, priority}
+                        table.insert(res, last)
                     end
+                    lsr, lsc, ler, lec, lpriority = sr, sc, er, ec, priority
                 else
-                    last = {sr, sc, er, ec, hlId, priority}
-                    table.insert(res, last)
+                    table.insert(res, {sr, sc, er, ec, hlId, priority})
                 end
-                lsr, lsc, ler, lec, lpriority = sr, sc, er, ec, priority
             end
         end
     end)

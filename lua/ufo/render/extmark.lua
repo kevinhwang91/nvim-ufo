@@ -8,7 +8,7 @@ local M = {}
 ---@param endRange number[]
 ---@param namespaces number[]
 ---@return table
-function M.getHighlightByRange(bufnr, startRange, endRange, namespaces)
+function M.getHighlightsByRange(bufnr, startRange, endRange, namespaces)
     local res = {}
     local endRow, endCol = endRange[1], endRange[2]
     for _, ns in pairs(namespaces) do
