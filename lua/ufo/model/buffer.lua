@@ -186,7 +186,7 @@ end
 ---
 ---@return string
 function Buffer:filetype()
-    if not self.ft then
+    if self.attached and not self.ft then
         self.ft = vim.bo[self.bufnr].ft
     end
     return self.ft
@@ -195,7 +195,7 @@ end
 ---
 ---@return string
 function Buffer:buftype()
-    if not self.bt then
+    if self.attached and not self.bt then
         self.bt = vim.bo[self.bufnr].bt
     end
     return self.bt
