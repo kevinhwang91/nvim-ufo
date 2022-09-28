@@ -183,8 +183,8 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
         -- buffer is detached
         return
     end
-    local lnum = api.nvim_win_get_cursor(0)[1]
-    lnum = utils.foldClosed(0, lnum)
+    local oLnum = api.nvim_win_get_cursor(0)[1]
+    local lnum = utils.foldClosed(0, oLnum)
     if lnum == -1 then
         return
     end
@@ -201,6 +201,10 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     local text = fb:lines(lnum, endLnum)
     floatwin:display(api.nvim_get_current_win(), text, enter, isAbove)
     utils.winCall(floatwin.winid, function()
+        if oLnum > lnum then
+            api.nvim_win_set_cursor(0, {oLnum - lnum + 1, 0})
+            cmd('norm! zz')
+        end
         cmd('norm! ze')
     end)
     render.mapHighlightLimitByRange(curBufnr, floatwin.bufnr,

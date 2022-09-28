@@ -90,6 +90,8 @@ function ScrollBar:display()
         return
     end
     local wopts = self:build()
+    -- it is relative to floating window, need to redraw to make floating window validate
+    cmd('redraw')
     if self:validate() then
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)
@@ -103,8 +105,6 @@ function ScrollBar:display()
         end
         vim.bo[self.bufnr].modifiable = true
         vim.bo[self.bufnr].bufhidden = 'hide'
-        -- it is relative to floating window, need to redraw to make floating window validate
-        cmd('redraw')
         ScrollBar:open(self.bufnr, wopts)
         local wo = vim.wo[self.winid]
         wo.winhl = 'Normal:UfoPreviewSbar'
