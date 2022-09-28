@@ -206,6 +206,7 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     render.mapHighlightLimitByRange(curBufnr, floatwin.bufnr,
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
                                     text, self.ns)
+    render.mapMatchByLnum(curWinid, floatwin.winid, lnum, endLnum)
     scrollbar:display()
     self:attach(curBufnr, lnum)
     return floatwin.winid

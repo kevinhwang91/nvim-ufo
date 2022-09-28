@@ -4,6 +4,7 @@ local fn = vim.fn
 local highlight  = require('ufo.highlight')
 local extmark    = require('ufo.render.extmark')
 local treesitter = require('ufo.render.treesitter')
+local match      = require('ufo.render.match')
 
 local M = {}
 
@@ -80,6 +81,13 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
                 extmark.setHighlight(dstBufnr, ns, row, r[2] - 1, row, r[3], r[4], 1)
             end
         end)
+    end
+end
+
+function M.mapMatchByLnum(srcWinid, dstWinid, lnum, endLnum)
+    local res = match.mapHighlightsByLnum(srcWinid, lnum, endLnum)
+    if not vim.tbl_isempty(res) then
+        fn.setmatches(res, dstWinid)
     end
 end
 
