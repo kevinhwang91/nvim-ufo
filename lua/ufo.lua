@@ -112,9 +112,9 @@ end
 ---@return UfoFoldingRange[]|Promise
 function M.getFolds(bufnr, providerName)
     if type(bufnr) == 'string' and type(providerName) == 'number' then
+        --TODO signature is changed (swap parameters), notify deprecated in next released
         ---@deprecated
         ---@diagnostic disable-next-line: cast-local-type
-        --TODO signature is changed (swap parameters), notify deprecated in next released
         bufnr, providerName = providerName, bufnr
     end
     local func = require('ufo.provider'):getFunction(providerName)
@@ -147,7 +147,7 @@ end
 ---@field text string text for the first line of closed fold
 ---@field get_fold_virt_text fun(lnum: number) a function to get virtual text by lnum
 
----@class ExtmarkVirtTextChunk
+---@class UfoExtmarkVirtTextChunk
 ---@field text string
 ---@field highlight string|number
 
@@ -156,7 +156,7 @@ end
 ---run \`:h nvim_buf_set_extmark | call search('virt_text')\` for detail
 ---@diagnostic disable: undefined-doc-param
 ---Detial for handler function:
----@param virtText ExtmarkVirtTextChunk[] contained text and highlight captured by Ufo, export to caller
+---@param virtText UfoExtmarkVirtTextChunk[] contained text and highlight captured by Ufo, export to caller
 ---@param lnum number first line of closed fold, like \`v:foldstart\` in foldtext()
 ---@param endLnum number last line of closed fold, like \`v:foldend\` in foldtext()
 ---@param width number text area width, exclude foldcolumn, signcolumn and numberwidth
@@ -172,7 +172,7 @@ end
 ---truncate('1你2好', 7) return '1你2好'
 ---@param ctx UfoFoldVirtTextHandlerContext the context used by ufo, export to caller
 
----@alias UfoFoldVirtTextHandler fun(virtText: ExtmarkVirtTextChunk[], lnum: number, endLnum: number, width: number, truncate: fun(str: string, width: number), ctx: UfoFoldVirtTextHandlerContext): ExtmarkVirtTextChunk
+---@alias UfoFoldVirtTextHandler fun(virtText: UfoExtmarkVirtTextChunk[], lnum: number, endLnum: number, width: number, truncate: fun(str: string, width: number), ctx: UfoFoldVirtTextHandlerContext): UfoExtmarkVirtTextChunk
 ---
 ---@param bufnr number
 ---@param handler UfoFoldVirtTextHandler

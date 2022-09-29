@@ -56,9 +56,9 @@ function FloatWin:borderHasLeftLine()
     return borderHasLine(self.border, 8)
 end
 
-function FloatWin:build(targetWinid, height, border, isAbove)
-    local winfo = utils.getWinInfo(targetWinid)
-    local aboveLine = utils.winCall(targetWinid, fn.winline) - 1
+function FloatWin:build(winid, height, border, isAbove)
+    local winfo = utils.getWinInfo(winid)
+    local aboveLine = utils.winCall(winid, fn.winline) - 1
     local belowLine = winfo.height - aboveLine
     self.border = type(border) == 'string' and vim.deepcopy(defaultBorder[border]) or border
     if isAbove then

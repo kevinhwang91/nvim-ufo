@@ -6,7 +6,7 @@ local api = vim.api
 ---@field ns number
 ---@field text? string
 ---@field width? number
----@field virtText? string
+---@field virtText? UfoExtmarkVirtTextChunk[]
 local FoldedLine = {}
 
 function FoldedLine:new(bufnr, ns, text, width)

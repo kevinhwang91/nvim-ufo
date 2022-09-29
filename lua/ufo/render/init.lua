@@ -91,7 +91,11 @@ function M.mapMatchByLnum(srcWinid, dstWinid, lnum, endLnum)
     end
 end
 
-function M.getVirtText(bufnr, text, lnum, syntax, namespaces)
+function M.setVirtText(bufnr, ns, row, virtText, id)
+    return extmark.setVirtText(bufnr, ns, row, virtText, id)
+end
+
+function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
     local len = #text
     if len == 0 then
         return {{'', 'UfoFoldedFg'}}
