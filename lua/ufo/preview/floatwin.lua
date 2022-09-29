@@ -19,6 +19,8 @@ local utils = require('ufo.utils')
 ---@field border string|'none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[]
 ---@field lineCount number
 ---@field showScrollBar boolean
+---@field topline number
+---@field virtText UfoExtmarkVirtTextChunk[]
 local FloatWin = {}
 
 local defaultBorder = {
@@ -117,7 +119,6 @@ function FloatWin:open(bufnr, wopts, enter)
         enter = false
     end
     self.winid = api.nvim_open_win(bufnr, enter, wopts)
-    api.nvim_win_set_cursor(self.winid, {1, 0})
     return self.winid
 end
 
@@ -125,12 +126,12 @@ function FloatWin:close()
     if self:validate() then
         api.nvim_win_close(self.winid, true)
     end
-    self.winid = nil
+    rawset(self, 'winid', nil)
 end
 
-function FloatWin:display(targetWinid, text, enter, isAbove)
+function FloatWin:display(winid, text, enter, isAbove)
     local height = math.min(self.config.maxheight, #text)
-    local wopts = self:build(targetWinid, height, self.config.border, isAbove)
+    local wopts = self:build(winid, height, self.config.border, isAbove)
     if self:validate() then
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)
@@ -155,15 +156,23 @@ function FloatWin:display(targetWinid, text, enter, isAbove)
         wo.fen, wo.fdm, wo.fdc = false, 'manual', '0'
         wo.cursorline = enter == true
         wo.signcolumn, wo.colorcolumn = 'no', ''
+        if wo.so == 0 then
+            wo.so = 1
+        end
         wo.winhl = self.config.winhighlight
         wo.winblend = self.winblend
     end
+    api.nvim_win_set_cursor(self.winid, {1, 0})
     vim.bo[self.bufnr].modifiable = true
     api.nvim_buf_set_lines(self.bufnr, 0, -1, true, text)
     vim.bo[self.bufnr].modifiable = false
     self.lineCount = #text
     self.showScrollBar = self.lineCount > self.height
     return self.winid
+end
+
+function FloatWin:refreshTopline()
+    self.topline = fn.line('w0', self.winid)
 end
 
 function FloatWin:initialize(ns, config)

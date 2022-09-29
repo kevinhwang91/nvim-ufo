@@ -213,7 +213,7 @@ For example, Changing the text in a buffer will request the providers for folds.
 | scrollD  | Type `CTRL-D` in preview window                                                                |         |
 | scrollE  | Type `CTRL-E` in preview window                                                                | `<C-E>` |
 | scrollY  | Type `CTRL-Y` in preview window                                                                | `<C-Y>` |
-| close    | In normal window: close preview window<br>In preview window: close preview window              | `q`     |
+| close    | In normal window: Close preview window<br>In preview window: Close preview window              | `q`     |
 | switch   | In normal window: Go to preview window<br>In preview window: Go to normal window               | `<Tab>` |
 | trace    | In normal window: Trace code based on topline<br>In preview window: Trace code based on cursor | `<CR>`  |
 
@@ -245,16 +245,22 @@ Additional mouse supported:
 ### Highlight groups
 
 ```vim
+" hi default UfoFoldedFg guifg=Normal.foreground
+" hi default UfoFoldedBg guibg=Folded.background
 hi default link UfoPreviewSbar PmenuSbar
 hi default link UfoPreviewThumb PmenuThumb
+hi default link UfoPreviewWinBar UfoFoldedBg
 hi default link UfoFoldedEllipsis Comment
 ```
 
-- `UfoPreviewSbar`: highlight the scroll bar of preview window, only take effect if the border is
-  missing right horizontal line, like `border = 'none'`.
-- `UfoPreviewThumb`: highlight the thumb of preview window.
-- `UfoFoldedEllipsis`: highlight ellipsis at the end of folded line, invalid if
-  `fold_virt_text_handler` is set.
+- `UfoFoldedFg`: Foreground for raw text of folded line.
+- `UfoFoldedBg`: Background of folded line.
+- `UfoPreviewSbar`: Scroll bar of preview window, only take effect if the border is missing right
+  horizontal line, like `border = 'none'`.
+- `UfoPreviewWinBar`: Virtual winBar of preview window.
+- `UfoPreviewThumb`: Thumb of preview window.
+- `UfoFoldedEllipsis`: Ellipsis at the end of folded line, invalid if `fold_virt_text_handler` is
+  set.
 
 ## Advanced configuration
 

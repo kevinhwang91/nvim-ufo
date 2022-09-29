@@ -39,4 +39,15 @@ function M.setHighlight(bufnr, ns, row, col, endRow, endCol, hlGroup, priority)
     })
 end
 
+function M.setVirtText(bufnr, ns, row, virtText, id)
+    id = api.nvim_buf_set_extmark(bufnr, ns, row, 0, {
+        id = id,
+        virt_text = virtText,
+        virt_text_win_col = 0,
+        priority = 10,
+        hl_mode = 'combine'
+    })
+    return id
+end
+
 return M

@@ -51,6 +51,7 @@ local function resetHighlightGroup()
     cmd([[
         hi default link UfoPreviewSbar PmenuSbar
         hi default link UfoPreviewThumb PmenuThumb
+        hi default link UfoPreviewWinBar UfoFoldedBg
         hi default link UfoFoldedEllipsis Comment
     ]])
 end

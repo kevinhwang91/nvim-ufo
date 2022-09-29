@@ -1,8 +1,6 @@
 local api = vim.api
 local fn = vim.fn
-local cmd = vim.cmd
 
-local utils = require('ufo.utils')
 local extmark = require('ufo.render.extmark')
 local FloatWin = require('ufo.preview.floatwin')
 
@@ -10,7 +8,6 @@ local FloatWin = require('ufo.preview.floatwin')
 ---@class UfoPreviewScrollBar : UfoPreviewFloatWin
 ---@field winid number
 ---@field bufnr number
----@field topline number
 local ScrollBar = setmetatable({}, {__index = FloatWin})
 
 function ScrollBar:build()
@@ -33,31 +30,21 @@ function ScrollBar:build()
     }
 end
 
-function ScrollBar:floatBufnr()
-    return FloatWin.bufnr
-end
-
 function ScrollBar:floatWinid()
     return FloatWin.winid
 end
 
----
----@param topline? number
-function ScrollBar:update(topline)
+function ScrollBar:update()
     if not self.showScrollBar then
         self.winid = nil
         return
     end
-    if not topline then
-        topline = utils.getWinInfo(self:floatWinid()).topline
-    end
-    self.topline = topline
     local barSize = math.ceil(self.height * self.height / self.lineCount)
     if barSize == self.height and barSize < self.lineCount then
         barSize = self.height - 1
     end
 
-    local barPos = math.ceil(self.height * topline / self.lineCount)
+    local barPos = math.ceil(self.height * self.topline / self.lineCount)
     local size = barPos + barSize - 1
     if size == self.height then
         if self.topline + self.height - 1 < self.lineCount then
@@ -90,8 +77,6 @@ function ScrollBar:display()
         return
     end
     local wopts = self:build()
-    -- it is relative to floating window, need to redraw to make floating window validate
-    cmd('redraw')
     if self:validate() then
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)

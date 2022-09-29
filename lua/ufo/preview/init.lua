@@ -7,6 +7,7 @@ local render     = require('ufo.render')
 local utils      = require('ufo.utils')
 local floatwin   = require('ufo.preview.floatwin')
 local scrollbar  = require('ufo.preview.scrollbar')
+local winbar     = require('ufo.preview.winbar')
 local keymap     = require('ufo.preview.keymap')
 local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
@@ -46,25 +47,29 @@ function Preview:trace(bufnr)
             wrow = wrow + 1
         end
     end
-    local fLnum, fCol, fWrow
-    utils.winCall(floatWinid, function()
-        local topline
-        local winView = fn.winsaveview()
-        fLnum, fCol, topline = winView.lnum, winView.col, winView.topline
-        if bufnr == self.bufnr then
-            fLnum = topline
+    local lnum = api.nvim_win_get_cursor(self.winid)[1]
+    local fLnum, fWrow, col
+    if bufnr == self.bufnr then
+        fLnum, fWrow, col = floatwin.topline, 0, 0
+        -- did scroll, do trace base on 2nd line
+        if fLnum > 1 then
+            fLnum = fLnum + 1
+            fWrow = 1
         end
-        fWrow = fLnum - topline
-    end)
-    api.nvim_set_current_win(self.winid)
-    local lnum, col = api.nvim_win_get_cursor(self.winid)[1], fCol
-    local startLnum = utils.foldClosed(0, lnum)
-    local fb = fold.get(self.bufnr)
-    if fb then
-        fb:openFold(startLnum)
+    else
+        local floatCursor = api.nvim_win_get_cursor(floatWinid)
+        fLnum = floatCursor[1]
+        fWrow = fLnum - floatwin.topline
+        lnum, col = api.nvim_win_get_cursor(self.winid)[1], floatCursor[2]
     end
+    api.nvim_set_current_win(self.winid)
+    local startLnum = utils.foldClosed(0, lnum)
     local lineSize = fWrow + wrow
     cmd('norm! m`zO')
+    local fb = fold.get(self.bufnr)
+    if fb then
+        fb:syncFoldedLines(0)
+    end
     lnum = startLnum + fLnum - 1
     local topline, topfill = utils.evaluateTopline(self.winid, lnum, lineSize)
     fn.winrestview({
@@ -83,7 +88,7 @@ function Preview:scroll(char)
     utils.winCall(floatwin.winid, function()
         local ctrlTbl = {B = 0x02, D = 0x04, E = 0x05, F = 0x06, U = 0x15, Y = 0x19}
         cmd(('norm! %c'):format(ctrlTbl[char]))
-        scrollbar:update()
+        self:refresh()
     end)
 end
 
@@ -115,7 +120,7 @@ local function onBufRemap(bufnr, str)
         self:scroll('Y')
     elseif str == 'wheelUp' or str == 'wheelDown' then
         promise.resolve():thenCall(function()
-            scrollbar:update()
+            self:refresh()
         end)
     elseif str == 'onKey' then
         promise.resolve():thenCall(function()
@@ -172,6 +177,12 @@ function Preview:detach()
     end
 end
 
+function Preview:refresh()
+    floatwin:refreshTopline()
+    scrollbar:update()
+    winbar:update()
+end
+
 ---
 ---@param enter? boolean
 ---@param nextLineIncluded? boolean
@@ -185,7 +196,8 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     end
     local oLnum = api.nvim_win_get_cursor(0)[1]
     local lnum = utils.foldClosed(0, oLnum)
-    if lnum == -1 then
+    local fl = fb.foldedLines[lnum]
+    if lnum == -1 or not fl then
         return
     end
     local endLnum = utils.foldClosedEnd(0, lnum)
@@ -198,20 +210,25 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     if not isAbove and nextLineIncluded ~= false then
         endLnum = fb:lineCount() == endLnum and endLnum or (endLnum + 1)
     end
+    floatwin.virtText = fl.virtText
     local text = fb:lines(lnum, endLnum)
     floatwin:display(api.nvim_get_current_win(), text, enter, isAbove)
     utils.winCall(floatwin.winid, function()
         if oLnum > lnum then
             api.nvim_win_set_cursor(0, {oLnum - lnum + 1, 0})
-            cmd('norm! zz')
+            cmd('norm! H')
         end
         cmd('norm! ze')
     end)
+    floatwin:refreshTopline()
+    -- it is relative to floating window, need to redraw to make floating window validate
+    cmd('redraw')
+    scrollbar:display()
+    winbar:display()
     render.mapHighlightLimitByRange(curBufnr, floatwin.bufnr,
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
                                     text, self.ns)
     render.mapMatchByLnum(curWinid, floatwin.winid, lnum, endLnum)
-    scrollbar:display()
     self:attach(curBufnr, lnum)
     return floatwin.winid
 end
@@ -227,6 +244,7 @@ end
 function Preview.close()
     floatwin:close()
     scrollbar:close()
+    winbar:close()
 end
 
 function Preview.floatWinid()
@@ -236,10 +254,7 @@ end
 function Preview:afterKey()
     local curWinid = api.nvim_get_current_win()
     if floatwin.winid == curWinid then
-        local topline = fn.line('w0')
-        if scrollbar.topline ~= topline then
-            scrollbar:update(topline)
-        end
+        self:refresh()
         return
     end
     if curWinid == self.winid then
@@ -264,6 +279,7 @@ function Preview:initialize(namespace)
     local disposables = {}
     table.insert(disposables, floatwin:initialize(namespace, conf.win_config))
     table.insert(disposables, scrollbar)
+    table.insert(disposables, winbar)
     self.ns = namespace
     self.disposables = disposables
     return self
