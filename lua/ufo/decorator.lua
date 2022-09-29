@@ -136,7 +136,7 @@ local function onEnd(name, tick)
 end
 
 function Decorator:highlightOpenFold(fb, winid, lnum)
-    if self.openFoldHlEnabled and winid == lastWinid then
+    if self.openFoldHlEnabled and winid == lastWinid and api.nvim_get_mode().mode ~= 'c' then
         local fl = fb:foldedLine(lnum)
         local _, endLnum = fl:range()
         local _, winids = utils.getWinByBuf(fb.bufnr)
