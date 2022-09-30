@@ -129,6 +129,10 @@ function FloatWin:close()
     rawset(self, 'winid', nil)
 end
 
+function FloatWin:call(executor)
+    utils.winCall(self.winid, executor)
+end
+
 function FloatWin:display(winid, text, enter, isAbove)
     local height = math.min(self.config.maxheight, #text)
     local wopts = self:build(winid, height, self.config.border, isAbove)
@@ -136,7 +140,7 @@ function FloatWin:display(winid, text, enter, isAbove)
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)
         if enter == true then
-            api.nvim_set_current_win(enter)
+            api.nvim_set_current_win(self.winid)
         end
     else
         local bufnr = fn.bufnr('^UfoPreviewFloatWin$')

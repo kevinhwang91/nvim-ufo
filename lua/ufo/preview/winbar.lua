@@ -1,7 +1,7 @@
 local api = vim.api
 local fn = vim.fn
 
-local extmark = require('ufo.render.extmark')
+local render = require('ufo.render')
 local FloatWin = require('ufo.preview.floatwin')
 
 --- Singleton
@@ -39,7 +39,7 @@ function WinBar:update()
     if not self:validate() then
         self:display()
     end
-    self.virtTextId = extmark.setVirtText(self.bufnr, self.ns, 0, self.virtText, self.virtTextId)
+    self.virtTextId = render.setVirtText(self.bufnr, self.ns, 0, self.virtText, 10, self.virtTextId)
 end
 
 function WinBar:display()

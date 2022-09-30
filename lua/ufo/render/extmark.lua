@@ -30,6 +30,17 @@ function M.getHighlightsByRange(bufnr, startRange, endRange, namespaces)
     return res
 end
 
+function M.setLineHighlight(bufnr, ns, row, hlGroup, priority, id)
+    return api.nvim_buf_set_extmark(bufnr, ns, row, 0, {
+        id = id,
+        end_row = row + 1,
+        end_col = 0,
+        hl_group = hlGroup,
+        hl_eol = true,
+        priority = priority
+    })
+end
+
 function M.setHighlight(bufnr, ns, row, col, endRow, endCol, hlGroup, priority)
     return api.nvim_buf_set_extmark(bufnr, ns, row, col, {
         end_row = endRow,
@@ -39,12 +50,12 @@ function M.setHighlight(bufnr, ns, row, col, endRow, endCol, hlGroup, priority)
     })
 end
 
-function M.setVirtText(bufnr, ns, row, virtText, id)
+function M.setVirtText(bufnr, ns, row, virtText,priority, id)
     id = api.nvim_buf_set_extmark(bufnr, ns, row, 0, {
         id = id,
         virt_text = virtText,
         virt_text_win_col = 0,
-        priority = 10,
+        priority = priority,
         hl_mode = 'combine'
     })
     return id

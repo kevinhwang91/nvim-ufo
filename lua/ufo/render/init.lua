@@ -91,8 +91,12 @@ function M.mapMatchByLnum(srcWinid, dstWinid, lnum, endLnum)
     end
 end
 
-function M.setVirtText(bufnr, ns, row, virtText, id)
-    return extmark.setVirtText(bufnr, ns, row, virtText, id)
+function M.setVirtText(bufnr, ns, row, virtText, priority, id)
+    return extmark.setVirtText(bufnr, ns, row, virtText, priority, id)
+end
+
+function M.setLineHighlight(bufnr, ns, row, hlGroup, priority, id)
+    return extmark.setLineHighlight(bufnr, ns, row, hlGroup, priority, id)
 end
 
 function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)

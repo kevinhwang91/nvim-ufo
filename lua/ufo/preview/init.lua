@@ -25,6 +25,7 @@ local Preview = {
     col = nil,
     topline = nil,
     foldedLnum = nil,
+    cursorMarkId = nil,
     keyMessages = nil
 }
 
@@ -85,11 +86,22 @@ function Preview:scroll(char)
     if not self.validate() then
         return
     end
-    utils.winCall(floatwin.winid, function()
+    floatwin:call(function()
         local ctrlTbl = {B = 0x02, D = 0x04, E = 0x05, F = 0x06, U = 0x15, Y = 0x19}
         cmd(('norm! %c'):format(ctrlTbl[char]))
-        self:refresh()
     end)
+    self:refresh()
+end
+
+function Preview:toggleCursor()
+    local bufnr = api.nvim_get_current_buf()
+    if self.bufnr == bufnr and self.lnum - self.foldedLnum > 0 then
+        self.cursorMarkId = render.setLineHighlight(floatwin.bufnr, self.ns, self.lnum - self.foldedLnum,
+                                                    'Visual', 1, self.cursorMarkId)
+    elseif self.cursorMarkId then
+        pcall(api.nvim_buf_del_extmark, floatwin.bufnr, self.ns, self.cursorMarkId)
+        self.cursorMarkId = nil
+    end
 end
 
 local function onBufRemap(bufnr, str)
@@ -102,6 +114,7 @@ local function onBufRemap(bufnr, str)
             vim.wo.cul = false
             api.nvim_set_current_win(self.winid)
         end
+        self:toggleCursor()
     elseif str == 'trace' or str == '2click' then
         self:trace(bufnr)
     elseif str == 'close' then
@@ -153,6 +166,7 @@ function Preview:attach(bufnr, foldedLnum)
     self.col = winView.col
     self.topline = winView.topline
     self.foldedLnum = foldedLnum
+    self:toggleCursor()
     table.insert(disposables, disposable:create(function()
         self.winid = nil
         self.bufnr = nil
@@ -160,6 +174,7 @@ function Preview:attach(bufnr, foldedLnum)
         self.col = nil
         self.topline = nil
         self.foldedLnum = nil
+        self.cursorMarkId = nil
         self.detachDisposables = nil
     end))
     table.insert(disposables, keymap:attach(bufnr, floatwin.bufnr, self.ns, self.keyMessages, {
@@ -194,7 +209,7 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
         -- buffer is detached
         return
     end
-    local oLnum = api.nvim_win_get_cursor(0)[1]
+    local oLnum, oCol = unpack(api.nvim_win_get_cursor(0))
     local lnum = utils.foldClosed(0, oLnum)
     local fl = fb.foldedLines[lnum]
     if lnum == -1 or not fl then
@@ -213,10 +228,10 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     floatwin.virtText = fl.virtText
     local text = fb:lines(lnum, endLnum)
     floatwin:display(api.nvim_get_current_win(), text, enter, isAbove)
-    utils.winCall(floatwin.winid, function()
+    floatwin:call(function()
         if oLnum > lnum then
-            api.nvim_win_set_cursor(0, {oLnum - lnum + 1, 0})
-            cmd('norm! H')
+            api.nvim_win_set_cursor(0, {oLnum - lnum + 1, oCol})
+            utils.zz()
         end
         cmd('norm! ze')
     end)
@@ -284,7 +299,6 @@ function Preview:initialize(namespace)
     self.disposables = disposables
     return self
 end
-
 function Preview:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}

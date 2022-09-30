@@ -2,6 +2,7 @@
 local M = {}
 local api = vim.api
 local fn = vim.fn
+local cmd = vim.cmd
 local uv = vim.loop
 
 ---
@@ -150,6 +151,25 @@ function M.setTimeout(callback, ms)
         callback()
     end)
     return timer
+end
+
+function M.zz()
+    local lnum1, lcount = api.nvim_win_get_cursor(0)[1], api.nvim_buf_line_count(0)
+    local zb = 'keepj norm! %dzb'
+    if lnum1 == lcount then
+        cmd(zb:format(lnum1))
+        return
+    end
+    cmd('norm! zvzz')
+    lnum1 = api.nvim_win_get_cursor(0)[1]
+    cmd('norm! L')
+    local lnum2 = api.nvim_win_get_cursor(0)[1]
+    if lnum2 + fn.getwinvar(0, '&scrolloff') >= lcount then
+        cmd(zb:format(lnum2))
+    end
+    if lnum1 ~= lnum2 then
+        cmd('keepj norm! ``')
+    end
 end
 
 ---
