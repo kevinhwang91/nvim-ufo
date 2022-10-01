@@ -1,5 +1,4 @@
 local api = vim.api
-local fn  = vim.fn
 local cmd = vim.cmd
 
 local promise    = require('promise')
@@ -30,6 +29,10 @@ local Preview = {
 }
 
 function Preview:trace(bufnr)
+    local fb = fold.get(self.bufnr)
+    if not fb then
+        return
+    end
     local floatWinid = floatwin.winid
     local fWinConfig = api.nvim_win_get_config(floatWinid)
     -- fWinConfig.row is a table value converted from a floating-point
@@ -48,10 +51,9 @@ function Preview:trace(bufnr)
             wrow = wrow + 1
         end
     end
-    local lnum = api.nvim_win_get_cursor(self.winid)[1]
     local fLnum, fWrow, col
     if bufnr == self.bufnr then
-        fLnum, fWrow, col = floatwin.topline, 0, 0
+        fLnum, fWrow = floatwin.topline, 0
         -- did scroll, do trace base on 2nd line
         if fLnum > 1 then
             fLnum = fLnum + 1
@@ -61,17 +63,19 @@ function Preview:trace(bufnr)
         local floatCursor = api.nvim_win_get_cursor(floatWinid)
         fLnum = floatCursor[1]
         fWrow = fLnum - floatwin.topline
-        lnum, col = api.nvim_win_get_cursor(self.winid)[1], floatCursor[2]
+        col = floatCursor[2]
     end
+    local cursor = api.nvim_win_get_cursor(self.winid)
     api.nvim_set_current_win(self.winid)
-    local startLnum = utils.foldClosed(0, lnum)
+    local lnum = utils.foldClosed(0, cursor[1]) + fLnum - 1
     local lineSize = fWrow + wrow
     cmd('norm! m`zO')
-    local fb = fold.get(self.bufnr)
-    if fb then
-        fb:syncFoldedLines(0)
+    fb:syncFoldedLines(self.winid)
+    if bufnr == self.bufnr then
+        local s
+        s, col = fb:lines(lnum)[1]:find('^%s+%S')
+        col = s and col - 1 or 0
     end
-    lnum = startLnum + fLnum - 1
     local topline, topfill = utils.evaluateTopline(self.winid, lnum, lineSize)
     utils.restView(0, {
         lnum = lnum,
