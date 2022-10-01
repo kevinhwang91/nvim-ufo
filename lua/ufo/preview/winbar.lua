@@ -39,7 +39,7 @@ function WinBar:update()
     if not self:validate() then
         self:display()
     end
-    self.virtTextId = render.setVirtText(self.bufnr, self.ns, 0, self.virtText, 10, self.virtTextId)
+    self.virtTextId = render.setVirtText(self.bufnr, self.ns, 0, self.virtText, {id = self.virtTextId})
 end
 
 function WinBar:display()

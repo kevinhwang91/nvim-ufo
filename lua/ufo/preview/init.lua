@@ -73,7 +73,7 @@ function Preview:trace(bufnr)
     end
     lnum = startLnum + fLnum - 1
     local topline, topfill = utils.evaluateTopline(self.winid, lnum, lineSize)
-    fn.winrestview({
+    utils.restView(0, {
         lnum = lnum,
         col = col,
         topline = topline,
@@ -160,11 +160,11 @@ function Preview:attach(bufnr, foldedLnum)
     end))
 
     self.winid = utils.getWinByBuf(bufnr)
-    local winView = utils.winCall(self.winid, fn.winsaveview)
+    local view = utils.saveView(self.winid)
     self.bufnr = bufnr
-    self.lnum = winView.lnum
-    self.col = winView.col
-    self.topline = winView.topline
+    self.lnum = view.lnum
+    self.col = view.col
+    self.topline = view.topline
     self.foldedLnum = foldedLnum
     self:toggleCursor()
     table.insert(disposables, disposable:create(function()
@@ -176,6 +176,7 @@ function Preview:attach(bufnr, foldedLnum)
         self.foldedLnum = nil
         self.cursorMarkId = nil
         self.detachDisposables = nil
+        api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
     end))
     table.insert(disposables, keymap:attach(bufnr, floatwin.bufnr, self.ns, self.keyMessages, {
         trace = self.keyMessages.trace,
@@ -203,8 +204,8 @@ end
 ---@param nextLineIncluded? boolean
 ---@return number? floatwinId
 function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
-    local curBufnr = api.nvim_get_current_buf()
-    local fb = fold.get(curBufnr)
+    local bufnr = api.nvim_get_current_buf()
+    local fb = fold.get(bufnr)
     if not fb then
         -- buffer is detached
         return
@@ -216,11 +217,8 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
         return
     end
     local endLnum = utils.foldClosedEnd(0, lnum)
-    if utils.isBufLoaded(floatwin.bufnr) then
-        api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
-    end
-    local curWinid = api.nvim_get_current_win()
-    local kind = fb:lineKind(curWinid, lnum)
+    local winid = api.nvim_get_current_win()
+    local kind = fb:lineKind(winid, lnum)
     local isAbove = kind == 'comment'
     if not isAbove and nextLineIncluded ~= false then
         endLnum = fb:lineCount() == endLnum and endLnum or (endLnum + 1)
@@ -240,11 +238,11 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     cmd('redraw')
     scrollbar:display()
     winbar:display()
-    render.mapHighlightLimitByRange(curBufnr, floatwin.bufnr,
+    self:attach(bufnr, lnum)
+    render.mapHighlightLimitByRange(bufnr, floatwin.bufnr,
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
                                     text, self.ns)
-    render.mapMatchByLnum(curWinid, floatwin.winid, lnum, endLnum)
-    self:attach(curBufnr, lnum)
+    render.mapMatchByLnum(winid, floatwin.winid, lnum, endLnum)
     return floatwin.winid
 end
 
@@ -267,15 +265,15 @@ function Preview.floatWinid()
 end
 
 function Preview:afterKey()
-    local curWinid = api.nvim_get_current_win()
-    if floatwin.winid == curWinid then
+    local winid = api.nvim_get_current_win()
+    if floatwin.winid == winid then
         self:refresh()
         return
     end
-    if curWinid == self.winid then
-        local winView = fn.winsaveview()
-        if self.topline ~= winView.topline or self.lnum ~= winView.lnum or
-            self.col ~= winView.col then
+    if winid == self.winid then
+        local view = utils.saveView(winid)
+        if self.topline ~= view.topline or self.lnum ~= view.lnum or
+            self.col ~= view.col then
             self.close()
         elseif self.foldedLnum ~= utils.foldClosed(self.winid, self.foldedLnum) then
             self.close()
@@ -299,6 +297,7 @@ function Preview:initialize(namespace)
     self.disposables = disposables
     return self
 end
+
 function Preview:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}

@@ -72,9 +72,9 @@ function FoldDriverNonFFI:createFolds(winid, ranges, rowPairs)
                 table.insert(cmds, ('%d,%d:fold'):format(startLine + 1, endLine + 1))
             end
         end
-        local winView = fn.winsaveview()
+        local view = utils.saveView(0)
         cmd('norm! zE')
-        fn.winrestview(winView)
+        utils.restView(0, view)
         local foldLevel = vim.wo.foldlevel
         table.insert(cmds, 'setl foldmethod=manual')
         table.insert(cmds, 'setl foldenable')

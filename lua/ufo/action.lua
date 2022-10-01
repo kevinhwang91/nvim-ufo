@@ -13,7 +13,7 @@ function M.goPreviousStartFold()
     end
 
     local cnt = vim.v.count1
-    local winView = fn.winsaveview()
+    local view = utils.saveView(0)
     local curLnum = getCurLnum()
     cmd('norm! m`')
     local previousLnum
@@ -54,7 +54,7 @@ function M.goPreviousStartFold()
             end
         end
     end
-    fn.winrestview(winView)
+    utils.restView(0, view)
     if previousLnum then
         cmd(('norm! %dgg_'):format(previousLnum))
     end

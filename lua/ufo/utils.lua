@@ -253,11 +253,7 @@ end
 ---@param winid number
 ---@return boolean
 function M.isWinValid(winid)
-    if winid then
-        return type(winid) == 'number' and winid > 0 and api.nvim_win_is_valid(winid)
-    else
-        return false
-    end
+    return type(winid) == 'number' and winid > 0 and api.nvim_win_is_valid(winid)
 end
 
 ---
@@ -370,6 +366,29 @@ function M.evaluateTopline(winid, line, lsizes)
     end
     log.info('topline:', topline, 'topfill:', topfill)
     return topline, topfill
+end
+
+---
+---@param winid number
+---@return table
+function M.saveView(winid)
+    return M.winCall(winid, fn.winsaveview)
+end
+
+---
+---@param winid number
+---@param view table
+function M.restView(winid, view)
+    M.winCall(winid, function()
+        fn.winrestview(view)
+    end)
+end
+
+---
+---@param winid number
+---@return number
+function M.wrow(winid)
+    return M.winCall(winid, fn.winline) - 1
 end
 
 return M

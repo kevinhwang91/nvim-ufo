@@ -50,15 +50,15 @@ function M.setHighlight(bufnr, ns, row, col, endRow, endCol, hlGroup, priority)
     })
 end
 
-function M.setVirtText(bufnr, ns, row, virtText,priority, id)
-    id = api.nvim_buf_set_extmark(bufnr, ns, row, 0, {
-        id = id,
+function M.setVirtText(bufnr, ns, row, virtText, opts)
+    opts = opts or {}
+    return api.nvim_buf_set_extmark(bufnr, ns, row, 0, {
+        id = opts.id,
         virt_text = virtText,
         virt_text_win_col = 0,
-        priority = priority,
-        hl_mode = 'combine'
+        priority = opts.priority or 10,
+        hl_mode = opts.hl_mode or 'combine'
     })
-    return id
 end
 
 return M
