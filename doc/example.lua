@@ -84,7 +84,15 @@ end
 ------------------------------------------enhanceAction---------------------------------------------
 local function peekOrHover()
     local winid = require('ufo').peekFoldedLinesUnderCursor()
-    if not winid then
+    if winid then
+        local bufnr = vim.api.nvim_win_get_buf(winid)
+        local keys = {'a', 'i', 'o', 'A', 'I', 'O', 'gd', 'gr'}
+        for _, k in ipairs(keys) do
+            -- Add a prefix key to fire `trace` action,
+            -- if Neovim is 0.8.0 before, remap yourself
+            vim.keymap.set('n', k, '<CR>' .. k, {noremap = false, buffer = bufnr})
+        end
+    else
         -- coc.nvim
         vim.fn.CocActionAsync('definitionHover')
         -- nvimlsp
