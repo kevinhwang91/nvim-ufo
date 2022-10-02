@@ -238,10 +238,21 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
         cmd('norm! ze')
     end)
     floatwin:refreshTopline()
-    -- it is relative to floating window, need to redraw to make floating window validate
-    cmd('redraw')
+    -- use a temporary virt text to overlay the topline to keep away from redraw,
+    -- when winbar is not ready
+    local tmpVirtId
+    if floatwin.topline > 1 then
+        tmpVirtId = render.setVirtText(floatwin.bufnr, self.ns, floatwin.topline - 1,
+                                       floatwin.virtText, {})
+    end
+    -- scrollbar and winbar relative to floating window,
+    -- need to an extra redraw to make floating window validate
+    cmd('redrawstatus')
     scrollbar:display()
     winbar:display()
+    if tmpVirtId then
+        api.nvim_buf_del_extmark(floatwin.bufnr, self.ns, tmpVirtId)
+    end
     self:attach(bufnr, lnum)
     render.mapHighlightLimitByRange(bufnr, floatwin.bufnr,
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},

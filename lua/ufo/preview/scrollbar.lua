@@ -26,7 +26,7 @@ function ScrollBar:build()
         row = 0,
         col = col,
         noautocmd = true,
-        zindex = self.zindex + 1
+        zindex = self.zindex + 2
     }
 end
 
