@@ -1,5 +1,6 @@
 local api = vim.api
 local fn = vim.fn
+local cmd = vim.cmd
 
 local utils = require('ufo.utils')
 
@@ -133,8 +134,18 @@ function FloatWin:call(executor)
     utils.winCall(self.winid, executor)
 end
 
-function FloatWin:display(winid, text, enter, isAbove)
-    local height = math.min(self.config.maxheight, #text)
+function FloatWin:setContent(text)
+    vim.bo[self.bufnr].modifiable = true
+    api.nvim_buf_set_lines(self.bufnr, 0, -1, true, text)
+    vim.bo[self.bufnr].modifiable = false
+    self.lineCount = #text
+    self.showScrollBar = self.lineCount > self.height
+    api.nvim_win_set_cursor(self.winid, {1, 0})
+    cmd('norm! ze')
+end
+
+function FloatWin:display(winid, targetHeight, enter, isAbove)
+    local height = math.min(self.config.maxheight, targetHeight)
     local wopts = self:build(winid, height, self.config.border, isAbove)
     if self:validate() then
         wopts.noautocmd = nil
@@ -166,12 +177,6 @@ function FloatWin:display(winid, text, enter, isAbove)
         wo.winhl = self.config.winhighlight
         wo.winblend = self.winblend
     end
-    api.nvim_win_set_cursor(self.winid, {1, 0})
-    vim.bo[self.bufnr].modifiable = true
-    api.nvim_buf_set_lines(self.bufnr, 0, -1, true, text)
-    vim.bo[self.bufnr].modifiable = false
-    self.lineCount = #text
-    self.showScrollBar = self.lineCount > self.height
     return self.winid
 end
 

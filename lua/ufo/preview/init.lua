@@ -24,6 +24,8 @@ local Preview = {
     col = nil,
     topline = nil,
     foldedLnum = nil,
+    foldedEndLnum = nil,
+    isAbove = nil,
     cursorMarkId = nil,
     keyMessages = nil
 }
@@ -146,7 +148,7 @@ local function onBufRemap(bufnr, str)
     end
 end
 
-function Preview:attach(bufnr, foldedLnum)
+function Preview:attach(bufnr, foldedLnum, foldedEndLnum)
     self:detach()
     local disposables = {}
     event:on('WinClosed', function()
@@ -170,6 +172,7 @@ function Preview:attach(bufnr, foldedLnum)
     self.col = view.col
     self.topline = view.topline
     self.foldedLnum = foldedLnum
+    self.foldedEndLnum = foldedEndLnum
     self:toggleCursor()
     table.insert(disposables, disposable:create(function()
         self.winid = nil
@@ -178,6 +181,8 @@ function Preview:attach(bufnr, foldedLnum)
         self.col = nil
         self.topline = nil
         self.foldedLnum = nil
+        self.foldedEndLnum = nil
+        self.isAbove = nil
         self.cursorMarkId = nil
         self.detachDisposables = nil
         api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
@@ -223,20 +228,21 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     local endLnum = utils.foldClosedEnd(0, lnum)
     local winid = api.nvim_get_current_win()
     local kind = fb:lineKind(winid, lnum)
-    local isAbove = kind == 'comment'
-    if not isAbove and nextLineIncluded ~= false then
+    self.isAbove = kind == 'comment'
+    if not self.isAbove and nextLineIncluded ~= false then
         endLnum = fb:lineCount() == endLnum and endLnum or (endLnum + 1)
     end
     floatwin.virtText = fl.virtText
     local text = fb:lines(lnum, endLnum)
-    floatwin:display(api.nvim_get_current_win(), text, enter, isAbove)
-    floatwin:call(function()
-        if oLnum > lnum then
+    floatwin:display(winid, #text, enter, self.isAbove)
+    floatwin:setContent(text)
+    if oLnum > lnum then
+        floatwin:call(function()
             api.nvim_win_set_cursor(0, {oLnum - lnum + 1, oCol})
             utils.zz()
-        end
-        cmd('norm! ze')
-    end)
+        end)
+    end
+    self:attach(bufnr, lnum, endLnum)
     floatwin:refreshTopline()
     -- use a temporary virt text to overlay the topline to keep away from redraw,
     -- when winbar is not ready
@@ -245,6 +251,10 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
         tmpVirtId = render.setVirtText(floatwin.bufnr, self.ns, floatwin.topline - 1,
                                        floatwin.virtText, {})
     end
+    render.mapHighlightLimitByRange(bufnr, floatwin.bufnr,
+                                    {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
+                                    text, self.ns)
+    render.mapMatchByLnum(winid, floatwin.winid, lnum, endLnum)
     -- scrollbar and winbar relative to floating window,
     -- need to an extra redraw to make floating window validate
     cmd('redrawstatus')
@@ -253,11 +263,6 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     if tmpVirtId then
         api.nvim_buf_del_extmark(floatwin.bufnr, self.ns, tmpVirtId)
     end
-    self:attach(bufnr, lnum)
-    render.mapHighlightLimitByRange(bufnr, floatwin.bufnr,
-                                    {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
-                                    text, self.ns)
-    render.mapMatchByLnum(winid, floatwin.winid, lnum, endLnum)
     return floatwin.winid
 end
 
@@ -287,11 +292,13 @@ function Preview:afterKey()
     end
     if winid == self.winid then
         local view = utils.saveView(winid)
-        if self.topline ~= view.topline or self.lnum ~= view.lnum or
+        if self.lnum ~= view.lnum or
             self.col ~= view.col then
             self.close()
         elseif self.foldedLnum ~= utils.foldClosed(self.winid, self.foldedLnum) then
             self.close()
+        elseif self.topline ~= view.topline then
+            floatwin:display(winid, self.foldedEndLnum - self.foldedLnum + 1, false, self.isAbove)
         end
     else
         self.close()
