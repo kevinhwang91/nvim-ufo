@@ -1,5 +1,4 @@
 local api = vim.api
-local fn = vim.fn
 
 local render = require('ufo.render')
 local FloatWin = require('ufo.preview.floatwin')
@@ -8,23 +7,24 @@ local FloatWin = require('ufo.preview.floatwin')
 ---@class UfoPreviewWinBar : UfoPreviewFloatWin
 ---@field winid number
 ---@field bufnr number
+---@field bufferName string
 ---@field virtTextId number
+---@field virtText UfoExtmarkVirtTextChunk[]
 local WinBar = setmetatable({}, {__index = FloatWin})
 
 function WinBar:build()
-    return {
-        relative = 'win',
-        win = self:floatWinid(),
-        focusable = false,
-        anchor = 'NW',
-        style = 'minimal',
-        width = self.width,
+    local config = FloatWin.getConfig()
+    local row, col, zindex = config.row, config.col, config.zindex
+    return vim.tbl_extend('force', config, {
         height = 1,
-        row = 0,
-        col = 0,
+        row = self:borderHasUpLine() and row + 1 or row,
+        col = self:borderHasLeftLine() and col + 1 or col,
+        style = 'minimal',
         noautocmd = true,
-        zindex = self.zindex + 1
-    }
+        focusable = false,
+        border = 'none',
+        zindex = zindex + 1
+    })
 end
 
 function WinBar:floatWinid()
@@ -52,21 +52,19 @@ function WinBar:display()
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)
     else
-        local bufnr = fn.bufnr('^UfoPreviewWinBar$')
-        if bufnr > 0 then
-            self.bufnr = bufnr
-        else
-            self.bufnr = api.nvim_create_buf(false, true)
-            api.nvim_buf_set_name(self.bufnr, 'UfoPreviewWinBar')
-        end
-        vim.bo[self.bufnr].bufhidden = 'hide'
-        WinBar:open(self.bufnr, wopts)
+        WinBar:open(wopts)
         local wo = vim.wo[self.winid]
         wo.winhl = 'Normal:UfoPreviewWinBar'
         wo.winblend = self.winblend
     end
     self:update()
     return self.winid
+end
+
+function WinBar:initialize()
+    self.bufferName = 'UfoPreviewWinBar'
+    self.virtTextId = nil
+    return self
 end
 
 return WinBar

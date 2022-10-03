@@ -1,5 +1,4 @@
 local api = vim.api
-local fn = vim.fn
 
 local extmark = require('ufo.render.extmark')
 local FloatWin = require('ufo.preview.floatwin')
@@ -8,26 +7,22 @@ local FloatWin = require('ufo.preview.floatwin')
 ---@class UfoPreviewScrollBar : UfoPreviewFloatWin
 ---@field winid number
 ---@field bufnr number
+---@field bufferName string
 local ScrollBar = setmetatable({}, {__index = FloatWin})
 
 function ScrollBar:build()
-    local col, border = self.width, self.border
-    if border == 'shadow' then
-        col = col - 1
-    end
-    return {
-        relative = 'win',
-        win = self:floatWinid(),
-        focusable = false,
-        anchor = 'NW',
-        style = 'minimal',
+    local config = FloatWin.getConfig()
+    local row, col, zindex = config.row, config.col + config.width, config.zindex
+    return vim.tbl_extend('force', config, {
         width = 1,
-        height = self.height,
-        row = 0,
-        col = col,
+        row = self:borderHasUpLine() and row + 1 or row,
+        col = self:borderHasLeftLine() and col + 1 or col,
+        style = 'minimal',
         noautocmd = true,
-        zindex = self.zindex + 2
-    }
+        focusable = false,
+        border = 'none',
+        zindex = zindex + 2
+    })
 end
 
 function ScrollBar:floatWinid()
@@ -81,16 +76,7 @@ function ScrollBar:display()
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)
     else
-        local bufnr = fn.bufnr('^UfoPreviewScrollBar$')
-        if bufnr > 0 then
-            self.bufnr = bufnr
-        else
-            self.bufnr = api.nvim_create_buf(false, true)
-            api.nvim_buf_set_name(self.bufnr, 'UfoPreviewScrollBar')
-        end
-        vim.bo[self.bufnr].modifiable = true
-        vim.bo[self.bufnr].bufhidden = 'hide'
-        ScrollBar:open(self.bufnr, wopts)
+        ScrollBar:open(wopts)
         local wo = vim.wo[self.winid]
         wo.winhl = 'Normal:UfoPreviewSbar'
         wo.winblend = self.winblend
@@ -104,6 +90,11 @@ function ScrollBar:display()
     vim.bo[self.bufnr].modifiable = false
     self:update()
     return self.winid
+end
+
+function ScrollBar:initialize()
+    self.bufferName = 'UfoPreviewScrollBar'
+    return self
 end
 
 return ScrollBar

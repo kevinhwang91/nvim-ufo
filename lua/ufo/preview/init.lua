@@ -35,10 +35,8 @@ function Preview:trace(bufnr)
     if not fb then
         return
     end
-    local floatWinid = floatwin.winid
-    local fWinConfig = api.nvim_win_get_config(floatWinid)
-    -- fWinConfig.row is a table value converted from a floating-point
-    local wrow = tonumber(fWinConfig.row[vim.val_idx])
+    local fWinConfig = floatwin.getConfig()
+    local wrow = fWinConfig.row
     if fWinConfig.anchor == 'SW' then
         wrow = wrow - fWinConfig.height
         if wrow < 0 then
@@ -62,7 +60,7 @@ function Preview:trace(bufnr)
             fWrow = 1
         end
     else
-        local floatCursor = api.nvim_win_get_cursor(floatWinid)
+        local floatCursor = api.nvim_win_get_cursor(floatwin.winid)
         fLnum = floatCursor[1]
         fWrow = fLnum - floatwin.topline
         col = floatCursor[2]
@@ -96,16 +94,17 @@ function Preview:scroll(char)
         local ctrlTbl = {B = 0x02, D = 0x04, E = 0x05, F = 0x06, U = 0x15, Y = 0x19}
         cmd(('norm! %c'):format(ctrlTbl[char]))
     end)
-    self:refresh()
+    self:viewChanged()
 end
 
 function Preview:toggleCursor()
     local bufnr = api.nvim_get_current_buf()
+    local floatBufnr = floatwin:getBufnr()
     if self.bufnr == bufnr and self.lnum - self.foldedLnum > 0 then
-        self.cursorMarkId = render.setLineHighlight(floatwin.bufnr, self.ns, self.lnum - self.foldedLnum,
+        self.cursorMarkId = render.setLineHighlight(floatBufnr, self.ns, self.lnum - self.foldedLnum,
                                                     'Visual', 1, self.cursorMarkId)
     elseif self.cursorMarkId then
-        pcall(api.nvim_buf_del_extmark, floatwin.bufnr, self.ns, self.cursorMarkId)
+        pcall(api.nvim_buf_del_extmark, floatBufnr, self.ns, self.cursorMarkId)
         self.cursorMarkId = nil
     end
 end
@@ -139,7 +138,7 @@ local function onBufRemap(bufnr, str)
         self:scroll('Y')
     elseif str == 'wheelUp' or str == 'wheelDown' then
         promise.resolve():thenCall(function()
-            self:refresh()
+            self:viewChanged()
         end)
     elseif str == 'onKey' then
         promise.resolve():thenCall(function()
@@ -173,7 +172,7 @@ function Preview:attach(bufnr, foldedLnum, foldedEndLnum)
     self.topline = view.topline
     self.foldedLnum = foldedLnum
     self.foldedEndLnum = foldedEndLnum
-    self:toggleCursor()
+    local floatBufnr = floatwin:getBufnr()
     table.insert(disposables, disposable:create(function()
         self.winid = nil
         self.bufnr = nil
@@ -185,9 +184,9 @@ function Preview:attach(bufnr, foldedLnum, foldedEndLnum)
         self.isAbove = nil
         self.cursorMarkId = nil
         self.detachDisposables = nil
-        api.nvim_buf_clear_namespace(floatwin.bufnr, self.ns, 0, -1)
+        api.nvim_buf_clear_namespace(floatBufnr, self.ns, 0, -1)
     end))
-    table.insert(disposables, keymap:attach(bufnr, floatwin.bufnr, self.ns, self.keyMessages, {
+    table.insert(disposables, keymap:attach(bufnr, floatBufnr, self.ns, self.keyMessages, {
         trace = self.keyMessages.trace,
         switch = self.keyMessages.switch,
         close = self.keyMessages.close,
@@ -202,10 +201,17 @@ function Preview:detach()
     end
 end
 
-function Preview:refresh()
+function Preview:viewChanged()
     floatwin:refreshTopline()
     scrollbar:update()
     winbar:update()
+end
+
+function Preview:display(enter, handler)
+    local height = self.foldedEndLnum - self.foldedLnum + 1
+    floatwin:display(self.winid, height, enter, self.isAbove, handler)
+    scrollbar:display()
+    winbar:display()
 end
 
 ---
@@ -233,36 +239,23 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
         endLnum = fb:lineCount() == endLnum and endLnum or (endLnum + 1)
     end
     floatwin.virtText = fl.virtText
-    local text = fb:lines(lnum, endLnum)
-    floatwin:display(winid, #text, enter, self.isAbove)
-    floatwin:setContent(text)
-    if oLnum > lnum then
-        floatwin:call(function()
-            api.nvim_win_set_cursor(0, {oLnum - lnum + 1, oCol})
-            utils.zz()
-        end)
-    end
     self:attach(bufnr, lnum, endLnum)
-    floatwin:refreshTopline()
-    -- use a temporary virt text to overlay the topline to keep away from redraw,
-    -- when winbar is not ready
-    local tmpVirtId
-    if floatwin.topline > 1 then
-        tmpVirtId = render.setVirtText(floatwin.bufnr, self.ns, floatwin.topline - 1,
-                                       floatwin.virtText, {})
-    end
-    render.mapHighlightLimitByRange(bufnr, floatwin.bufnr,
+    local text = fb:lines(lnum, endLnum)
+    self:display(enter, function()
+        floatwin:setContent(text)
+        if oLnum > lnum then
+            floatwin:call(function()
+                api.nvim_win_set_cursor(0, {oLnum - lnum + 1, oCol})
+                utils.zz()
+            end)
+        end
+        floatwin:refreshTopline()
+    end)
+    self:toggleCursor()
+    render.mapHighlightLimitByRange(bufnr, floatwin:getBufnr(),
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
                                     text, self.ns)
     render.mapMatchByLnum(winid, floatwin.winid, lnum, endLnum)
-    -- scrollbar and winbar relative to floating window,
-    -- need to an extra redraw to make floating window validate
-    cmd('redrawstatus')
-    scrollbar:display()
-    winbar:display()
-    if tmpVirtId then
-        api.nvim_buf_del_extmark(floatwin.bufnr, self.ns, tmpVirtId)
-    end
     return floatwin.winid
 end
 
@@ -287,7 +280,7 @@ end
 function Preview:afterKey()
     local winid = api.nvim_get_current_win()
     if floatwin.winid == winid then
-        self:refresh()
+        self:viewChanged()
         return
     end
     if winid == self.winid then
@@ -299,11 +292,7 @@ function Preview:afterKey()
             self.close()
         elseif self.topline ~= view.topline then
             if floatwin:validate() then
-                local height = self.foldedEndLnum - self.foldedLnum + 1
-                floatwin:display(winid, height, false, self.isAbove)
-                cmd('redrawstatus')
-                scrollbar:display()
-                winbar:display()
+                self:display(false)
             end
         end
     else
@@ -319,8 +308,8 @@ function Preview:initialize(namespace)
     self.keyMessages = conf.mappings
     local disposables = {}
     table.insert(disposables, floatwin:initialize(namespace, conf.win_config))
-    table.insert(disposables, scrollbar)
-    table.insert(disposables, winbar)
+    table.insert(disposables, scrollbar:initialize())
+    table.insert(disposables, winbar:initialize())
     self.ns = namespace
     self.disposables = disposables
     return self

@@ -10,12 +10,10 @@ local utils = require('ufo.utils')
 ---@field ns number
 ---@field winid number
 ---@field bufnr number
+---@field bufferName string
 ---@field width number
 ---@field height number
 ---@field anchor string|'SW'|'NW'
----@field row number
----@field col number
----@field zindex number
 ---@field winblend number
 ---@field border string|'none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[]
 ---@field lineCount number
@@ -64,50 +62,49 @@ function FloatWin:build(winid, height, border, isAbove)
     local aboveLine = utils.winCall(winid, fn.winline) - 1
     local belowLine = winfo.height - aboveLine
     self.border = type(border) == 'string' and vim.deepcopy(defaultBorder[border]) or border
+    local row, col = 0, 0
     if isAbove then
         if aboveLine < height and belowLine > aboveLine then
             self.height = math.min(height, belowLine)
-            self.row = aboveLine - self.height
+            row = aboveLine - self.height
         else
             self.height = math.min(height, aboveLine)
-            self.row = 1
+            row = 1
         end
     else
         if belowLine < height and belowLine < aboveLine then
             self.height = math.min(height, aboveLine)
-            self.row = belowLine - self.height
+            row = belowLine - self.height
         else
             if self:borderHasUpLine() and fn.screenrow() == 1 and aboveLine == 0 then
                 self.border[1], self.border[2], self.border[3] = '', '', ''
             end
             self.height = math.min(height, belowLine)
-            self.row = 0
+            row = 0
         end
     end
-    self.col = 0
     self.width = winfo.width - winfo.textoff
     if self:borderHasLeftLine() then
-        self.col = self.col - 1
+        col = col - 1
     end
     if not isAbove and self:borderHasUpLine() then
-        self.row = self.row - 1
+        row = row - 1
     end
     if self:borderHasRightLine() then
         self.width = self.width - 1
     end
-    self.anchor = isAbove and 'SW' or 'NW'
-    self.zindex = 51
+    local anchor = isAbove and 'SW' or 'NW'
     return {
         border = self.border,
         relative = 'cursor',
         focusable = true,
         width = self.width,
         height = self.height,
-        anchor = self.anchor,
-        row = self.row,
-        col = self.col,
+        anchor = anchor,
+        row = row,
+        col = col,
         noautocmd = true,
-        zindex = self.zindex
+        zindex = 51
     }
 end
 
@@ -115,11 +112,20 @@ function FloatWin:validate()
     return utils.isWinValid(rawget(self, 'winid'))
 end
 
-function FloatWin:open(bufnr, wopts, enter)
+function FloatWin.getConfig()
+    local config = api.nvim_win_get_config(FloatWin.winid)
+    local row, col = config.row, config.col
+    -- row and col are a table value converted from the floating-point
+    ---@diagnostic disable-next-line: need-check-nil
+    config.row, config.col = tonumber(row[vim.val_idx]), tonumber(col[vim.val_idx])
+    return config
+end
+
+function FloatWin:open(wopts, enter)
     if enter == nil then
         enter = false
     end
-    self.winid = api.nvim_open_win(bufnr, enter, wopts)
+    self.winid = api.nvim_open_win(self:getBufnr(), enter, wopts)
     return self.winid
 end
 
@@ -134,6 +140,21 @@ function FloatWin:call(executor)
     utils.winCall(self.winid, executor)
 end
 
+function FloatWin:getBufnr()
+    if utils.isBufLoaded(rawget(self, 'bufnr')) then
+        return self.bufnr
+    end
+    local bufnr = fn.bufnr('^' .. self.bufferName .. '$')
+    if bufnr > 0 then
+        self.bufnr = bufnr
+    else
+        self.bufnr = api.nvim_create_buf(false, true)
+        api.nvim_buf_set_name(self.bufnr, self.bufferName)
+        vim.bo[self.bufnr].bufhidden = 'hide'
+    end
+    return self.bufnr
+end
+
 function FloatWin:setContent(text)
     vim.bo[self.bufnr].modifiable = true
     api.nvim_buf_set_lines(self.bufnr, 0, -1, true, text)
@@ -144,7 +165,14 @@ function FloatWin:setContent(text)
     cmd('norm! ze')
 end
 
-function FloatWin:display(winid, targetHeight, enter, isAbove)
+---
+---@param winid number
+---@param targetHeight number
+---@param enter boolean
+---@param isAbove boolean
+---@param postHandle? fun()
+---@return number
+function FloatWin:display(winid, targetHeight, enter, isAbove, postHandle)
     local height = math.min(self.config.maxheight, targetHeight)
     local wopts = self:build(winid, height, self.config.border, isAbove)
     if self:validate() then
@@ -154,15 +182,7 @@ function FloatWin:display(winid, targetHeight, enter, isAbove)
             api.nvim_set_current_win(self.winid)
         end
     else
-        local bufnr = fn.bufnr('^UfoPreviewFloatWin$')
-        if bufnr > 0 then
-            self.bufnr = bufnr
-        else
-            self.bufnr = api.nvim_create_buf(false, true)
-            api.nvim_buf_set_name(self.bufnr, 'UfoPreviewFloatWin')
-        end
-        vim.bo[self.bufnr].bufhidden = 'hide'
-        self:open(self.bufnr, wopts, enter)
+        self:open(wopts, enter)
         self.winblend = self.config.winblend
         local wo = vim.wo[self.winid]
         wo.wrap = false
@@ -176,6 +196,9 @@ function FloatWin:display(winid, targetHeight, enter, isAbove)
         end
         wo.winhl = self.config.winhighlight
         wo.winblend = self.winblend
+    end
+    if type(postHandle) == 'function' then
+        postHandle()
     end
     return self.winid
 end
@@ -198,15 +221,15 @@ function FloatWin:initialize(ns, config)
     else
         error('error border config')
     end
+    self.bufferName = 'UfoPreviewFloatWin'
     self.config = config
     return self
 end
 
 function FloatWin:dispose()
+    self:close()
     pcall(api.nvim_buf_delete, self.bufnr, {force = true})
-    self.winid = nil
     self.bufnr = nil
-    self.showScrollBar = nil
 end
 
 return FloatWin
