@@ -298,7 +298,13 @@ function Preview:afterKey()
         elseif self.foldedLnum ~= utils.foldClosed(self.winid, self.foldedLnum) then
             self.close()
         elseif self.topline ~= view.topline then
-            floatwin:display(winid, self.foldedEndLnum - self.foldedLnum + 1, false, self.isAbove)
+            if floatwin:validate() then
+                local height = self.foldedEndLnum - self.foldedLnum + 1
+                floatwin:display(winid, height, false, self.isAbove)
+                cmd('redrawstatus')
+                scrollbar:display()
+                winbar:display()
+            end
         end
     else
         self.close()
