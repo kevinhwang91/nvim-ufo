@@ -20,8 +20,10 @@ function M.getHighlightsByRange(bufnr, startRange, endRange, namespaces)
             local hlGroup = details.hl_group
             local priority = details.priority
             if hlGroup then
-                if er >= endRow and ec > endCol then
+                if er > endRow then
                     er, ec = endRow, endCol
+                elseif er == endRow and ec > endCol then
+                    er = endCol
                 end
                 table.insert(res, {sr, sc, er, ec, hlGroup, priority})
             end
