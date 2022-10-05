@@ -40,7 +40,8 @@ local function onWin(name, winid, bufnr, topRow, botRow)
             return false
         end
     end
-    if bufnrSet[bufnr] or not fold.get(bufnr) or not vim.wo[winid].foldenable then
+    local fb = fold.get(bufnr)
+    if bufnrSet[bufnr] or not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable then
         collection[winid] = nil
         return false
     end
