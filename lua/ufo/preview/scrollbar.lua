@@ -12,10 +12,18 @@ local ScrollBar = setmetatable({}, {__index = FloatWin})
 
 function ScrollBar:build()
     local config = FloatWin.getConfig()
-    local row, col, zindex = config.row, config.col + config.width, config.zindex
+    local row, col, height = config.row, config.col + config.width, config.height
+    local anchor, zindex = config.anchor, config.zindex
+    if anchor == 'NW' then
+        row = self:borderHasUpLine() and row + 1 or row
+    else
+        row = (self:borderHasBottomLine() and row - 1 or row) - height
+        row = math.max(row, self:borderHasUpLine() and 1 or 0)
+    end
     return vim.tbl_extend('force', config, {
+        anchor = 'NW',
         width = 1,
-        row = self:borderHasUpLine() and row + 1 or row,
+        row = row,
         col = self:borderHasLeftLine() and col + 1 or col,
         style = 'minimal',
         noautocmd = true,

@@ -61,7 +61,8 @@ function FloatWin:build(winid, height, border, isAbove)
     local winfo = utils.getWinInfo(winid)
     local aboveLine = utils.winCall(winid, fn.winline) - 1
     local belowLine = winfo.height - aboveLine
-    self.border = type(border) == 'string' and vim.deepcopy(defaultBorder[border]) or border
+    border = type(border) == 'string' and defaultBorder[border] or border
+    self.border = vim.deepcopy(border)
     local row, col = 0, 0
     if isAbove then
         if aboveLine < height and belowLine > aboveLine then

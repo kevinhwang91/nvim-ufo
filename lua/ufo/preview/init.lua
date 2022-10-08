@@ -147,7 +147,7 @@ local function onBufRemap(bufnr, str)
     end
 end
 
-function Preview:attach(bufnr, foldedLnum, foldedEndLnum)
+function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum)
     self:detach()
     local disposables = {}
     event:on('WinClosed', function()
@@ -164,8 +164,8 @@ function Preview:attach(bufnr, foldedLnum, foldedEndLnum)
         event:emit('setOpenFoldHl')
     end))
 
-    self.winid = utils.getWinByBuf(bufnr)
-    local view = utils.saveView(self.winid)
+    local view = utils.saveView(winid)
+    self.winid = winid
     self.bufnr = bufnr
     self.lnum = view.lnum
     self.col = view.col
@@ -231,15 +231,15 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     if lnum == -1 or not fl then
         return
     end
-    local endLnum = utils.foldClosedEnd(0, lnum)
     local winid = api.nvim_get_current_win()
+    local endLnum = utils.foldClosedEnd(0, lnum)
+    self:attach(bufnr, winid, lnum, endLnum)
     local kind = fb:lineKind(winid, lnum)
     self.isAbove = kind == 'comment'
     if not self.isAbove and nextLineIncluded ~= false then
         endLnum = fb:lineCount() == endLnum and endLnum or (endLnum + 1)
     end
     floatwin.virtText = fl.virtText
-    self:attach(bufnr, lnum, endLnum)
     local text = fb:lines(lnum, endLnum)
     self:display(enter, function()
         floatwin:setContent(text)
@@ -293,6 +293,7 @@ function Preview:afterKey()
         elseif self.topline ~= view.topline then
             if floatwin:validate() then
                 self:display(false)
+                self.topline = view.topline
             end
         end
     else
