@@ -34,14 +34,6 @@ local function tryUpdateFold(bufnr)
         if not fb or not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) then
             return
         end
-        -- TODO
-        -- buffer go back normal mode from diff mode will disable `foldenable` if the foldmethod was
-        -- `manual` before entering diff mode. Unfortunately, foldmethod will always be `manual` if
-        -- enable ufo, `foldenable` will be disabled.
-        -- version will be `0` if never update folds for the buffer
-        if fb.version > 0 then
-            vim.wo[winid].foldenable = true
-        end
         await(Fold.update(bufnr))
     end)
 end
@@ -181,6 +173,18 @@ local function diffWinClosed(winid)
                 local fb = manager:get(bufnr)
                 if fb then
                     fb:resetFoldedLines(true)
+
+                    -- TODO
+                    -- buffer go back normal mode from diff mode will disable `foldenable` if the foldmethod was
+                    -- `manual` before entering diff mode. Unfortunately, foldmethod will always be `manual` if
+                    -- enable ufo, `foldenable` will be disabled.
+
+                    -- `set foldenable` forcedly, feel free to open an issue if ufo is evil.
+                    promise.resolve():thenCall(function()
+                        if utils.isWinValid(id) then
+                            vim.wo[id].foldenable = true
+                        end
+                    end)
                     tryUpdateFold(bufnr)
                 end
             end
