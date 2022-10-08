@@ -102,7 +102,7 @@ function Preview:toggleCursor()
     local floatBufnr = floatwin:getBufnr()
     if self.bufnr == bufnr and self.lnum - self.foldedLnum > 0 then
         self.cursorMarkId = render.setLineHighlight(floatBufnr, self.ns, self.lnum - self.foldedLnum,
-                                                    'Visual', 1, self.cursorMarkId)
+                                                    'UfoPreviewCursorLine', 1, self.cursorMarkId)
     elseif self.cursorMarkId then
         pcall(api.nvim_buf_del_extmark, floatBufnr, self.ns, self.cursorMarkId)
         self.cursorMarkId = nil

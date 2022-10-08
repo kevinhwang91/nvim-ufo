@@ -59,7 +59,7 @@ use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 ```lua
 use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 
-vim.o.foldcolumn = '1'
+vim.o.foldcolumn = '1' -- '0' is not bad
 vim.o.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
 vim.o.foldlevelstart = 99
 vim.o.foldenable = true
@@ -250,6 +250,7 @@ Additional mouse supported:
 hi default link UfoPreviewSbar PmenuSbar
 hi default link UfoPreviewThumb PmenuThumb
 hi default link UfoPreviewWinBar UfoFoldedBg
+hi default link UfoPreviewCursorLine Visual
 hi default link UfoFoldedEllipsis Comment
 ```
 
@@ -257,6 +258,8 @@ hi default link UfoFoldedEllipsis Comment
 - `UfoFoldedBg`: Background of folded line.
 - `UfoPreviewSbar`: Scroll bar of preview window, only take effect if the border is missing right
   horizontal line, like `border = 'none'`.
+- `UfoPreviewCursorLine`: Highlight current line in preview window if it isn't the start of folded
+  lines.
 - `UfoPreviewWinBar`: Virtual winBar of preview window.
 - `UfoPreviewThumb`: Thumb of preview window.
 - `UfoFoldedEllipsis`: Ellipsis at the end of folded line, invalid if `fold_virt_text_handler` is
@@ -303,10 +306,8 @@ vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith) -- closeAllFolds == clo
 vim.keymap.set('n', 'K', function()
     local winid = require('ufo').peekFoldedLinesUnderCursor()
     if not winid then
-        -- choose one of them
-        -- coc.nvim
-        vim.fn.CocActionAsync('definitionHover')
-        -- nvimlsp
+        -- choose one of coc.nvim and nvim lsp
+        vim.fn.CocActionAsync('definitionHover') -- coc.nvim
         vim.lsp.buf.hover()
     end
 end)

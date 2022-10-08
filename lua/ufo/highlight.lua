@@ -52,6 +52,7 @@ local function resetHighlightGroup()
         hi default link UfoPreviewSbar PmenuSbar
         hi default link UfoPreviewThumb PmenuThumb
         hi default link UfoPreviewWinBar UfoFoldedBg
+        hi default link UfoPreviewCursorLine Visual
         hi default link UfoFoldedEllipsis Comment
     ]])
 end
