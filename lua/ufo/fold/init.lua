@@ -166,9 +166,9 @@ end
 
 local function diffWinClosed(winid)
     winid = winid or api.nvim_get_current_win()
-    if utils.isWinValid(winid) and utils.isDiffFold(winid) then
+    if utils.isWinValid(winid) and vim.wo[winid].foldmethod == 'diff' then
         for _, id in ipairs(api.nvim_tabpage_list_wins(0)) do
-            if winid ~= id and utils.isDiffFold(id) then
+            if winid ~= id and vim.wo[id].foldmethod == 'diff' then
                 local bufnr = api.nvim_win_get_buf(id)
                 local fb = manager:get(bufnr)
                 if fb then
@@ -181,7 +181,7 @@ local function diffWinClosed(winid)
 
                     -- `set foldenable` forcedly, feel free to open an issue if ufo is evil.
                     promise.resolve():thenCall(function()
-                        if utils.isWinValid(id) then
+                        if utils.isWinValid(id) and vim.wo[id].foldmethod == 'manual' then
                             vim.wo[id].foldenable = true
                         end
                     end)

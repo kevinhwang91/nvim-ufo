@@ -186,13 +186,6 @@ end
 ---
 ---@param winid number
 ---@return boolean
-function M.isDiffFold(winid)
-    return vim.wo[winid].foldmethod == 'diff'
-end
-
----
----@param winid number
----@return boolean
 function M.isDiffOrMarkerFold(winid)
     local method = vim.wo[winid].foldmethod
     return method == 'diff' or method == 'marker'
