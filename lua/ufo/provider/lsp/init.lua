@@ -57,7 +57,7 @@ function LSP:request(bufnr)
             firstCheckFt = true
             self.providerContext[ft] = {timestamp = uv.hrtime(), count = 0}
         else
-            -- after 120 seconds and count is greater than 5
+            -- after 120 seconds and count is equal or greater than 5
             if uv.hrtime() - context.timestamp > 1.2e11 and context.count >= 5 then
                 self.hasProviders[ft] = false
                 hasProvider = false

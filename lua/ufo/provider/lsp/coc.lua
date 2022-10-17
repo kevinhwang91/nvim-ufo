@@ -18,7 +18,8 @@ function CocClient.action(action, ...)
     return promise(function(resolve, reject)
         table.insert(args, function(err, res)
             if err ~= vim.NIL then
-                if type(err) == 'string' and err:match('service not started') then
+                if type(err) == 'string' and
+                    (err:match('service not started') or err:match('Plugin not ready')) then
                     resolve()
                 else
                     reject(err)
@@ -60,6 +61,7 @@ function CocClient.handleInitNotify()
 end
 
 function CocClient.handleDisposeNotify()
+    CocClient.initialized = false
     CocClient.enabled = false
 end
 
