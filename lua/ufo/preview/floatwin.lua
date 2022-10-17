@@ -67,7 +67,13 @@ function FloatWin:build(winid, height, border, isAbove)
     if isAbove then
         if aboveLine < height and belowLine > aboveLine then
             self.height = math.min(height, belowLine)
-            row = aboveLine - self.height
+            row = self.height - aboveLine
+            if self:borderHasBottomLine() then
+                row = row + 1
+            end
+            if self:borderHasUpLine() then
+                row = row + 1
+            end
         else
             self.height = math.min(height, aboveLine)
             row = 1
@@ -83,13 +89,13 @@ function FloatWin:build(winid, height, border, isAbove)
             self.height = math.min(height, belowLine)
             row = 0
         end
+        if self:borderHasUpLine() then
+            row = row - 1
+        end
     end
     self.width = winfo.width - winfo.textoff
     if self:borderHasLeftLine() then
         col = col - 1
-    end
-    if not isAbove and self:borderHasUpLine() then
-        row = row - 1
     end
     if self:borderHasRightLine() then
         self.width = self.width - 1
