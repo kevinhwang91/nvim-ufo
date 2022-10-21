@@ -142,7 +142,7 @@ function Decorator:highlightOpenFold(fb, winid, lnum)
         local _, endLnum = fl:range()
         local _, winids = utils.getWinByBuf(fb.bufnr)
         local shared = not not winids
-        utils.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', lnum, endLnum,
+        render.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', lnum, endLnum,
                                         self.openFoldHlTimeout, shared)
     end
 end

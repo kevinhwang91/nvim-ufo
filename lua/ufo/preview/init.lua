@@ -1,5 +1,6 @@
 local api = vim.api
 local cmd = vim.cmd
+local fn = vim.fn
 
 local promise    = require('promise')
 local render     = require('ufo.render')
@@ -12,23 +13,26 @@ local event      = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 local config     = require('ufo.config')
 local fold       = require('ufo.fold')
+local highlight  = require('ufo.highlight')
 
 local initialized
 
 ---@class UfoPreview
-local Preview = {
-    detachDisposables = nil,
-    winid = nil,
-    bufnr = nil,
-    lnum = nil,
-    col = nil,
-    topline = nil,
-    foldedLnum = nil,
-    foldedEndLnum = nil,
-    isAbove = nil,
-    cursorMarkId = nil,
-    keyMessages = nil
-}
+---@field disposables UfoDisposable[]
+---@field detachDisposables UfoDisposable[]
+---@field ns number
+---@field winid number
+---@field bufnr number
+---@field lnum number
+---@field col number
+---@field topline number
+---@field foldedLnum number
+---@field foldedEndLnum number
+---@field isAbove boolean
+---@field cursorSignName string
+---@field cursorSignId number
+---@field keyMessages table<string, string>
+local Preview = {}
 
 function Preview:trace(bufnr)
     local fb = fold.get(self.bufnr)
@@ -101,11 +105,12 @@ function Preview:toggleCursor()
     local bufnr = api.nvim_get_current_buf()
     local floatBufnr = floatwin:getBufnr()
     if self.bufnr == bufnr and self.lnum - self.foldedLnum > 0 then
-        self.cursorMarkId = render.setLineHighlight(floatBufnr, self.ns, self.lnum - self.foldedLnum,
-                                                    'UfoPreviewCursorLine', 1, self.cursorMarkId)
-    elseif self.cursorMarkId then
-        pcall(api.nvim_buf_del_extmark, floatBufnr, self.ns, self.cursorMarkId)
-        self.cursorMarkId = nil
+        self.cursorSignId = fn.sign_place(self.cursorSignId or 0, 'UfoPreview',
+                                          self.cursorSignName, floatBufnr,
+                                          {lnum = self.lnum - self.foldedLnum + 1, priority = 1})
+    elseif self.cursorSignId then
+        pcall(fn.sign_unplace, 'UfoPreview', {buffer = floatBufnr})
+        self.cursorSignId = nil
     end
 end
 
@@ -183,9 +188,14 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
         self.foldedLnum = nil
         self.foldedEndLnum = nil
         self.isAbove = nil
-        self.cursorMarkId = nil
+        self.cursorSignId = nil
         self.detachDisposables = nil
         api.nvim_buf_clear_namespace(floatBufnr, self.ns, 0, -1)
+        pcall(fn.sign_unplace, 'UfoPreview', {buffer = floatBufnr})
+        if floatwin:validate() then
+            fn.clearmatches(floatwin.winid)
+        end
+        self.cursorSignId = nil
     end))
     table.insert(disposables, keymap:attach(bufnr, floatBufnr, self.ns, self.keyMessages, {
         trace = self.keyMessages.trace,
@@ -308,12 +318,12 @@ function Preview:initialize(namespace)
     end
     local conf = vim.deepcopy(config.preview)
     self.keyMessages = conf.mappings
-    local disposables = {}
-    table.insert(disposables, floatwin:initialize(namespace, conf.win_config))
-    table.insert(disposables, scrollbar:initialize())
-    table.insert(disposables, winbar:initialize())
+    self.disposables = {}
+    table.insert(self.disposables, floatwin:initialize(namespace, conf.win_config))
+    table.insert(self.disposables, scrollbar:initialize())
+    table.insert(self.disposables, winbar:initialize())
     self.ns = namespace
-    self.disposables = disposables
+    self.cursorSignName = highlight.signNames()['UfoPreviewCursorLine']
     return self
 end
 

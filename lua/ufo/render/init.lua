@@ -5,6 +5,7 @@ local highlight  = require('ufo.highlight')
 local extmark    = require('ufo.render.extmark')
 local treesitter = require('ufo.render.treesitter')
 local match      = require('ufo.render.match')
+local utils      = require('ufo.utils')
 
 local M = {}
 
@@ -95,10 +96,6 @@ function M.setVirtText(bufnr, ns, row, virtText, opts)
     return extmark.setVirtText(bufnr, ns, row, virtText, opts)
 end
 
-function M.setLineHighlight(bufnr, ns, row, hlGroup, priority, id)
-    return extmark.setLineHighlight(bufnr, ns, row, hlGroup, priority, id)
-end
-
 function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
     local len = #text
     if len == 0 then
@@ -139,6 +136,66 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
     end
     table.insert(virtText, {text:sub(lastIndex), lastHlGroup})
     return virtText
+end
+
+---Prefer use sign_place rather than matchaddpos, only use matchaddpos if buffer is shared
+---with multiple windows in current tabpage.
+---Check out https://github.com/neovim/neovim/issues/20208 for detail.
+---@param handle number
+---@param hlGoup string
+---@param start number
+---@param finish number
+---@param delay? number
+---@param shared? boolean
+---@return Promise
+function M.highlightLinesWithTimeout(handle, hlGoup, start, finish, delay, shared)
+    vim.validate({
+        handle = {handle, 'number'},
+        hlGoup = {hlGoup, 'string'},
+        start = {start, 'number'},
+        finish = {finish, 'number'},
+        delay = {delay, 'number', true},
+        shared = {shared, 'boolean', true},
+    })
+    local ids = {}
+    local onFulfilled
+    if shared then
+        local prior = 10
+        local l = {}
+        for i = start, finish do
+            table.insert(l, {i})
+            if i % 8 == 0 then
+                table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
+                l = {}
+            end
+        end
+        if #l > 0 then
+            table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
+        end
+        onFulfilled = function()
+            for _, id in ipairs(ids) do
+                pcall(fn.matchdelete, id, handle)
+            end
+        end
+    else
+        local signName = highlight.signNames()[hlGoup]
+        local attrs = {}
+        for i = start, finish do
+            table.insert(attrs, {
+                buffer = handle,
+                group = 'UfoHighlight',
+                name = signName,
+                lnum = i
+            })
+        end
+        ids = fn.sign_placelist(attrs)
+        onFulfilled = function()
+            for _, id in ipairs(ids) do
+                pcall(fn.sign_unplace, 'UfoHighlight', {buffer = handle, id = id})
+            end
+        end
+    end
+    return utils.wait(delay or 300):thenCall(onFulfilled)
 end
 
 return M

@@ -1,7 +1,9 @@
-local event = require('ufo.lib.event')
-local disposable = require('ufo.lib.disposable')
 local cmd = vim.cmd
 local api = vim.api
+local fn = vim.fn
+
+local event = require('ufo.lib.event')
+local disposable = require('ufo.lib.disposable')
 
 ---@class UfoHighlight
 local Highlight = {}
@@ -9,6 +11,9 @@ local initialized
 
 ---@type table<number|string, table>
 local hlGroups
+
+---@type table<string, string>
+local signNames
 
 local function resetHighlightGroup()
     local termguicolors = vim.o.termguicolors
@@ -57,11 +62,34 @@ local function resetHighlightGroup()
     ]])
 end
 
+local function resetSignGroup()
+    signNames = setmetatable({}, {
+        __index = function(tbl, k)
+            assert(fn.sign_define(k, {linehl = k}) == 0,
+                   'Define sign name ' .. k .. 'failed')
+            rawset(tbl, k, k)
+            return k
+        end
+    })
+    return disposable:create(function()
+        for _, name in pairs(signNames) do
+            pcall(fn.sign_undefine, name)
+        end
+    end)
+end
+
 function Highlight.hlGroups()
     if not initialized then
         Highlight:initialize()
     end
     return hlGroups
+end
+
+function Highlight.signNames()
+    if not initialized then
+        Highlight:initialize()
+    end
+    return signNames
 end
 
 ---
@@ -73,6 +101,7 @@ function Highlight:initialize()
     self.disposables = {}
     event:on('ColorScheme', resetHighlightGroup, self.disposables)
     resetHighlightGroup()
+    table.insert(self.disposables, resetSignGroup())
     initialized = true
     return self
 end
