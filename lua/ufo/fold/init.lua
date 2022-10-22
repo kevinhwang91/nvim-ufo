@@ -162,30 +162,29 @@ local function updatePendingFold(bufnr)
     end)
 end
 
-local function diffWinClosed(winid)
-    winid = winid or api.nvim_get_current_win()
-    if utils.isWinValid(winid) and vim.wo[winid].foldmethod == 'diff' then
-        for _, id in ipairs(api.nvim_tabpage_list_wins(0)) do
-            if winid ~= id and vim.wo[id].foldmethod == 'diff' then
-                local bufnr = api.nvim_win_get_buf(id)
-                local fb = manager:get(bufnr)
-                if fb then
-                    fb:resetFoldedLines(true)
+local function handleDiffMode(winid, new, old)
+    if old ~= new and new == 0 then
+        local bufnr = api.nvim_win_get_buf(winid)
+        local fb = manager:get(bufnr)
 
-                    -- TODO
-                    -- buffer go back normal mode from diff mode will disable `foldenable` if the foldmethod was
-                    -- `manual` before entering diff mode. Unfortunately, foldmethod will always be `manual` if
-                    -- enable ufo, `foldenable` will be disabled.
+        if fb then
+            fb:resetFoldedLines(true)
 
-                    -- `set foldenable` forcedly, feel free to open an issue if ufo is evil.
-                    promise.resolve():thenCall(function()
-                        if utils.isWinValid(id) and vim.wo[id].foldmethod == 'manual' then
-                            vim.wo[id].foldenable = true
-                        end
+            -- TODO
+            -- buffer go back normal mode from diff mode will disable `foldenable` if the foldmethod was
+            -- `manual` before entering diff mode. Unfortunately, foldmethod will always be `manual` if
+            -- enable ufo, `foldenable` will be disabled.
+
+            -- `set foldenable` forcedly, feel free to open an issue if ufo is evil.
+            promise.resolve():thenCall(function()
+                if utils.isWinValid(winid) and vim.wo[winid].foldmethod == 'manual' then
+                    utils.winCall(winid, function()
+                        cmd('silent! %foldopen!')
                     end)
-                    tryUpdateFold(bufnr)
+                    vim.wo[winid].foldenable = true
                 end
-            end
+            end)
+            tryUpdateFold(bufnr)
         end
     end
 end
@@ -219,8 +218,8 @@ function Fold:initialize(ns)
     end, self.disposables)
     event:on('TextChanged', updateFoldDebounced, self.disposables)
     event:on('CmdlineLeave', updatePendingFold, self.disposables)
-    event:on('WinClosed', diffWinClosed, self.disposables)
     event:on('BufAttach', Fold.attach, self.disposables)
+    event:on('DiffModeChanged', handleDiffMode, self.disposables)
     table.insert(self.disposables, manager:initialize(ns, config.provider_selector,
                                                       config.close_fold_kinds))
     return self

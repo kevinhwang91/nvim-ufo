@@ -28,11 +28,16 @@ local function createEvents()
         au CmdlineLeave * lua require('ufo.lib.event'):emit('CmdlineLeave')
         au ColorScheme * lua require('ufo.lib.event'):emit('ColorScheme')
     ]])
-    local optionSetArgs = 'vim.api.nvim_get_current_buf(), vim.v.option_new, vim.v.option_old'
+    local bufOptSetArgs = 'vim.api.nvim_get_current_buf(), vim.v.option_new, vim.v.option_old'
+    local winOptSetArgs = 'vim.api.nvim_get_current_win(), ' ..
+        'tonumber(vim.v.option_new), tonumber(vim.v.option_old)'
     cmd(([[
         au OptionSet buftype silent! lua require('ufo.lib.event'):emit('BufTypeChanged', %s)
         au OptionSet filetype silent! lua require('ufo.lib.event'):emit('FileTypeChanged', %s)
-    ]]):format(optionSetArgs, optionSetArgs))
+    ]]):format(bufOptSetArgs, bufOptSetArgs))
+    cmd(([[
+        au OptionSet diff silent! lua require('ufo.lib.event'):emit('DiffModeChanged', %s)
+    ]]):format(winOptSetArgs))
     cmd('aug END')
 
     return disposable:create(function()
