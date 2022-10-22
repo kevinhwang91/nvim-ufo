@@ -100,9 +100,9 @@ function Buffer:buildMissingHunk(lnum, endLnum)
     end
     -- scan backward
     if #hunks > 0 then
-        local firstHunks = hunks[1]
-        local fhs = firstHunks[1]
-        if fhs == lnum then
+        local firstHunk = hunks[1]
+        local fhLnum = firstHunk[1]
+        if fhLnum == lnum then
             local i = lnum - 1
             while i > 0 do
                 if self._lines[i] then
@@ -110,10 +110,10 @@ function Buffer:buildMissingHunk(lnum, endLnum)
                 end
                 i = i - 1
             end
-            fhs = i + 1
-            cnt = cnt + lnum - fhs
-            firstHunks[1] = fhs
-            lnum = fhs
+            fhLnum = i + 1
+            cnt = cnt + lnum - fhLnum
+            firstHunk[1] = fhLnum
+            lnum = fhLnum
         end
     end
     if cnt > (endLnum - lnum) / 4 and #hunks > 2 then

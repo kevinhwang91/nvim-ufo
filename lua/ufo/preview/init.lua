@@ -15,9 +15,8 @@ local config     = require('ufo.config')
 local fold       = require('ufo.fold')
 local highlight  = require('ufo.highlight')
 
-local initialized
-
 ---@class UfoPreview
+---@field initialized boolean
 ---@field disposables UfoDisposable[]
 ---@field detachDisposables UfoDisposable[]
 ---@field ns number
@@ -313,12 +312,16 @@ function Preview:afterKey()
 end
 
 function Preview:initialize(namespace)
-    if initialized then
+    if self.initialized then
         return
     end
+    self.initialized = true
     local conf = vim.deepcopy(config.preview)
     self.keyMessages = conf.mappings
     self.disposables = {}
+    table.insert(self.disposables, disposable:create(function()
+        self.initialized = false
+    end))
     table.insert(self.disposables, floatwin:initialize(namespace, conf.win_config))
     table.insert(self.disposables, scrollbar:initialize())
     table.insert(self.disposables, winbar:initialize())
@@ -330,7 +333,6 @@ end
 function Preview:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}
-    initialized = false
 end
 
 return Preview

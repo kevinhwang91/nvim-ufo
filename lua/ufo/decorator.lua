@@ -11,15 +11,14 @@ local event      = require('ufo.lib.event')
 local fold = require('ufo.fold')
 local render = require('ufo.render')
 
-local initialized
-
 ---@class UfoDecorator
+---@field initialized boolean
 ---@field ns number
 ---@field virtTextHandler? UfoFoldVirtTextHandler[]
 ---@field enableFoldEndVirtText boolean
 ---@field openFoldHlTimeout number
 ---@field openFoldHlEnabled boolean
----@field disposables table
+---@field disposables UfoDisposable
 local Decorator = {}
 
 local collection
@@ -143,7 +142,7 @@ function Decorator:highlightOpenFold(fb, winid, lnum)
         local _, winids = utils.getWinByBuf(fb.bufnr)
         local shared = not not winids
         render.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', lnum, endLnum,
-                                        self.openFoldHlTimeout, shared)
+                                         self.openFoldHlTimeout, shared)
     end
 end
 
@@ -224,10 +223,10 @@ end
 ---@param namespace number
 ---@return UfoDecorator
 function Decorator:initialize(namespace)
-    if initialized then
+    if self.initialized then
         return self
     end
-    local disposables = {}
+    self.initialized = true
     api.nvim_set_decoration_provider(namespace, {
         on_start = onStart,
         on_win = onWin,
@@ -236,7 +235,9 @@ function Decorator:initialize(namespace)
     })
     self.ns = namespace
 
-    table.insert(disposables, disposable:create(function()
+    self.disposables = {}
+    table.insert(self.disposables, disposable:create(function()
+        self.initialized = false
         api.nvim_set_decoration_provider(namespace, {})
     end))
     self.enableGetFoldVirtText = config.enable_get_fold_virt_text
@@ -256,7 +257,7 @@ function Decorator:initialize(namespace)
         else
             self.openFoldHlEnabled = self.openFoldHlTimeout > 0
         end
-    end, disposables)
+    end, self.disposables)
 
     local virtTextHandler = config.fold_virt_text_handler or self.defaultVirtTextHandler
     self.virtTextHandlers = setmetatable({}, {
@@ -268,16 +269,14 @@ function Decorator:initialize(namespace)
     handlerErrorMsg = ([[!Error in user's handler, check out `%s`]]):format(log.path)
     event:on('BufDetach', function(bufnr)
         self.virtTextHandlers[bufnr] = nil
-    end, disposables)
-    self.disposables = disposables
-    initialized = true
+    end, self.disposables)
+    self.disposables = self.disposables
     return self
 end
 
 function Decorator:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}
-    initialized = false
 end
 
 return Decorator

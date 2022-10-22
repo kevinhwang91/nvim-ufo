@@ -253,7 +253,7 @@ end
 ---@param bufnr number
 ---@return boolean
 function M.isBufLoaded(bufnr)
-    return bufnr and type(bufnr) == 'number' and bufnr > 0 and api.nvim_buf_is_loaded(bufnr)
+    return type(bufnr) == 'number' and bufnr > 0 and api.nvim_buf_is_loaded(bufnr)
 end
 
 ---

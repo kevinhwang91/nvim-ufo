@@ -7,16 +7,12 @@ local driver     = require('ufo.fold.driver')
 local log        = require('ufo.lib.log')
 
 ---@class UfoFoldBufferManager
+---@field initialized boolean
 ---@field buffers UfoFoldBuffer[]
 ---@field providerSelector function
 ---@field closeKinds UfoFoldingRangeKind[]
 ---@field disposables UfoDisposable[]
-local FoldBufferManager = {
-    buffers = {},
-    disposables = {}
-}
-
-local initialized
+local FoldBufferManager = {}
 
 ---
 ---@param namespace number
@@ -24,33 +20,35 @@ local initialized
 ---@param closeKinds UfoFoldingRangeKind[]
 ---@return UfoFoldBufferManager
 function FoldBufferManager:initialize(namespace, selector, closeKinds)
-    if initialized then
+    if self.initialized then
         return self
     end
     self.ns = namespace
     self.providerSelector = selector
     self.closeKinds = closeKinds
-    local disposables = {
-        disposable:create(function()
-            for _, fb in pairs(self.buffers) do
-                fb:dispose()
-            end
-            self.buffers = {}
-        end)
-    }
+    self.buffers = {}
+    self.initialized = true
+    self.disposables = {}
+    table.insert(self.disposables, disposable:create(function()
+        for _, fb in pairs(self.buffers) do
+            fb:dispose()
+        end
+        self.buffers = {}
+        self.initialized = false
+    end))
     event:on('BufDetach', function(bufnr)
         local fb = self:get(bufnr)
         if fb then
             fb:dispose()
         end
         self.buffers[bufnr] = nil
-    end, disposables)
+    end, self.disposables)
     event:on('BufReload', function(bufnr)
         local fb = self:get(bufnr)
         if fb then
             fb:dispose()
         end
-    end, disposables)
+    end, self.disposables)
 
     local function optChanged(bufnr, new, old)
         if old ~= new then
@@ -61,17 +59,15 @@ function FoldBufferManager:initialize(namespace, selector, closeKinds)
         end
     end
 
-    event:on('BufTypeChanged', optChanged, disposables)
-    event:on('FileTypeChanged', optChanged, disposables)
+    event:on('BufTypeChanged', optChanged, self.disposables)
+    event:on('FileTypeChanged', optChanged, self.disposables)
     event:on('BufLinesChanged', function(bufnr, _, firstLine, lastLine, lastLineUpdated)
         local fb = self:get(bufnr)
         if fb then
             fb:handleFoldedLinesChanged(firstLine, lastLine, lastLineUpdated)
         end
-    end, disposables)
-    self.disposables = disposables
+    end, self.disposables)
     self.providerSelector = selector
-    initialized = true
     return self
 end
 
@@ -96,7 +92,6 @@ end
 function FoldBufferManager:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}
-    initialized = false
 end
 
 function FoldBufferManager:parseBufferProviders(fb, selector)

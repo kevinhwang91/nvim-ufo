@@ -1,6 +1,5 @@
 local api = vim.api
 local cmd = vim.cmd
-local fn = vim.fn
 
 local config     = require('ufo.config')
 local promise    = require('promise')
@@ -12,9 +11,8 @@ local event      = require('ufo.lib.event')
 local manager    = require('ufo.fold.manager')
 local disposable = require('ufo.lib.disposable')
 
-local initialized
-
 ---@class UfoFold
+---@field initialized boolean
 ---@field disposables UfoDisposable[]
 local Fold = {}
 
@@ -196,10 +194,14 @@ end
 ---@param ns number
 ---@return UfoFold
 function Fold:initialize(ns)
-    if initialized then
+    if self.initialized then
         return self
     end
-    local disposables = {}
+    self.initialized = true
+    self.disposables = {}
+    table.insert(self.disposables, disposable:create(function()
+        self.initialized = false
+    end))
     event:on('BufEnter', function(bufnr)
         bufnr = bufnr or api.nvim_get_current_buf()
         local fb = manager:get(bufnr)
@@ -208,28 +210,25 @@ function Fold:initialize(ns)
         end
         setFoldText()
         updatePendingFold(bufnr)
-    end, disposables)
+    end, self.disposables)
     event:on('InsertLeave', function(bufnr)
         updateFoldDebounced(bufnr, true)
-    end, disposables)
+    end, self.disposables)
     event:on('BufWritePost', function(bufnr)
         updateFoldDebounced(bufnr, true)
-    end, disposables)
-    event:on('TextChanged', updateFoldDebounced, disposables)
-    event:on('CmdlineLeave', updatePendingFold, disposables)
-    event:on('WinClosed', diffWinClosed, disposables)
-    event:on('BufAttach', Fold.attach, disposables)
-    table.insert(disposables, manager:initialize(ns, config.provider_selector,
-                                                 config.close_fold_kinds))
-    self.disposables = disposables
-    initialized = true
+    end, self.disposables)
+    event:on('TextChanged', updateFoldDebounced, self.disposables)
+    event:on('CmdlineLeave', updatePendingFold, self.disposables)
+    event:on('WinClosed', diffWinClosed, self.disposables)
+    event:on('BufAttach', Fold.attach, self.disposables)
+    table.insert(self.disposables, manager:initialize(ns, config.provider_selector,
+                                                      config.close_fold_kinds))
     return self
 end
 
 function Fold:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}
-    initialized = false
 end
 
 return Fold

@@ -7,15 +7,10 @@ local promise    = require('promise')
 local utils      = require('ufo.utils')
 
 ---@class UfoBufferManager
+---@field initialized boolean
 ---@field buffers UfoBuffer[]
 ---@field disposables UfoDisposable[]
-local BufferManager = {
-    buffers = {},
-    bufDetachSet = {},
-    disposables = {}
-}
-
-local initialized
+local BufferManager = {}
 
 local function attach(self, bufnr)
     if not self.buffers[bufnr] and not self.bufDetachSet[bufnr] then
@@ -28,27 +23,31 @@ local function attach(self, bufnr)
 end
 
 function BufferManager:initialize()
-    if initialized then
+    if self.initialized then
         return self
     end
-    local disposables = {}
-    table.insert(disposables, disposable:create(function()
+    self.initialized = true
+    self.buffers = {}
+    self.bufDetachSet = {}
+    self.disposables = {}
+    table.insert(self.disposables, disposable:create(function()
         for _, b in pairs(self.buffers) do
             b:dispose()
         end
+        self.initialized = false
         self.buffers = {}
         self.bufDetachSet = {}
     end))
     event:on('BufEnter', function(bufnr)
         attach(self, bufnr or api.nvim_get_current_buf())
-    end, disposables)
+    end, self.disposables)
     event:on('BufDetach', function(bufnr)
         local b = self.buffers[bufnr]
         if b then
             b:dispose()
             self.buffers[bufnr] = nil
         end
-    end, disposables)
+    end, self.disposables)
     event:on('BufTypeChanged', function(bufnr, new, old)
         local b = self.buffers[bufnr]
         if b and old ~= new then
@@ -58,14 +57,13 @@ function BufferManager:initialize()
                 b.bt = new
             end
         end
-    end, disposables)
+    end, self.disposables)
     event:on('FileTypeChanged', function(bufnr, new, old)
         local b = self.buffers[bufnr]
         if b and old ~= new then
             b.ft = new
         end
-    end, disposables)
-    self.disposables = disposables
+    end, self.disposables)
 
     for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do
         local bufnr = api.nvim_win_get_buf(winid)
@@ -80,7 +78,6 @@ function BufferManager:initialize()
             end)
         end
     end
-    initialized = true
     return self
 end
 
@@ -94,7 +91,6 @@ end
 function BufferManager:dispose()
     disposable.disposeAll(self.disposables)
     self.disposables = {}
-    initialized = false
 end
 
 function BufferManager:attach(bufnr)

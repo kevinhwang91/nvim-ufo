@@ -42,7 +42,7 @@ end
 
 ---
 ---@param winid number
----@param ranges number[]
+---@param ranges table<number, number[]> list of line range
 function M.createFolds(winid, ranges)
     local wp = findWin(winid)
     local s, e = CPos_T(), CPos_T()
