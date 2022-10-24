@@ -102,6 +102,17 @@ function M.inspectBuf(bufnr)
         table.insert(msg, 'Fallback provider: ' .. fb.providers[2])
     end
     table.insert(msg, 'Selected provider: ' .. (fb.selectedProvider or 'nil'))
+    local kindSet = {}
+    for _, range in ipairs(fb.foldRanges) do
+        if range.kind then
+            kindSet[range.kind] = true
+        end
+    end
+    local kinds = {}
+    for kind in pairs(kindSet) do
+        table.insert(kinds, kind)
+    end
+    table.insert(msg, 'Fold kinds: ' .. table.concat(kinds, ', '))
     return msg
 end
 

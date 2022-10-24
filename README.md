@@ -153,8 +153,9 @@ For example, Changing the text in a buffer will request the providers for folds.
     },
     close_fold_kinds = {
         description = [[After the buffer is displayed (opened for the first time), close the
-                    folds whose range with `kind` field is included in this option.
-                    For now, only 'lsp' provider contain 'comment', 'imports' and 'region'.]],
+                    folds whose range with `kind` field is included in this option. For now,
+                    'lsp' provider's standardized kinds are 'comment', 'imports' and 'region',
+                    run `UfoInspect` for details if your provider has extended the kinds.]],
         default = {}
     },
     fold_virt_text_handler = {
