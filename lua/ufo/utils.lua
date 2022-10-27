@@ -205,6 +205,9 @@ end
 ---@param targetWidth number
 ---@return string
 function M.truncateStrByWidth(str, targetWidth)
+    -- str in `strdisplaywidth` need to be converted from Lua to VimScript
+    -- If a Lua string contains a NUL byte, it will be converted to a |Blob|.
+    str = str:gsub('%z', '^@')
     if fn.strdisplaywidth(str) <= targetWidth then
         return str
     end
