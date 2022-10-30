@@ -195,7 +195,7 @@ function FoldBuffer:openFold(lnum)
         self.foldedLineCount = self.foldedLineCount - 1
         self.foldedLines[lnum] = false
     end
-    return not not fl
+    return fl ~= nil
 end
 
 ---

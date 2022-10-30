@@ -138,20 +138,22 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
     return virtText
 end
 
----Prefer use sign_place rather than matchaddpos, only use matchaddpos if buffer is shared
+---Prefer use nvim_buf_set_extmark rather than matchaddpos, only use matchaddpos if buffer is shared
 ---with multiple windows in current tabpage.
 ---Check out https://github.com/neovim/neovim/issues/20208 for detail.
 ---@param handle number
----@param hlGoup string
+---@param hlGroup string
+---@param ns number
 ---@param start number
 ---@param finish number
 ---@param delay? number
 ---@param shared? boolean
 ---@return Promise
-function M.highlightLinesWithTimeout(handle, hlGoup, start, finish, delay, shared)
+function M.highlightLinesWithTimeout(handle, hlGroup, ns, start, finish, delay, shared)
     vim.validate({
         handle = {handle, 'number'},
-        hlGoup = {hlGoup, 'string'},
+        hlGoup = {hlGroup, 'string'},
+        ns = {ns, 'number'},
         start = {start, 'number'},
         finish = {finish, 'number'},
         delay = {delay, 'number', true},
@@ -165,12 +167,12 @@ function M.highlightLinesWithTimeout(handle, hlGoup, start, finish, delay, share
         for i = start, finish do
             table.insert(l, {i})
             if i % 8 == 0 then
-                table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
+                table.insert(ids, fn.matchaddpos(hlGroup, l, prior))
                 l = {}
             end
         end
         if #l > 0 then
-            table.insert(ids, fn.matchaddpos(hlGoup, l, prior))
+            table.insert(ids, fn.matchaddpos(hlGroup, l, prior))
         end
         onFulfilled = function()
             for _, id in ipairs(ids) do
@@ -178,20 +180,16 @@ function M.highlightLinesWithTimeout(handle, hlGoup, start, finish, delay, share
             end
         end
     else
-        local signName = highlight.signNames()[hlGoup]
-        local attrs = {}
+        local o = {hl_group = hlGroup}
         for i = start, finish do
-            table.insert(attrs, {
-                buffer = handle,
-                group = 'UfoHighlight',
-                name = signName,
-                lnum = i
-            })
+            local row, col = i - 1, 0
+            o.end_row = i
+            o.end_col = 0
+            table.insert(ids, api.nvim_buf_set_extmark(handle, ns, row, col, o))
         end
-        ids = fn.sign_placelist(attrs)
         onFulfilled = function()
             for _, id in ipairs(ids) do
-                pcall(fn.sign_unplace, 'UfoHighlight', {buffer = handle, id = id})
+                pcall(api.nvim_buf_del_extmark, handle, ns, id)
             end
         end
     end

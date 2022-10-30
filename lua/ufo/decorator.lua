@@ -14,6 +14,7 @@ local render = require('ufo.render')
 ---@class UfoDecorator
 ---@field initialized boolean
 ---@field ns number
+---@field hlNs number
 ---@field virtTextHandler? UfoFoldVirtTextHandler[]
 ---@field enableFoldEndVirtText boolean
 ---@field openFoldHlTimeout number
@@ -140,9 +141,9 @@ function Decorator:highlightOpenFold(fb, winid, lnum)
         local fl = fb:foldedLine(lnum)
         local _, endLnum = fl:range()
         local _, winids = utils.getWinByBuf(fb.bufnr)
-        local shared = not not winids
-        render.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', lnum, endLnum,
-                                         self.openFoldHlTimeout, shared)
+        local shared = winids ~= nil
+        render.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', self.hlNs,
+                                         lnum, endLnum, self.openFoldHlTimeout, shared)
     end
 end
 
@@ -234,6 +235,7 @@ function Decorator:initialize(namespace)
         on_end = onEnd
     })
     self.ns = namespace
+    self.hlNs = self.hlNs or api.nvim_create_namespace('')
 
     self.disposables = {}
     table.insert(self.disposables, disposable:create(function()
@@ -270,7 +272,6 @@ function Decorator:initialize(namespace)
     event:on('BufDetach', function(bufnr)
         self.virtTextHandlers[bufnr] = nil
     end, self.disposables)
-    self.disposables = self.disposables
     return self
 end
 
