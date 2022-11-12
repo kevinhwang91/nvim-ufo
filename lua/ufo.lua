@@ -141,19 +141,20 @@ function M.setup(opts)
 end
 
 ---------------------------------------setFoldVirtTextHandler---------------------------------------
+
 ---@class UfoFoldVirtTextHandlerContext
 ---@field bufnr number buffer for closed fold
 ---@field winid number window for closed fold
 ---@field text string text for the first line of closed fold
----@field get_fold_virt_text fun(lnum: number) a function to get virtual text by lnum
+---@field get_fold_virt_text fun(lnum: number): UfoExtmarkVirtTextChunk[] a function to get virtual text by lnum
 
 ---@class UfoExtmarkVirtTextChunk
----@field text string
----@field highlight string|number
+---@field [1] string text
+---@field [2] string|number highlight
 
 ---Set a fold virtual text handler for a buffer, will override global handler if it's existed.
 ---Ufo actually uses a virtual text with \`nvim_buf_set_extmark\` to overlap the first line of closed fold
----run \`:h nvim_buf_set_extmark | call search('virt_text')\` for detail
+---run \`:h nvim_buf_set_extmark | call search('virt_text')\` for detail.
 ---@diagnostic disable: undefined-doc-param
 ---Detial for handler function:
 ---@param virtText UfoExtmarkVirtTextChunk[] contained text and highlight captured by Ufo, export to caller
@@ -172,8 +173,8 @@ end
 ---truncate('1你2好', 7) return '1你2好'
 ---@param ctx UfoFoldVirtTextHandlerContext the context used by ufo, export to caller
 
----@alias UfoFoldVirtTextHandler fun(virtText: UfoExtmarkVirtTextChunk[], lnum: number, endLnum: number, width: number, truncate: fun(str: string, width: number), ctx: UfoFoldVirtTextHandlerContext): UfoExtmarkVirtTextChunk
----
+---@alias UfoFoldVirtTextHandler fun(virtText: UfoExtmarkVirtTextChunk[], lnum: number, endLnum: number, width: number, truncate: fun(str: string, width: number), ctx: UfoFoldVirtTextHandlerContext): UfoExtmarkVirtTextChunk[]
+
 ---@param bufnr number
 ---@param handler UfoFoldVirtTextHandler
 function M.setFoldVirtTextHandler(bufnr, handler)
