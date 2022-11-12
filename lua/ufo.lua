@@ -153,7 +153,7 @@ end
 
 ---Set a fold virtual text handler for a buffer, will override global handler if it's existed.
 ---Ufo actually uses a virtual text with \`nvim_buf_set_extmark\` to overlap the first line of closed fold
----run \`:h nvim_buf_set_extmark | call search('virt_text')\` for detail
+---run \`:h nvim_buf_set_extmark | call search('virt_text')\` for detail.
 ---@diagnostic disable: undefined-doc-param
 ---Detial for handler function:
 ---@param virtText UfoExtmarkVirtTextChunk[] contained text and highlight captured by Ufo, export to caller
