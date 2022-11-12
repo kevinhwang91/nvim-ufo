@@ -148,8 +148,8 @@ end
 ---@field get_fold_virt_text fun(lnum: number) a function to get virtual text by lnum
 
 ---@class UfoExtmarkVirtTextChunk
----@field text string
----@field highlight string|number
+---@field [1] string text
+---@field [2] string|number highlight
 
 ---Set a fold virtual text handler for a buffer, will override global handler if it's existed.
 ---Ufo actually uses a virtual text with \`nvim_buf_set_extmark\` to overlap the first line of closed fold
