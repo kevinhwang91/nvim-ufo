@@ -146,7 +146,7 @@ end
 ---@field bufnr number buffer for closed fold
 ---@field winid number window for closed fold
 ---@field text string text for the first line of closed fold
----@field get_fold_virt_text fun(lnum: number) a function to get virtual text by lnum
+---@field get_fold_virt_text fun(lnum: number): UfoExtmarkVirtTextChunk[] a function to get virtual text by lnum
 
 ---@class UfoExtmarkVirtTextChunk
 ---@field [1] string text
