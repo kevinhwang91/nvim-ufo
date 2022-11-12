@@ -141,6 +141,7 @@ function M.setup(opts)
 end
 
 ---------------------------------------setFoldVirtTextHandler---------------------------------------
+
 ---@class UfoFoldVirtTextHandlerContext
 ---@field bufnr number buffer for closed fold
 ---@field winid number window for closed fold
