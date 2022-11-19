@@ -11,7 +11,6 @@ local Buffer = {}
 function Buffer:new(bufnr)
     local o = setmetatable({}, self)
     self.__index = self
-    o.id = vim.loop.hrtime()
     o.bufnr = bufnr
     o:reload()
     return o

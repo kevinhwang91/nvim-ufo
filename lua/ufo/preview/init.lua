@@ -89,13 +89,13 @@ function Preview:trace(bufnr)
     })
 end
 
-function Preview:scroll(char)
+function Preview:scroll(char, toTopLeft)
     if not self.validate() then
         return
     end
     floatwin:call(function()
         local ctrlTbl = {B = 0x02, D = 0x04, E = 0x05, F = 0x06, U = 0x15, Y = 0x19}
-        cmd(('norm! %c'):format(ctrlTbl[char]))
+        cmd(('norm! %c%s'):format(ctrlTbl[char], toTopLeft and 'H_' or ''))
     end)
     self:viewChanged()
 end
@@ -115,8 +115,9 @@ end
 
 local function onBufRemap(bufnr, str)
     local self = Preview
+    local isNormalBuf = bufnr == self.bufnr
     if str == 'switch' then
-        if bufnr == self.bufnr then
+        if isNormalBuf then
             api.nvim_set_current_win(floatwin.winid)
             vim.wo.cul = true
         else
@@ -129,17 +130,17 @@ local function onBufRemap(bufnr, str)
     elseif str == 'close' then
         self:close()
     elseif str == 'scrollB' then
-        self:scroll('B')
+        self:scroll('B', isNormalBuf)
     elseif str == 'scrollF' then
-        self:scroll('F')
+        self:scroll('F', isNormalBuf)
     elseif str == 'scrollU' then
-        self:scroll('U')
+        self:scroll('U', isNormalBuf)
     elseif str == 'scrollD' then
-        self:scroll('D')
+        self:scroll('D', isNormalBuf)
     elseif str == 'scrollE' then
-        self:scroll('E')
+        self:scroll('E', isNormalBuf)
     elseif str == 'scrollY' then
-        self:scroll('Y')
+        self:scroll('Y', isNormalBuf)
     elseif str == 'wheelUp' or str == 'wheelDown' then
         promise.resolve():thenCall(function()
             self:viewChanged()
@@ -227,7 +228,7 @@ end
 ---
 ---@param enter? boolean
 ---@param nextLineIncluded? boolean
----@return number? floatwinId
+---@return number? floatWinId
 function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     local bufnr = api.nvim_get_current_buf()
     local fb = fold.get(bufnr)
@@ -253,11 +254,9 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     local text = fb:lines(lnum, endLnum)
     self:display(enter, function()
         floatwin:setContent(text)
+        api.nvim_win_set_cursor(floatwin.winid, {oLnum - lnum + 1, oCol})
         if oLnum > lnum then
-            floatwin:call(function()
-                api.nvim_win_set_cursor(0, {oLnum - lnum + 1, oCol})
-                utils.zz()
-            end)
+            floatwin:call(utils.zz)
         end
         floatwin:refreshTopline()
     end)

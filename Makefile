@@ -4,9 +4,7 @@ DEPS ?= build
 LUA_LS ?= $(DEPS)/lua-language-server
 LINT_LEVEL ?= Information
 
-all: deps
-
-deps: | $(LUA_LS)
+all:
 
 lint:
 	@rm -rf $(LUA_LS)
