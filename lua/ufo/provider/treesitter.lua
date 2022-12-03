@@ -91,6 +91,9 @@ function Treesitter.getFolds(bufnr)
     end
     local bt = buf:buftype()
     if bt ~= '' and bt ~= 'acwrite' then
+        if bt == 'nofile' then
+            error('UfoFallbackException')
+        end
         return
     end
     local self = Treesitter

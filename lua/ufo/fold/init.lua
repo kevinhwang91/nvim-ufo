@@ -28,8 +28,7 @@ local function tryUpdateFold(bufnr)
         end
         -- some plugins may change foldmethod to diff
         await(utils.wait(50))
-        local fb = manager:get(bufnr)
-        if not fb or not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) then
+        if not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) then
             return
         end
         await(Fold.update(bufnr))

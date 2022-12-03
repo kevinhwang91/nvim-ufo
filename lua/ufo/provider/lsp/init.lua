@@ -46,7 +46,7 @@ function LSP:request(bufnr)
     end
     local bt = buf:buftype()
     if bt ~= '' and bt ~= 'acwrite' then
-        return promise.resolve()
+        return bt == 'nofile' and promise.reject('UfoFallbackException') or promise.resolve()
     end
     local ft = buf:filetype()
     local hasProvider = self.hasProviders[ft]

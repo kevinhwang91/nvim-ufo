@@ -135,7 +135,7 @@ the folds, the request strategy is formed by the main and the fallback. The defa
 
 For example, Changing the text in a buffer will request the providers for folds.
 
-> `foldmethod` option will finally become `manual` if ufo are working.
+> `foldmethod` option will finally become `manual` if ufo is working.
 
 ### Setup and description
 
