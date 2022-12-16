@@ -235,7 +235,7 @@ Additional mouse supported:
 | UfoDisable     | Disable ufo                                                    |
 | UfoInspect     | Inspect current buffer information                             |
 | UfoAttach      | Attach current buffer to enable all features                   |
-| UfoDetach      | Attach current buffer to disable all features                  |
+| UfoDetach      | Detach current buffer to disable all features                  |
 | UfoEnableFold  | Enable to get folds and update them at once for current buffer |
 | UfoDisableFold | Disable to get folds for current buffer                        |
 

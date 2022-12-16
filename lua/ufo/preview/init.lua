@@ -179,6 +179,7 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
     self.foldedEndLnum = foldedEndLnum
     self.isAbove = isAbove
     local floatBufnr = floatwin:getBufnr()
+    vim.bo[floatBufnr].iskeyword = vim.bo[bufnr].iskeyword
     table.insert(disposables, disposable:create(function()
         self.winid = nil
         self.bufnr = nil
@@ -195,7 +196,9 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
         if floatwin:validate() then
             fn.clearmatches(floatwin.winid)
         end
-        self.cursorSignId = nil
+        pcall(api.nvim_buf_call, floatBufnr, function()
+            cmd('setl iskeyword<')
+        end)
     end))
     table.insert(disposables, keymap:attach(bufnr, floatBufnr, self.ns, self.keyMessages, {
         trace = self.keyMessages.trace,
@@ -265,6 +268,7 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
                                     {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
                                     text, self.ns)
     render.mapMatchByLnum(winid, floatwin.winid, lnum, endLnum)
+    vim.wo[floatwin.winid].listchars = vim.wo[winid].listchars
     return floatwin.winid
 end
 
