@@ -316,6 +316,8 @@ end)
 
 ### Customize fold text
 
+Adding number suffix of folded lines instead of the default ellipsis, here is the example:
+
 <p align="center">
     <img width="864px" src=https://user-images.githubusercontent.com/17562139/174121926-e90a962d-9fc9-428a-bd53-274ed392c68d.png>
 </p>
@@ -350,14 +352,16 @@ local handler = function(virtText, lnum, endLnum, width, truncate)
 end
 
 -- global handler
+-- `handler` is the 2nd parameter of `setFoldVirtTextHandler`,
+-- check out `./lua/ufo.lua` and search `setFoldVirtTextHandler` for detail.
 require('ufo').setup({
     fold_virt_text_handler = handler
 })
 
 -- buffer scope handler
 -- will override global handler if it is existed
-local bufnr = vim.api.nvim_get_current_buf()
-require('ufo').setFoldVirtTextHandler(bufnr, handler)
+-- local bufnr = vim.api.nvim_get_current_buf()
+-- require('ufo').setFoldVirtTextHandler(bufnr, handler)
 ```
 
 ## Feedback
