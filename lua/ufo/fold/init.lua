@@ -35,10 +35,12 @@ local function tryUpdateFold(bufnr)
     end)
 end
 
-local function setFoldText()
-    cmd([[
-        setl foldtext=v:lua.require'ufo.main'.foldtext()
-        setl fillchars+=fold:\ ]])
+local function setFoldText(bufnr)
+    api.nvim_buf_call(bufnr, function()
+        cmd([[
+            setl foldtext=v:lua.require'ufo.main'.foldtext()
+            setl fillchars+=fold:\ ]])
+    end)
 end
 
 function Fold.update(bufnr)
@@ -120,7 +122,7 @@ function Fold.attach(bufnr)
         return
     end
     log.debug('attach bufnr:', bufnr)
-    setFoldText()
+    setFoldText(bufnr)
     tryUpdateFold(bufnr)
 end
 
@@ -206,7 +208,7 @@ function Fold:initialize(ns)
         if not fb then
             return
         end
-        setFoldText()
+        setFoldText(bufnr)
         updatePendingFold(bufnr)
     end, self.disposables)
     event:on('InsertLeave', function(bufnr)
