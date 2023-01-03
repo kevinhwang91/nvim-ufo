@@ -85,7 +85,6 @@ local language_servers = require("lspconfig").util.available_servers() -- or lis
 for _, ls in ipairs(language_servers) do
     require('lspconfig')[ls].setup({
         capabilities = capabilities,
-        other_fields = ...
     })
 end
 require('ufo').setup()
