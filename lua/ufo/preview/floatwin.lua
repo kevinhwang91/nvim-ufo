@@ -63,7 +63,7 @@ function FloatWin:build(winid, height, border, isAbove)
     local belowLine = winfo.height - aboveLine
     border = type(border) == 'string' and defaultBorder[border] or border
     self.border = vim.deepcopy(border)
-    if utils.textoff(winid) == 0 then
+    if fn.screencol() == 1 then
         self.border[1], self.border[7], self.border[8] = '', '', ''
     end
     local row, col = 0, 0
