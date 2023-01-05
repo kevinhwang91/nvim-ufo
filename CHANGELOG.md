@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.3.0] - 2023-01-05
+
+### Features
+
+#### Provider
+
+- Use fallback if `buftype == 'nofile'`
+- Inspect current fold kinds
+
+### Bug Fixes
+
+#### Preview
+
+- Respect target buffer opts
+- Stick to top left corner while scrolling in normal window
+- Fix wrong row for upward display
+
+#### Fold
+
+- Window maybe changed before set opts
+- Improve leaving diff mode behavior
+
+#### Miscellaneous
+
+- Substitute NUL byte for VimScript func
+- Catch coc.nvim `Plugin not ready` error and resolve
+
+### Documentation
+
+- Explain `fold_virt_text_handler` (#98)
+- Make capabilities for all available lsp servers & remove "other_fields" (#100)
+
 ## [1.2.0] - 2022-10-09
 
 ### Features
