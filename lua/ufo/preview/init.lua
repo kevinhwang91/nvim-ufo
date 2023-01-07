@@ -180,6 +180,8 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
     self.isAbove = isAbove
     local floatBufnr = floatwin:getBufnr()
     vim.bo[floatBufnr].iskeyword = vim.bo[bufnr].iskeyword
+    vim.bo[floatBufnr].tabstop = vim.bo[bufnr].tabstop
+    vim.bo[floatBufnr].shiftwidth = vim.bo[bufnr].shiftwidth
     table.insert(disposables, disposable:create(function()
         self.winid = nil
         self.bufnr = nil
@@ -198,6 +200,8 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
         end
         pcall(api.nvim_buf_call, floatBufnr, function()
             cmd('setl iskeyword<')
+            cmd('setl topstop<')
+            cmd('setl shiftwidth<')
         end)
     end))
     table.insert(disposables, keymap:attach(bufnr, floatBufnr, self.ns, self.keyMessages, {
