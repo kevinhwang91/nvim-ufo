@@ -9,13 +9,13 @@ function Indent.getFolds(bufnr)
         return
     end
     local lines = buf:lines(1, -1)
-    local sw = vim.bo[bufnr].shiftwidth
     local ts = vim.bo[bufnr].ts
+    local sw = vim.bo[bufnr].sw
+    sw = sw == 0 and ts or sw
     local levels = {}
-    for lnum = 1, #lines do
-        local line = lines[lnum]
+    for _, line in ipairs(lines) do
+        local level = -1
         local n = 0
-        local stop = false
         for col = 1, #line do
             -- compare byte is slightly faster than a char in the string
             local b = line:byte(col, col)
@@ -26,11 +26,10 @@ function Indent.getFolds(bufnr)
                 -- '\t'
                 n = n + (ts - (n % ts))
             else
-                stop = true
+                level = math.ceil(n / sw)
                 break
             end
         end
-        local level = stop and math.ceil(n / sw) or -1
         table.insert(levels, level)
     end
 
@@ -52,15 +51,14 @@ function Indent.getFolds(bufnr)
 
     local lastLnum = 1
     local lastLevel = levels[1]
-    for i = 1, #lines do
-        local curLevel = levels[i]
-        if curLevel >= 0 then
-            if curLevel > 0 and curLevel > lastLevel then
+    for i, level in ipairs(levels) do
+        if level >= 0 then
+            if level > 0 and level > lastLevel then
                 table.insert(stack, {lastLevel, lastLnum})
-            elseif curLevel < lastLevel then
-                pop(curLevel, lastLnum)
+            elseif level < lastLevel then
+                pop(level, lastLnum)
             end
-            lastLevel = curLevel
+            lastLevel = level
             lastLnum = i
         end
     end
