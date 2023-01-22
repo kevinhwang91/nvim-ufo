@@ -64,9 +64,9 @@ local function onEnd(name, tick)
     local needRedraw = false
     local self = Decorator
     for winid, data in pairs(collection or {}) do
-        local bufnr = data.bufnr
-        local fb = fold.get(bufnr)
-        if #data.rows > 0 then
+        if #data.rows > 1 then
+            local bufnr = data.bufnr
+            local fb = fold.get(bufnr)
             utils.winCall(winid, function()
                 local folded = self:unHandledFoldedLnums(fb, winid, data.rows)
                 log.debug('unhandled folded lnum:', folded)
