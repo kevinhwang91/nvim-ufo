@@ -19,6 +19,7 @@ local render = require('ufo.render')
 ---@field enableFoldEndVirtText boolean
 ---@field openFoldHlTimeout number
 ---@field openFoldHlEnabled boolean
+---@field virtTextHandlers table<number, function>
 ---@field disposables UfoDisposable
 local Decorator = {}
 
@@ -71,6 +72,7 @@ local function onEnd(name, tick)
                 local folded = self:unHandledFoldedLnums(fb, winid, data.rows)
                 log.debug('unhandled folded lnum:', folded)
                 if #folded == 0 then
+                    cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
                     return
                 end
                 local textoff = utils.textoff(winid)
@@ -124,6 +126,12 @@ local function onEnd(name, tick)
                             log.error(res)
                         end
                     end
+                end
+                local cursor = api.nvim_win_get_cursor(winid)
+                if fb:lineIsClosed(cursor[1]) then
+                    cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
+                else
+                    cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
                 end
             end)
         end

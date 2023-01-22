@@ -253,6 +253,7 @@ hi default link UfoPreviewThumb PmenuThumb
 hi default link UfoPreviewWinBar UfoFoldedBg
 hi default link UfoPreviewCursorLine Visual
 hi default link UfoFoldedEllipsis Comment
+hi default link UfoCursorFoldedLine CursorLine
 ```
 
 - `UfoFoldedFg`: Foreground for raw text of folded line.
@@ -265,6 +266,7 @@ hi default link UfoFoldedEllipsis Comment
 - `UfoPreviewThumb`: Thumb of preview window.
 - `UfoFoldedEllipsis`: Ellipsis at the end of folded line, invalid if `fold_virt_text_handler` is
   set.
+- `UfoCursorFoldedLine`: Highlight the folded line under the cursor
 
 ## Advanced configuration
 
