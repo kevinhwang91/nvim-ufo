@@ -71,8 +71,14 @@ local function onEnd(name, tick)
             utils.winCall(winid, function()
                 local folded = self:unHandledFoldedLnums(fb, winid, data.rows)
                 log.debug('unhandled folded lnum:', folded)
+                local curLnum = api.nvim_win_get_cursor(winid)[1]
+                -- TODO
+                -- Avoid to use any Vim scope variables
+                local lastCurFoldedLnum = vim.w.ufo_cur_folded_line
                 if #folded == 0 then
-                    cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
+                    if lastCurFoldedLnum then
+                        cmd('setl winhl-=CursorLine:UfoCursorFoldedLine | sil! unlet w:ufo_cur_folded_line')
+                    end
                     return
                 end
                 local textoff = utils.textoff(winid)
@@ -127,11 +133,13 @@ local function onEnd(name, tick)
                         end
                     end
                 end
-                local cursor = api.nvim_win_get_cursor(winid)
-                if fb:lineIsClosed(cursor[1]) then
+                if not lastCurFoldedLnum and fb:lineIsClosed(curLnum) then
                     cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
-                else
-                    cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
+                    vim.w.ufo_cur_folded_line = curLnum
+                    lastCurFoldedLnum = curLnum
+                end
+                if lastCurFoldedLnum and lastCurFoldedLnum ~= curLnum then
+                    cmd('setl winhl-=CursorLine:UfoCursorFoldedLine | sil! unlet w:ufo_cur_folded_line')
                 end
             end)
         end
