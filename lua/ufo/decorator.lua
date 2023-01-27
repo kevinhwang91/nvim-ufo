@@ -20,6 +20,7 @@ local render = require('ufo.render')
 ---@field openFoldHlTimeout number
 ---@field openFoldHlEnabled boolean
 ---@field curWinid number
+---@field lastWinid number
 ---@field virtTextHandlers table<number, function>
 ---@field winSessionTbl table<number, table>
 ---@field disposables UfoDisposable
@@ -144,6 +145,7 @@ local function onEnd(name, tick)
     end
     collection = nil
     bufnrSet = nil
+    self.lastWinid = self.curWinid
 end
 
 function Decorator:setCursorFoldedLineHighlight(winid, curLnum)
@@ -181,7 +183,7 @@ function Decorator:resetCurosrFoldedLineHighlightByBuf(bufnr)
 end
 
 function Decorator:highlightOpenFold(fb, winid, lnum)
-    if self.openFoldHlEnabled and winid == self.curWinid and api.nvim_get_mode().mode ~= 'c' then
+    if self.openFoldHlEnabled and winid == self.lastWinid and api.nvim_get_mode().mode ~= 'c' then
         local fl = fb:foldedLine(lnum)
         local _, endLnum = fl:range()
         local _, winids = utils.getWinByBuf(fb.bufnr)
