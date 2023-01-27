@@ -112,6 +112,10 @@ function Fold.get(bufnr)
     return manager:get(bufnr)
 end
 
+function Fold.buffers()
+    return manager.buffers
+end
+
 function Fold.apply(bufnr, ranges)
     return manager:applyFoldRanges(bufnr, ranges)
 end
