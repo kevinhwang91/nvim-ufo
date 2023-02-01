@@ -75,7 +75,7 @@ local function onEnd(name, tick)
                 local folded = self:computeFoldedLnums(fb, winid, data.rows)
                 log.debug('folded lnum:', folded)
                 if #folded == 0 then
-                    self:clearCursorFoldedLineHighlight(winid)
+                    self:clearCursorFoldedLineHighlight(bufnr, winid)
                     return
                 end
                 local textoff = utils.textoff(winid)
@@ -133,11 +133,12 @@ local function onEnd(name, tick)
                 local cursor = api.nvim_win_get_cursor(winid)
                 local curLnum = cursor[1]
                 if fb:lineIsClosed(curLnum) then
-                    self:setCursorFoldedLineHighlight(winid, curLnum)
+                    self:setCursorFoldedLineHighlight(bufnr, winid, curLnum)
                 else
-                    self:clearCursorFoldedLineHighlight(winid)
+                    self:clearCursorFoldedLineHighlight(bufnr, winid)
                 end
             end)
+            self.winSessionTbl[winid].bufnr = bufnr
         end
     end
     if needRedraw then
@@ -148,17 +149,17 @@ local function onEnd(name, tick)
     self.lastWinid = self.curWinid
 end
 
-function Decorator:setCursorFoldedLineHighlight(winid, curLnum)
+function Decorator:setCursorFoldedLineHighlight(bufnr, winid, curLnum)
     local session = self.winSessionTbl[winid]
-    if session.curFoldedLine == 0 then
+    if session.bufnr ~= bufnr or session.curFoldedLine == 0 then
         cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
         session.curFoldedLine = curLnum
     end
 end
 
-function Decorator:clearCursorFoldedLineHighlight(winid)
+function Decorator:clearCursorFoldedLineHighlight(bufnr, winid)
     local session = self.winSessionTbl[winid]
-    if session.curFoldedLine > 0 then
+    if session.bufnr ~= bufnr or session.curFoldedLine > 0 then
         cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
         session.curFoldedLine = 0
     end
@@ -319,7 +320,10 @@ function Decorator:initialize(namespace)
     handlerErrorMsg = ([[!Error in user's handler, check out `%s`]]):format(log.path)
     self.winSessionTbl = setmetatable({}, {
         __index = function(tbl, winid)
-            local res = {curFoldedLine = 0}
+            local res = {
+                bufnr = 0,
+                curFoldedLine = 0
+            }
             rawset(tbl, winid, res)
             return res
         end
