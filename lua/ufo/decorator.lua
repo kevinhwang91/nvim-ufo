@@ -177,7 +177,7 @@ function Decorator:resetCurosrFoldedLineHighlightByBuf(bufnr)
     end
     for _, winid in ipairs(winids or {id}) do
         utils.winCall(winid, function()
-            self:clearCursorFoldedLineHighlight(winid)
+            self:clearCursorFoldedLineHighlight(bufnr, winid)
         end)
         self.winSessionTbl[winid].curFoldedLine = 0
     end
