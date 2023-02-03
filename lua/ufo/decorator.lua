@@ -152,7 +152,10 @@ end
 function Decorator:setCursorFoldedLineHighlight(bufnr, winid, curLnum)
     local session = self.winSessionTbl[winid]
     if session.bufnr ~= bufnr or session.curFoldedLine == 0 then
-        cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
+        local winhl = vim.wo[winid].winhl
+        if not winhl:find('UfoCursorFoldedLine', 1, true) then
+            cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
+        end
         session.curFoldedLine = curLnum
     end
 end
@@ -160,7 +163,10 @@ end
 function Decorator:clearCursorFoldedLineHighlight(bufnr, winid)
     local session = self.winSessionTbl[winid]
     if session.bufnr ~= bufnr or session.curFoldedLine > 0 then
-        cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
+        local winhl = vim.wo[winid].winhl
+        if winhl:find('UfoCursorFoldedLine', 1, true) then
+            cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
+        end
         session.curFoldedLine = 0
     end
 end
