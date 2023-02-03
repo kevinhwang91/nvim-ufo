@@ -214,6 +214,8 @@ For example, Changing the text in a buffer will request the providers for folds.
 | scrollD  | Type `CTRL-D` in preview window                                                                |         |
 | scrollE  | Type `CTRL-E` in preview window                                                                | `<C-E>` |
 | scrollY  | Type `CTRL-Y` in preview window                                                                | `<C-Y>` |
+| jumpTop  | Jump to top region in preview window                                                           |         |
+| jumpBot  | Jump to bottom region in preview window                                                        |         |
 | close    | In normal window: Close preview window<br>In preview window: Close preview window              | `q`     |
 | switch   | In normal window: Go to preview window<br>In preview window: Go to normal window               | `<Tab>` |
 | trace    | In normal window: Trace code based on topline<br>In preview window: Trace code based on cursor | `<CR>`  |
@@ -291,7 +293,9 @@ require('ufo').setup({
         },
         mappings = {
             scrollU = '<C-u>',
-            scrollD = '<C-d>'
+            scrollD = '<C-d>',
+            jumpTop = '[',
+            jumpBot = ']'
         }
     },
     provider_selector = function(bufnr, filetype, buftype)

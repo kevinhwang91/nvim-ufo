@@ -89,15 +89,30 @@ function Preview:trace(bufnr)
     })
 end
 
-function Preview:scroll(char, toTopLeft)
-    if not self.validate() then
-        return
+function Preview:winCall(executor)
+    local res = false
+    if self.validate() then
+        floatwin:call(executor)
+        res = true
     end
-    floatwin:call(function()
+    return res
+end
+
+function Preview:scroll(char, toTopLeft)
+    if self:winCall(function()
         local ctrlTbl = {B = 0x02, D = 0x04, E = 0x05, F = 0x06, U = 0x15, Y = 0x19}
         cmd(('norm! %c%s'):format(ctrlTbl[char], toTopLeft and 'H_' or ''))
-    end)
-    self:viewChanged()
+    end) then
+        self:viewChanged()
+    end
+end
+
+function Preview:jumpView(toBottom)
+    if self:winCall(function()
+        cmd(('norm! %s'):format(toBottom and 'GH_' or 'gg'))
+    end) then
+        self:viewChanged()
+    end
 end
 
 function Preview:toggleCursor()
@@ -129,6 +144,10 @@ local function onBufRemap(bufnr, str)
         self:trace(bufnr)
     elseif str == 'close' then
         self:close()
+    elseif str == 'jumpTop' then
+        self:jumpView(false)
+    elseif str == 'jumpBot' then
+        self:jumpView(true)
     elseif str == 'scrollB' then
         self:scroll('B', isNormalBuf)
     elseif str == 'scrollF' then

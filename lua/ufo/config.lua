@@ -25,9 +25,11 @@ local def = {
             scrollD = '',
             scrollE = '<C-E>',
             scrollY = '<C-Y>',
+            jumpTop = '',
+            jumpBot = '',
             close = 'q',
             switch = '<Tab>',
-            trace = '<CR>',
+            trace = '<CR>'
         }
     }
 }
