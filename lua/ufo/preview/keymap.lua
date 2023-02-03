@@ -1,4 +1,5 @@
 local event = require('ufo.lib.event')
+local utils = require('ufo.utils')
 
 local api = vim.api
 
@@ -26,11 +27,13 @@ function Keymap:setKeymaps()
 end
 
 function Keymap:restoreKeymaps()
-    for _, key in pairs(self.keyMessages) do
-        pcall(api.nvim_buf_del_keymap, self.bufnr, 'n', key)
-    end
-    for _, k in ipairs(self.keyBackup) do
-        api.nvim_buf_set_keymap(self.bufnr, 'n', k.lhs, k.rhs, k.opts)
+    if utils.isBufLoaded(self.bufnr) then
+        for _, key in pairs(self.keyMessages) do
+            pcall(api.nvim_buf_del_keymap, self.bufnr, 'n', key)
+        end
+        for _, k in ipairs(self.keyBackup) do
+            api.nvim_buf_set_keymap(self.bufnr, 'n', k.lhs, k.rhs, k.opts)
+        end
     end
     self.keyBackup = {}
 end

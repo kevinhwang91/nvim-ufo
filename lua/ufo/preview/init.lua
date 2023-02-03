@@ -193,16 +193,18 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
         self.isAbove = nil
         self.cursorSignId = nil
         self.detachDisposables = nil
-        api.nvim_buf_clear_namespace(floatBufnr, self.ns, 0, -1)
-        pcall(fn.sign_unplace, 'UfoPreview', {buffer = floatBufnr})
-        if floatwin:validate() then
-            fn.clearmatches(floatwin.winid)
+        if utils.isBufLoaded(floatBufnr) then
+            api.nvim_buf_clear_namespace(floatBufnr, self.ns, 0, -1)
+            pcall(fn.sign_unplace, 'UfoPreview', {buffer = floatBufnr})
+            if floatwin:validate() then
+                fn.clearmatches(floatwin.winid)
+            end
+            pcall(api.nvim_buf_call, floatBufnr, function()
+                cmd('setl iskeyword<')
+                cmd('setl topstop<')
+                cmd('setl shiftwidth<')
+            end)
         end
-        pcall(api.nvim_buf_call, floatBufnr, function()
-            cmd('setl iskeyword<')
-            cmd('setl topstop<')
-            cmd('setl shiftwidth<')
-        end)
     end))
     table.insert(disposables, keymap:attach(bufnr, floatBufnr, self.ns, self.keyMessages, {
         trace = self.keyMessages.trace,
