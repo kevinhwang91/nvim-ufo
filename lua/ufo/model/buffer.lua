@@ -203,6 +203,9 @@ end
 ---
 ---@return number
 function Buffer:lineCount()
+    if self:buftype() == 'quickfix' then
+        self:reload()
+    end
     return #self._lines
 end
 
