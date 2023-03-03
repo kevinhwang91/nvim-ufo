@@ -26,12 +26,23 @@ local render = require('ufo.render')
 ---@field disposables UfoDisposable
 local Decorator = {}
 
+local function frameKey()
+    return table.concat({ fn.line("w0") - 1, fn.line("w$"), api.nvim_buf_get_changedtick(0) })
+end
+
 local collection
 local bufnrSet
 local handlerErrorMsg
+local lastFrameKey = frameKey()
 
 ---@diagnostic disable-next-line: unused-local
 local function onStart(name, tick)
+    local thisFrameKey = frameKey()
+    if lastFrameKey == thisFrameKey then
+        return false
+    end
+
+    lastFrameKey = thisFrameKey
     collection = {}
     bufnrSet = {}
 end
