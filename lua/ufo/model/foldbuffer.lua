@@ -189,13 +189,15 @@ end
 ---@param lnum number
 ---@return boolean
 function FoldBuffer:openFold(lnum)
+    local folded = false
     local fl = self.foldedLines[lnum]
     if fl then
+        folded = self.foldedLines[lnum] ~= nil
         fl:deleteVirtText()
         self.foldedLineCount = self.foldedLineCount - 1
         self.foldedLines[lnum] = false
     end
-    return fl ~= nil
+    return folded
 end
 
 ---

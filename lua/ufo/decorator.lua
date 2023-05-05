@@ -72,8 +72,9 @@ local function onEnd(name, tick)
             local bufnr = data.bufnr
             local fb = fold.get(bufnr)
             utils.winCall(winid, function()
-                local folded = self:computeFoldedLnums(fb, winid, data.rows)
-                log.debug('folded lnum:', folded)
+                local folded
+                folded, needRedraw = self:computeFoldedLnums(fb, winid, data.rows)
+                log.debug('folded lnums:', folded, 'didOpen:', needRedraw)
                 if #folded == 0 then
                     self:clearCursorFoldedLineHighlight(bufnr, winid)
                     return
@@ -228,7 +229,7 @@ function Decorator:computeFoldedLnums(fb, winid, rows)
     if didOpen then
         fb:syncFoldedLines(winid)
     end
-    return folded
+    return folded, didOpen
 end
 
 ---@diagnostic disable-next-line: unused-local
