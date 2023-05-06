@@ -1,8 +1,8 @@
-local util         = require('vim.lsp.util')
-local promise      = require('promise')
-local utils        = require('ufo.utils')
-local async        = require('async')
-local log          = require('ufo.lib.log')
+local util = require('vim.lsp.util')
+local promise = require('promise')
+local utils = require('ufo.utils')
+local async = require('async')
+local log = require('ufo.lib.log')
 local foldingrange = require('ufo.model.foldingrange')
 
 ---@class UfoLspNvimClient
@@ -75,17 +75,17 @@ function NvimClient.requestFoldingRange(bufnr, kind)
             error('UfoFallbackException')
         end
         local params = {textDocument = util.make_text_document_params(bufnr)}
-        return NvimClient.request(client, 'textDocument/foldingRange',
-                                  params, bufnr):thenCall(function(ranges)
-            if not ranges then
-                return {}
-            end
-            ranges = vim.tbl_filter(function(o)
-                return (not kind or kind == o.kind) and o.startLine < o.endLine
-            end, ranges)
-            foldingrange.sortRanges(ranges)
-            return ranges
-        end)
+        return NvimClient.request(client, 'textDocument/foldingRange', params, bufnr)
+            :thenCall(function(ranges)
+                if not ranges then
+                    return {}
+                end
+                ranges = vim.tbl_filter(function(o)
+                    return (not kind or kind == o.kind) and o.startLine < o.endLine
+                end, ranges)
+                foldingrange.sortRanges(ranges)
+                return ranges
+            end)
     end)
 end
 

@@ -29,7 +29,7 @@ local defaultBorder = {
     rounded = {'╭', '─', '╮', '│', '╯', '─', '╰', '│'},
     solid   = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
     shadow  = {'', '', {' ', 'FloatShadowThrough'}, {' ', 'FloatShadow'},
-               {' ', 'FloatShadow'}, {' ', 'FloatShadow'}, {' ', 'FloatShadowThrough'}, ''},
+        {' ', 'FloatShadow'}, {' ', 'FloatShadow'}, {' ', 'FloatShadowThrough'}, ''},
 }
 
 local function borderHasLine(border, index)

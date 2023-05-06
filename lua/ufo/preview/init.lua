@@ -2,18 +2,18 @@ local api = vim.api
 local cmd = vim.cmd
 local fn = vim.fn
 
-local promise    = require('promise')
-local render     = require('ufo.render')
-local utils      = require('ufo.utils')
-local floatwin   = require('ufo.preview.floatwin')
-local scrollbar  = require('ufo.preview.scrollbar')
-local winbar     = require('ufo.preview.winbar')
-local keymap     = require('ufo.preview.keymap')
-local event      = require('ufo.lib.event')
+local promise = require('promise')
+local render = require('ufo.render')
+local utils = require('ufo.utils')
+local floatwin = require('ufo.preview.floatwin')
+local scrollbar = require('ufo.preview.scrollbar')
+local winbar = require('ufo.preview.winbar')
+local keymap = require('ufo.preview.keymap')
+local event = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
-local config     = require('ufo.config')
-local fold       = require('ufo.fold')
-local highlight  = require('ufo.highlight')
+local config = require('ufo.config')
+local fold = require('ufo.fold')
+local highlight = require('ufo.highlight')
 
 ---@class UfoPreview
 ---@field initialized boolean
@@ -100,17 +100,17 @@ end
 
 function Preview:scroll(char, toTopLeft)
     if self:winCall(function()
-        local ctrlTbl = {B = 0x02, D = 0x04, E = 0x05, F = 0x06, U = 0x15, Y = 0x19}
-        cmd(('norm! %c%s'):format(ctrlTbl[char], toTopLeft and 'H_' or ''))
-    end) then
+            local ctrlTbl = {B = 0x02, D = 0x04, E = 0x05, F = 0x06, U = 0x15, Y = 0x19}
+            cmd(('norm! %c%s'):format(ctrlTbl[char], toTopLeft and 'H_' or ''))
+        end) then
         self:viewChanged()
     end
 end
 
 function Preview:jumpView(toBottom)
     if self:winCall(function()
-        cmd(('norm! %s'):format(toBottom and 'GH_' or 'gg'))
-    end) then
+            cmd(('norm! %s'):format(toBottom and 'GH_' or 'gg'))
+        end) then
         self:viewChanged()
     end
 end
@@ -120,8 +120,7 @@ function Preview:toggleCursor()
     local floatBufnr = floatwin:getBufnr()
     if self.bufnr == bufnr and self.lnum - self.foldedLnum > 0 then
         self.cursorSignId = fn.sign_place(self.cursorSignId or 0, 'UfoPreview',
-                                          self.cursorSignName, floatBufnr,
-                                          {lnum = self.lnum - self.foldedLnum + 1, priority = 1})
+            self.cursorSignName, floatBufnr, {lnum = self.lnum - self.foldedLnum + 1, priority = 1})
     elseif self.cursorSignId then
         pcall(fn.sign_unplace, 'UfoPreview', {buffer = floatBufnr})
         self.cursorSignId = nil
@@ -290,8 +289,7 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
     end)
     self:toggleCursor()
     render.mapHighlightLimitByRange(bufnr, floatwin:getBufnr(),
-                                    {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]},
-                                    text, self.ns)
+        {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]}, text, self.ns)
     render.mapMatchByLnum(winid, floatwin.winid, lnum, endLnum)
     vim.wo[floatwin.winid].listchars = vim.wo[winid].listchars
     return floatwin.winid

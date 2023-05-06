@@ -1,8 +1,8 @@
 local api = vim.api
 local cmd = vim.cmd
 
-local utils      = require('ufo.utils')
-local buffer     = require('ufo.model.buffer')
+local utils = require('ufo.utils')
+local buffer = require('ufo.model.buffer')
 local foldedline = require('ufo.model.foldedline')
 
 ---@class UfoFoldBuffer

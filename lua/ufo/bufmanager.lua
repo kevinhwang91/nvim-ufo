@@ -1,10 +1,10 @@
 local api = vim.api
 
-local buffer     = require('ufo.model.buffer')
-local event      = require('ufo.lib.event')
+local buffer = require('ufo.model.buffer')
+local event = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
-local promise    = require('promise')
-local utils      = require('ufo.utils')
+local promise = require('promise')
+local utils = require('ufo.utils')
 
 ---@class UfoBufferManager
 ---@field initialized boolean

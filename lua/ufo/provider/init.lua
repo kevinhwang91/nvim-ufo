@@ -1,7 +1,7 @@
 local uv = vim.loop
 
 local promise = require('promise')
-local log     = require('ufo.lib.log')
+local log = require('ufo.lib.log')
 
 ---@class Provider UfoProvider
 ---@field modulePathPrefix string
@@ -52,7 +52,7 @@ function Provider:requestFoldingRange(providers, bufnr)
         p = p:finally(function()
             log.debug(('requestFoldingRange(%s, %d) has elapsed: %dms')
                 :format(vim.inspect(providers, {indent = '', newline = ' '}),
-                        bufnr, (uv.hrtime() - s) / 1e6))
+                    bufnr, (uv.hrtime() - s) / 1e6))
         end)
     end
     return p
@@ -60,12 +60,12 @@ end
 
 function Provider:initialize()
     self.modules = setmetatable({}, {
-    __index = function(t, k)
-        local ok, res = pcall(require, self.modulePathPrefix .. k)
-        assert(ok, ([[Can't find a module in `%s%s`]]):format(self.modulePathPrefix, k))
-        rawset(t, k, res)
-        return res
-    end
+        __index = function(t, k)
+            local ok, res = pcall(require, self.modulePathPrefix .. k)
+            assert(ok, ([[Can't find a module in `%s%s`]]):format(self.modulePathPrefix, k))
+            rawset(t, k, res)
+            return res
+        end
     })
     return self
 end

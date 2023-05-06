@@ -1,11 +1,11 @@
 local api = vim.api
 local fn = vim.fn
 
-local highlight  = require('ufo.highlight')
-local extmark    = require('ufo.render.extmark')
+local highlight = require('ufo.highlight')
+local extmark = require('ufo.render.extmark')
 local treesitter = require('ufo.render.treesitter')
-local match      = require('ufo.render.match')
-local utils      = require('ufo.utils')
+local match = require('ufo.render.match')
+local utils = require('ufo.utils')
 
 local M = {}
 

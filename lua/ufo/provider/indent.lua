@@ -1,5 +1,5 @@
 local foldingrange = require('ufo.model.foldingrange')
-local bufmanager   = require('ufo.bufmanager')
+local bufmanager = require('ufo.bufmanager')
 
 local Indent = {}
 

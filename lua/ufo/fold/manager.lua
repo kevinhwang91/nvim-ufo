@@ -1,10 +1,10 @@
-local buffer     = require('ufo.model.foldbuffer')
-local event      = require('ufo.lib.event')
+local buffer = require('ufo.model.foldbuffer')
+local event = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
 local bufmanager = require('ufo.bufmanager')
-local utils      = require('ufo.utils')
-local driver     = require('ufo.fold.driver')
-local log        = require('ufo.lib.log')
+local utils = require('ufo.utils')
+local driver = require('ufo.fold.driver')
+local log = require('ufo.lib.log')
 
 ---@class UfoFoldBufferManager
 ---@field initialized boolean

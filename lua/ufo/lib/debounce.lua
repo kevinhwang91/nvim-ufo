@@ -15,8 +15,11 @@ local Debounce = {}
 ---@param leading? boolean
 ---@return UfoDebounce
 function Debounce:new(fn, wait, leading)
-    vim.validate({fn = {fn, 'function'}, wait = {wait, 'number'},
-                  leading = {leading, 'boolean', true}})
+    vim.validate({
+        fn = {fn, 'function'},
+        wait = {wait, 'number'},
+        leading = {leading, 'boolean', true}
+    })
     local o = setmetatable({}, self)
     o.timer = nil
     o.fn = vim.schedule_wrap(fn)

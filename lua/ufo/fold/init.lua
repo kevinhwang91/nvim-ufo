@@ -1,14 +1,14 @@
 local api = vim.api
 local cmd = vim.cmd
 
-local config     = require('ufo.config')
-local promise    = require('promise')
-local async      = require('async')
-local utils      = require('ufo.utils')
-local provider   = require('ufo.provider')
-local log        = require('ufo.lib.log')
-local event      = require('ufo.lib.event')
-local manager    = require('ufo.fold.manager')
+local config = require('ufo.config')
+local promise = require('promise')
+local async = require('async')
+local utils = require('ufo.utils')
+local provider = require('ufo.provider')
+local log = require('ufo.lib.log')
+local event = require('ufo.lib.event')
+local manager = require('ufo.fold.manager')
 local disposable = require('ufo.lib.disposable')
 
 ---@class UfoFold
@@ -226,7 +226,7 @@ function Fold:initialize(ns)
     event:on('BufAttach', Fold.attach, self.disposables)
     event:on('DiffModeChanged', handleDiffMode, self.disposables)
     table.insert(self.disposables, manager:initialize(ns, config.provider_selector,
-                                                      config.close_fold_kinds))
+        config.close_fold_kinds))
     return self
 end
 

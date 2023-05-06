@@ -54,7 +54,7 @@ function Buffer:attach()
             self._changedtick = changedtick
             self._lines = self:handleLinesChanged(self._lines, firstLine, lastLine, lastLineUpdated)
             event:emit('BufLinesChanged', bufnr, changedtick, firstLine, lastLine,
-                       lastLineUpdated, byteCount)
+                lastLineUpdated, byteCount)
         end,
         on_changedtick = function(name, bufnr, changedtick)
             self._changedtick = changedtick

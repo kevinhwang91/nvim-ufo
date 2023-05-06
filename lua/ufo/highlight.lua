@@ -67,7 +67,7 @@ local function resetSignGroup()
     signNames = setmetatable({}, {
         __index = function(tbl, k)
             assert(fn.sign_define(k, {linehl = k}) == 0,
-                   'Define sign name ' .. k .. 'failed')
+                'Define sign name ' .. k .. 'failed')
             rawset(tbl, k, k)
             return k
         end

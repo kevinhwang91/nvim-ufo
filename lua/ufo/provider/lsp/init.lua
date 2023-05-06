@@ -1,8 +1,8 @@
 local uv = vim.loop
 
-local promise    = require('promise')
-local utils      = require('ufo.utils')
-local log        = require('ufo.lib.log')
+local promise = require('promise')
+local utils = require('ufo.utils')
+local log = require('ufo.lib.log')
 local bufmanager = require('ufo.bufmanager')
 
 ---@class UfoLSPProviderContext

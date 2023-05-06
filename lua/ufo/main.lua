@@ -2,12 +2,12 @@ local M = {}
 local cmd = vim.cmd
 local api = vim.api
 
-local utils      = require('ufo.utils')
-local provider   = require('ufo.provider')
-local fold       = require('ufo.fold')
-local decorator  = require('ufo.decorator')
-local highlight  = require('ufo.highlight')
-local preview    = require('ufo.preview')
+local utils = require('ufo.utils')
+local provider = require('ufo.provider')
+local fold = require('ufo.fold')
+local decorator = require('ufo.decorator')
+local highlight = require('ufo.highlight')
+local preview = require('ufo.preview')
 local disposable = require('ufo.lib.disposable')
 local bufmanager = require('ufo.bufmanager')
 

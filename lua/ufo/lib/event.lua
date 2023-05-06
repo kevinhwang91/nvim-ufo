@@ -1,5 +1,5 @@
 local disposable = require('ufo.lib.disposable')
-local log        = require('ufo.lib.log')
+local log = require('ufo.lib.log')
 
 ---@class UfoEvent
 local Event = {

@@ -7,13 +7,10 @@ charset = utf-8
 trim_trailing_whitespace = true
 
 [*.lua]
-align_call_args = only_not_exist_cross_row_expression
-align_table_field_to_first_field = true
-local_assign_continuation_align_to_first_expression = true
-keep_one_space_between_table_and_bracket = false
+align_continuous_assign_statement = false
+space_around_table_field_list = false
+align_call_args = false
 quote_style = single
-remove_empty_header_and_footer_lines_in_function = true
-remove_expression_list_finish_comma= true
 
 [*.json,*.jsonc]
 indent_style = tab

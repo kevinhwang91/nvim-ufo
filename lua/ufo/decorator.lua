@@ -1,12 +1,12 @@
 local api = vim.api
-local fn  = vim.fn
+local fn = vim.fn
 local cmd = vim.cmd
 
-local utils      = require('ufo.utils')
-local config     = require('ufo.config')
-local log        = require('ufo.lib.log')
+local utils = require('ufo.utils')
+local config = require('ufo.config')
+local log = require('ufo.lib.log')
 local disposable = require('ufo.lib.disposable')
-local event      = require('ufo.lib.event')
+local event = require('ufo.lib.event')
 
 local fold = require('ufo.fold')
 local render = require('ufo.render')
@@ -105,7 +105,7 @@ local function onEnd(name, tick)
                             getFoldVirtText = function(l)
                                 assert(type(l) == 'number', 'expected a number, got ' .. type(l))
                                 assert(lnum <= l and l <= endLnum,
-                                       ('expected lnum range from %d to %d, got %d'):format(lnum, endLnum, l))
+                                    ('expected lnum range from %d to %d, got %d'):format(lnum, endLnum, l))
                                 local line = fb:lines(l)[1]
                                 return render.captureVirtText(bufnr, line, l, syntax, nss)
                             end
@@ -197,7 +197,7 @@ function Decorator:highlightOpenFold(fb, winid, lnum)
         local _, winids = utils.getWinByBuf(fb.bufnr)
         local shared = winids ~= nil
         render.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', self.hlNs,
-                                         lnum, endLnum, self.openFoldHlTimeout, shared)
+            lnum, endLnum, self.openFoldHlTimeout, shared)
     end
 end
 

@@ -197,7 +197,7 @@ end
 function M.getWinInfo(winid)
     local winfos = fn.getwininfo(winid)
     assert(type(winfos) == 'table' and #winfos == 1,
-           '`getwininfo` expected 1 table with single element.')
+        '`getwininfo` expected 1 table with single element.')
     return winfos[1]
 end
 
