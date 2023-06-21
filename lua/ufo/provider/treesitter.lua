@@ -1,5 +1,6 @@
 local parsers = require('nvim-treesitter.parsers')
 local query = require('nvim-treesitter.query')
+local tsrange = require('nvim-treesitter.tsrange')
 local bufmanager = require('ufo.bufmanager')
 local foldingrange = require('ufo.model.foldingrange')
 
@@ -52,10 +53,16 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         if pattern == nil then
             return pattern
         end
-        for id, node in ipairs(match) do
-            local name = q.captures[id] -- name of the capture in the query
-            if name then
-                table.insert(matches, node)
+        for _, node in pairs(match) do
+            table.insert(matches, node)
+        end
+        local preds = q.info.patterns[pattern]
+        if preds then
+            for _, pred in pairs(preds) do
+                if pred[1] == 'make-range!' and type(pred[2]) == 'string' and #pred == 4 then
+                    local node = tsrange.TSRange.from_nodes(bufnr, match[pred[3]], match[pred[4]])
+                    table.insert(matches, node)
+                end
             end
         end
         return matches
