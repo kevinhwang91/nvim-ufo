@@ -59,7 +59,7 @@ function ScrollBar:update()
 
     if self:borderHasRightLine() then
         local wopts = self:build()
-        wopts.height = barSize
+        wopts.height = math.max(1, barSize)
         wopts.row = wopts.row + barPos - 1
         wopts.noautocmd = nil
         api.nvim_win_set_config(self.winid, wopts)
