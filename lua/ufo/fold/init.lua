@@ -71,6 +71,11 @@ function Fold.update(bufnr)
     fb:acquireRequest()
 
     local function dispose(resolved)
+        ---@diagnostic disable-next-line: redefined-local
+        local fb = manager:get(bufnr)
+        if not fb then
+            return false
+        end
         fb:releaseRequest()
         local ok = ft == fb:filetype() and bt == fb:buftype()
         if ok then
