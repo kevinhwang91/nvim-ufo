@@ -1,4 +1,4 @@
----@class UfoFoldingRangeKind
+---@alias UfoFoldingRangeKind
 ---| 'comment'
 ---| 'imports'
 ---| 'region'
