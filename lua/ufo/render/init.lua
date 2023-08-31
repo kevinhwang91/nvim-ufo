@@ -26,6 +26,32 @@ local function fillSlots(mark, len, hlGroups, hlGroupSlots, prioritySlots)
     end
 end
 
+local function insertInlay(marks, text, hlGroupSlots)
+    if #marks == 0 then
+        return text
+    end
+    table.sort(marks, function(a, b)
+        local aCol, bCol, aPriority, bPriority = a[2], b[2], a[4], b[4]
+        return aCol == bCol and aPriority < bPriority or aCol < bCol
+    end)
+    for i = #marks, 1, -1 do
+        local m = marks[i]
+        local col, chunks = m[2] + 1, m[3]
+        for _, chunk in ipairs(chunks) do
+            local t, hlGroup = chunk[1], chunk[2]
+            text = text:sub(1, col - 1) .. t .. text:sub(col)
+            if hlGroup == 'Normal' then
+                hlGroup = 'UfoFoldedFg'
+            end
+            for _ = 1, #t do
+                table.insert(hlGroupSlots, col, hlGroup)
+                col = col + 1
+            end
+        end
+    end
+    return text
+end
+
 -- 1-indexed
 local function syntaxToRowHighlightRange(res, lnum, startCol, endCol)
     local lastIndex = 1
@@ -41,13 +67,24 @@ local function syntaxToRowHighlightRange(res, lnum, startCol, endCol)
     table.insert(res, {lnum, lastIndex, endCol, lastHlId})
 end
 
-local function mapMarkers(bufnr, startRow, marks, hlGroups, ns)
+local function mapHightlightMarkers(bufnr, startRow, marks, hlGroups, ns)
     for _, m in ipairs(marks) do
-        if next(hlGroups[m[5]]) then
-            m[1] = m[1] - startRow
-            m[3] = m[3] - startRow
-            extmark.setHighlight(bufnr, ns, m[1], m[2], m[3], m[4], m[5], m[6])
+        local hlGroup = m[5]
+        if next(hlGroups[hlGroup]) then
+            local sr, sc = m[1] - startRow, m[2]
+            local er, ec = m[3] - startRow, m[4]
+            extmark.setHighlight(bufnr, ns, sr, sc, er, ec, hlGroup, m[6])
         end
+    end
+end
+
+local function mapInlayMarkers(bufnr, startRow, marks, ns)
+    for _, m in ipairs(marks) do
+        local sr, sc = m[1] - startRow, m[2]
+        extmark.setVirtText(bufnr, ns, sr, sc, m[3], {
+            priority = m[4],
+            virt_text_pos = 'inline'
+        })
     end
 end
 
@@ -61,10 +98,10 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
         end
     end
     local hlGroups = highlight.hlGroups()
-    local marks = extmark.getHighlightsByRange(srcBufnr, startRange, endRange, nss)
-    mapMarkers(dstBufnr, startRow, marks, hlGroups, ns)
-    marks = treesitter.getHighlightsByRange(srcBufnr, startRange, endRange, hlGroups)
-    mapMarkers(dstBufnr, startRow, marks, hlGroups, ns)
+    local hlMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(srcBufnr, startRange, endRange, nss)
+    mapHightlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
+    hlMarks = treesitter.getHighlightsByRange(srcBufnr, startRange, endRange, hlGroups)
+    mapHightlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
     if vim.bo[srcBufnr].syntax ~= '' then
         api.nvim_buf_call(srcBufnr, function()
             local res = {}
@@ -83,6 +120,7 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
             end
         end)
     end
+    mapInlayMarkers(dstBufnr, startRow, inlayMarks, ns)
 end
 
 function M.mapMatchByLnum(srcWinid, dstWinid, lnum, endLnum)
@@ -92,8 +130,8 @@ function M.mapMatchByLnum(srcWinid, dstWinid, lnum, endLnum)
     end
 end
 
-function M.setVirtText(bufnr, ns, row, virtText, opts)
-    return extmark.setVirtText(bufnr, ns, row, virtText, opts)
+function M.setVirtText(bufnr, ns, row, col, virtText, opts)
+    return extmark.setVirtText(bufnr, ns, row, col, virtText, opts)
 end
 
 function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
@@ -103,13 +141,16 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
     end
     local prioritySlots = {}
     local hlGroupSlots = {}
-    local marks = extmark.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
+    for i = 1, len do
+        hlGroupSlots[i] = 'UfoFoldedFg'
+    end
+    local hlMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
     local hlGroups = highlight.hlGroups()
-    for _, m in ipairs(marks) do
+    for _, m in ipairs(hlMarks) do
         fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
     end
-    marks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
-    for _, m in ipairs(marks) do
+    hlMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
+    for _, m in ipairs(hlMarks) do
         fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
     end
     if syntax then
@@ -123,19 +164,20 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
             end
         end)
     end
-    local virtText = {}
-    local lastHlGroup = hlGroupSlots[1] or 'UfoFoldedFg'
+    text = insertInlay(inlayMarks, text, hlGroupSlots)
+    local res = {}
+    local lastHlGroup = hlGroupSlots[1]
     local lastIndex = 1
-    for i = 2, len do
-        local hlGroup = hlGroupSlots[i] or 'UfoFoldedFg'
+    for i = 2, #text do
+        local hlGroup = hlGroupSlots[i]
         if lastHlGroup ~= hlGroup then
-            table.insert(virtText, {text:sub(lastIndex, i - 1), lastHlGroup})
+            table.insert(res, {text:sub(lastIndex, i - 1), lastHlGroup})
             lastIndex = i
             lastHlGroup = hlGroup
         end
     end
-    table.insert(virtText, {text:sub(lastIndex), lastHlGroup})
-    return virtText
+    table.insert(res, {text:sub(lastIndex), lastHlGroup})
+    return res
 end
 
 ---Prefer use nvim_buf_set_extmark rather than matchaddpos, only use matchaddpos if buffer is shared
