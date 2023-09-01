@@ -160,9 +160,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
             virtText[#virtText][1] = { virtText[#virtText][1] }
         end
     end
-    if virtText[#virtText] and virtText[#virtText][1] then
-        virtText[#virtText][1] = table.concat(virtText[#virtText][1])
-    end
+    virtText[#virtText][1] = table.concat(virtText[#virtText][1])
     table.remove(virtText, 1)
     return virtText
 end
