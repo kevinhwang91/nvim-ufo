@@ -9,49 +9,6 @@ local utils = require('ufo.utils')
 
 local M = {}
 
-local function fillSlots(mark, len, hlGroups, hlGroupSlots, prioritySlots)
-    local col, endCol, hlGroup, priority = mark[2], mark[4], mark[5], mark[6]
-    if not hlGroup or not hlGroups[hlGroup].foreground then
-        return
-    end
-    if endCol == -1 then
-        endCol = len
-    end
-    for i = col + 1, endCol do
-        local oldPriority = prioritySlots[i]
-        if not oldPriority or oldPriority <= priority then
-            prioritySlots[i] = priority
-            hlGroupSlots[i] = hlGroup
-        end
-    end
-end
-
-local function insertInlay(marks, text, hlGroupSlots)
-    if #marks == 0 then
-        return text
-    end
-    table.sort(marks, function(a, b)
-        local aCol, bCol, aPriority, bPriority = a[2], b[2], a[4], b[4]
-        return aCol == bCol and aPriority < bPriority or aCol < bCol
-    end)
-    for i = #marks, 1, -1 do
-        local m = marks[i]
-        local col, chunks = m[2] + 1, m[3]
-        for _, chunk in ipairs(chunks) do
-            local t, hlGroup = chunk[1], chunk[2]
-            text = text:sub(1, col - 1) .. t .. text:sub(col)
-            if hlGroup == 'Normal' then
-                hlGroup = 'UfoFoldedFg'
-            end
-            for _ = 1, #t do
-                table.insert(hlGroupSlots, col, hlGroup)
-                col = col + 1
-            end
-        end
-    end
-    return text
-end
-
 -- 1-indexed
 local function syntaxToRowHighlightRange(res, lnum, startCol, endCol)
     local lastIndex = 1
@@ -139,45 +96,75 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
     if len == 0 then
         return {{'', 'UfoFoldedFg'}}
     end
-    local prioritySlots = {}
-    local hlGroupSlots = {}
-    for i = 1, len do
-        hlGroupSlots[i] = 'UfoFoldedFg'
-    end
+
     local hlMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
+    vim.list_extend(hlMarks, treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}))
+
     local hlGroups = highlight.hlGroups()
-    for _, m in ipairs(hlMarks) do
-        fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
-    end
-    hlMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
-    for _, m in ipairs(hlMarks) do
-        fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
-    end
-    if syntax then
-        api.nvim_buf_call(bufnr, function()
-            for i = 1, len do
-                if not prioritySlots[i] then
-                    local hlId = fn.synID(lnum, i, true)
-                    prioritySlots[i] = 1
-                    hlGroupSlots[i] = hlId
-                end
-            end
+    hlMarks = vim.iter(hlMarks):filter(function(m)
+        -- hlGroup must exist or be conceal
+        return (m[5] and #vim.tbl_keys(hlGroups[m[5]]) > 0) or m[7]
+    end)
+
+    -- endCol ➜ len
+    hlMarks = hlMarks:map(function(m)
+        if m[4] == -1 then -- endCol
+            m[4] = len
+        end
+        return m
+    end):totable()
+
+    local default = {0, 1, 0, len, 'UfoFoldedFg', 1}
+    table.sort(inlayMarks, function(a, b)
+        local aCol, bCol, aPriority, bPriority = a[2], b[2], a[4], b[4]
+        return aCol < bCol or (aCol == bCol and aPriority < bPriority)
+    end)
+
+    -- first hlgroup is empty, gets ignored by set extmark, and allows comparison
+    local virtText = {{{}}}
+    for i, char in ipairs(vim.split(text, '')) do
+        -- get the most relevant mark
+        local mark = vim.iter(hlMarks):fold(default, function(best, m)
+            return (best[6] <= m[6] and m[2] < i and i <= m[4]) and m or best
         end)
-    end
-    text = insertInlay(inlayMarks, text, hlGroupSlots)
-    local res = {}
-    local lastHlGroup = hlGroupSlots[1]
-    local lastIndex = 1
-    for i = 2, #text do
-        local hlGroup = hlGroupSlots[i]
-        if lastHlGroup ~= hlGroup then
-            table.insert(res, {text:sub(lastIndex, i - 1), lastHlGroup})
-            lastIndex = i
-            lastHlGroup = hlGroup
+        if syntax and mark == default then
+            mark = {0, i, 0, i, '', -1}
+            mark[5] = api.nvim_buf_call(bufnr, function() return fn.synID(lnum, i, true) end)
+            if mark[5] == 'Normal' then
+                mark[5] = 'UfoFoldedFg'
+            end
+        end
+        local startCol, hlGroup, conceal = mark[2], mark[5], mark[7]
+
+        -- Process text
+        local isStartingConcealGroup = conceal and startCol == i - 1
+        local isNewGroup = hlGroup ~= virtText[#virtText][2]
+
+        if isNewGroup or isStartingConcealGroup then
+            virtText[#virtText][1] = table.concat(virtText[#virtText][1])
+        end
+
+        if isStartingConcealGroup then
+            table.insert(virtText, {{conceal}, hlGroup})
+        elseif isNewGroup then
+            table.insert(virtText, {{char}, hlGroup})
+        elseif not conceal then
+            table.insert(virtText[#virtText][1], char)
+        end
+
+        -- insert inlay hints
+        while inlayMarks[1] and inlayMarks[1][2] == i do
+            virtText[#virtText][1] = table.concat(virtText[#virtText][1])
+            local inlayText = table.remove(inlayMarks, 1)[3]
+            vim.list_extend(virtText, inlayText)
+            virtText[#virtText][1] = { virtText[#virtText][1] }
         end
     end
-    table.insert(res, {text:sub(lastIndex), lastHlGroup})
-    return res
+    if virtText[#virtText] and virtText[#virtText][1] then
+        virtText[#virtText][1] = table.concat(virtText[#virtText][1])
+    end
+    table.remove(virtText, 1)
+    return virtText
 end
 
 ---Prefer use nvim_buf_set_extmark rather than matchaddpos, only use matchaddpos if buffer is shared
