@@ -97,22 +97,33 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         return {{'', 'UfoFoldedFg'}}
     end
 
-    local hlMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
-    vim.list_extend(hlMarks, treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}))
+    local extMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
+    local tsMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
 
     local hlGroups = highlight.hlGroups()
-    hlMarks = vim.iter(hlMarks):filter(function(m)
-        -- hlGroup must exist or be conceal
-        return (m[5] and #vim.tbl_keys(hlGroups[m[5]]) > 0) or m[7]
-    end)
+    local hlMarks = {}
 
-    -- endCol ➜ len
-    hlMarks = hlMarks:map(function(m)
-        if m[4] == -1 then -- endCol
-            m[4] = len
+    for _, m in ipairs(extMarks) do
+        local hlGroup, conceal = m[5], m[7]
+        -- next({}) ➜ nil
+        if conceal or (hlGroup and next(hlGroups[hlGroup])) then
+            if m[4] == -1 then
+                m[4] = len
+            end
+            table.insert(hlMarks, m)
         end
-        return m
-    end):totable()
+    end
+
+    for _, m in ipairs(tsMarks) do
+        local hlGroup, conceal = m[5], m[7]
+        -- next({}) ➜ nil
+        if conceal or (hlGroup and next(hlGroups[hlGroup])) then
+            if m[4] == -1 then
+                m[4] = len
+            end
+            table.insert(hlMarks, m)
+        end
+    end
 
     local default = {0, 1, 0, len, 'UfoFoldedFg', 1}
     table.sort(inlayMarks, function(a, b)
@@ -120,13 +131,19 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         return aCol < bCol or (aCol == bCol and aPriority < bPriority)
     end)
 
-    -- first hlgroup is empty, gets ignored by set extmark, and allows comparison
-    local virtText = {{{}}}
-    for i, char in ipairs(vim.split(text, '')) do
+    local virtText = {{'', 'UfoFoldedFg'}}
+    local i = 0
+    for char in text:gmatch('.') do
+        i = i + 1
+
         -- get the most relevant mark
-        local mark = vim.iter(hlMarks):fold(default, function(best, m)
-            return (best[6] <= m[6] and m[2] < i and i <= m[4]) and m or best
-        end)
+        local mark = default
+        for _, m in ipairs(hlMarks) do
+            if (mark[6] <= m[6] and m[2] < i and i <= m[4]) then
+                mark = m
+            end
+        end
+
         if syntax and mark == default then
             mark = {0, i, 0, i, '', -1}
             mark[5] = api.nvim_buf_call(bufnr, function() return fn.synID(lnum, i, true) end)
@@ -137,31 +154,22 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         local startCol, hlGroup, conceal = mark[2], mark[5], mark[7]
 
         -- Process text
-        local isStartingConcealGroup = conceal and startCol == i - 1
-        local isNewGroup = hlGroup ~= virtText[#virtText][2]
-
-        if isNewGroup or isStartingConcealGroup then
-            virtText[#virtText][1] = table.concat(virtText[#virtText][1])
-        end
-
-        if isStartingConcealGroup then
-            table.insert(virtText, {{conceal}, hlGroup})
-        elseif isNewGroup then
-            table.insert(virtText, {{char}, hlGroup})
+        if conceal and startCol == i - 1 then
+            table.insert(virtText, {conceal, hlGroup})
+        elseif hlGroup ~= virtText[#virtText][2] then
+            table.insert(virtText, {char, hlGroup})
         elseif not conceal then
-            table.insert(virtText[#virtText][1], char)
+            virtText[#virtText][1] = virtText[#virtText][1] .. char
         end
 
         -- insert inlay hints
         while inlayMarks[1] and inlayMarks[1][2] == i do
-            virtText[#virtText][1] = table.concat(virtText[#virtText][1])
             local inlayText = table.remove(inlayMarks, 1)[3]
-            vim.list_extend(virtText, inlayText)
-            virtText[#virtText][1] = { virtText[#virtText][1] }
+            for _, chunk in ipairs(inlayText) do
+                table.insert(virtText, chunk)
+            end
         end
     end
-    virtText[#virtText][1] = table.concat(virtText[#virtText][1])
-    table.remove(virtText, 1)
     return virtText
 end
 
