@@ -156,7 +156,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         -- Process text
         if conceal and startCol == i - 1 then
             table.insert(virtText, {conceal, hlGroup})
-        elseif hlGroup ~= virtText[#virtText][2] then
+        elseif not conceal and hlGroup ~= virtText[#virtText][2] then
             table.insert(virtText, {char, hlGroup})
         elseif not conceal then
             virtText[#virtText][1] = virtText[#virtText][1] .. char
