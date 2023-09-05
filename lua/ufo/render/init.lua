@@ -105,8 +105,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
 
     for _, m in ipairs(extMarks) do
         local hlGroup, conceal = m[5], m[7]
-        -- next({}) ➜ nil
-        if conceal or (hlGroup and next(hlGroups[hlGroup])) then
+        if conceal or (hlGroup and hlGroups[hlGroup].foreground) then
             if m[4] == -1 then
                 m[4] = len
             end
@@ -116,8 +115,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
 
     for _, m in ipairs(tsMarks) do
         local hlGroup, conceal = m[5], m[7]
-        -- next({}) ➜ nil
-        if conceal or (hlGroup and next(hlGroups[hlGroup])) then
+        if conceal or (hlGroup and hlGroups[hlGroup].foreground) then
             if m[4] == -1 then
                 m[4] = len
             end
@@ -131,15 +129,13 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         return aCol < bCol or (aCol == bCol and aPriority < bPriority)
     end)
 
-    local virtText = {{'', 'UfoFoldedFg'}}
-    local i = 0
-    for char in text:gmatch('.') do
-        i = i + 1
-
+    local virtText = {{}}
+    local newChunk = true
+    for i = 1, len do
         -- get the most relevant mark
         local mark = default
         for _, m in ipairs(hlMarks) do
-            if (mark[6] <= m[6] and m[2] < i and i <= m[4]) then
+            if (m[2] < i and i <= m[4]) and ((mark[6] <= m[6]) or (m[7] and not mark[7])) then
                 mark = m
             end
         end
@@ -156,10 +152,12 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         -- Process text
         if conceal and startCol == i - 1 then
             table.insert(virtText, {conceal, hlGroup})
-        elseif not conceal and hlGroup ~= virtText[#virtText][2] then
-            table.insert(virtText, {char, hlGroup})
+            newChunk = true
+        elseif not conceal and (newChunk or hlGroup ~= virtText[#virtText][2]) then
+            table.insert(virtText, {{i, i}, hlGroup})
+            newChunk = false
         elseif not conceal then
-            virtText[#virtText][1] = virtText[#virtText][1] .. char
+            virtText[#virtText][1][2] = i
         end
 
         -- insert inlay hints
@@ -168,6 +166,14 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
             for _, chunk in ipairs(inlayText) do
                 table.insert(virtText, chunk)
             end
+            newChunk = true
+        end
+    end
+
+    table.remove(virtText, 1)
+    for _, m in ipairs(virtText) do
+        if type(m[1]) == 'table' then
+            m[1] = text:sub(m[1][1], m[1][2])
         end
     end
     return virtText
