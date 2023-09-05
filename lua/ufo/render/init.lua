@@ -131,6 +131,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
 
     local virtText = {{}}
     local newChunk = true
+    local lastSynConceal
     for i = 1, len do
         -- get the most relevant mark
         local mark = default
@@ -141,8 +142,19 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         end
 
         if syntax and mark == default then
-            mark = {0, i, 0, i, '', -1}
-            mark[5] = api.nvim_buf_call(bufnr, function() return fn.synID(lnum, i, true) end)
+            mark = {0, i, 0, i, -1, -1}
+            local concealed = api.nvim_buf_call(bufnr, function() return fn.synconcealed(lnum, i) end)
+            if concealed[1] == 1  then
+                mark[5] = 'conceal'
+                mark[7] = concealed[2]
+                if concealed[3] ~= lastSynConceal then
+                    mark[2] = i - 1  -- inserts coneal chunk
+                    lastSynConceal = concealed[3]
+                end
+            else
+                mark[5] = api.nvim_buf_call(bufnr, function() return fn.synID(lnum, i, true) end)
+            end
+
             if mark[5] == 'Normal' then
                 mark[5] = 'UfoFoldedFg'
             end
