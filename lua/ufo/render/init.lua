@@ -91,11 +91,12 @@ function M.setVirtText(bufnr, ns, row, col, virtText, opts)
     return extmark.setVirtText(bufnr, ns, row, col, virtText, opts)
 end
 
-function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
+function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     local len = #text
     if len == 0 then
         return {{'', 'UfoFoldedFg'}}
     end
+    concealLevel = vim.wo.conceallevel -- until concealLevel is passed in
 
     local extMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
     local tsMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
@@ -105,7 +106,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
 
     for _, m in ipairs(extMarks) do
         local hlGroup, conceal = m[5], m[7]
-        if conceal or (hlGroup and hlGroups[hlGroup].foreground) then
+        if (concealLevel > 0 and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
             if m[4] == -1 then
                 m[4] = len
             end
@@ -115,7 +116,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
 
     for _, m in ipairs(tsMarks) do
         local hlGroup, conceal = m[5], m[7]
-        if conceal or (hlGroup and hlGroups[hlGroup].foreground) then
+        if (concealLevel > 0 and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
             if m[4] == -1 then
                 m[4] = len
             end
@@ -143,6 +144,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
 
         if syntax and mark == default then
             mark = {0, i, 0, i, -1, -1}
+            -- already accounts for concealLevel
             local concealed = api.nvim_buf_call(bufnr, function() return fn.synconcealed(lnum, i) end)
             if concealed[1] == 1  then
                 mark[5] = 'conceal'
@@ -162,13 +164,15 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
         local startCol, hlGroup, conceal = mark[2], mark[5], mark[7]
 
         -- Process text
-        if conceal and startCol == i - 1 then
-            table.insert(virtText, {conceal, hlGroup})
+        if conceal and startCol == i - 1 and concealLevel > 0 then
+            if concealLevel ~= 3 then
+                table.insert(virtText, {conceal, hlGroup})
+            end
             newChunk = true
-        elseif not conceal and (newChunk or hlGroup ~= virtText[#virtText][2]) then
+        elseif (not conceal or concealLevel == 0) and (newChunk or hlGroup ~= virtText[#virtText][2]) then
             table.insert(virtText, {{i, i}, hlGroup})
             newChunk = false
-        elseif not conceal then
+        elseif (not conceal or concealLevel == 0) then
             virtText[#virtText][1][2] = i
         end
 
