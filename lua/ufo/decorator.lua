@@ -82,6 +82,7 @@ local function onEnd(name, tick)
                 local textoff = utils.textoff(winid)
                 local width = api.nvim_win_get_width(winid) - textoff
                 local syntax = vim.bo[bufnr].syntax ~= ''
+                local concealLevel = vim.wo[winid].conceallevel
                 if not nss then
                     nss = {}
                     for _, ns in pairs(api.nvim_get_namespaces()) do
@@ -99,7 +100,7 @@ local function onEnd(name, tick)
                         local endLnum = utils.foldClosedEnd(0, lnum)
                         local handler = self:getVirtTextHandler(bufnr)
                         local limitedText = utils.truncateStrByWidth(text, width)
-                        local virtText = render.captureVirtText(bufnr, limitedText, lnum, syntax, nss)
+                        local virtText = render.captureVirtText(bufnr, limitedText, lnum, syntax, nss, concealLevel)
                         local getFoldVirtText
                         if self.enableGetFoldVirtText then
                             getFoldVirtText = function(l)
@@ -107,13 +108,13 @@ local function onEnd(name, tick)
                                 assert(lnum <= l and l <= endLnum,
                                     ('expected lnum range from %d to %d, got %d'):format(lnum, endLnum, l))
                                 local line = fb:lines(l)[1]
-                                return render.captureVirtText(bufnr, line, l, syntax, nss)
+                                return render.captureVirtText(bufnr, line, l, syntax, nss, concealLevel)
                             end
                         end
                         local endVirtText
                         if self.enableFoldEndVirtText then
                             local endText = fb:lines(endLnum)[1]
-                            endVirtText = render.captureVirtText(bufnr, endText, endLnum, syntax, nss)
+                            endVirtText = render.captureVirtText(bufnr, endText, endLnum, syntax, nss, concealLevel)
                         end
                         local ok, res = pcall(handler, virtText, lnum, endLnum, width,
                             utils.truncateStrByWidth, {

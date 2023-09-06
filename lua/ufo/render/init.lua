@@ -96,7 +96,6 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     if len == 0 then
         return {{'', 'UfoFoldedFg'}}
     end
-    concealLevel = vim.wo.conceallevel -- until concealLevel is passed in
 
     local extMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
     local tsMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
