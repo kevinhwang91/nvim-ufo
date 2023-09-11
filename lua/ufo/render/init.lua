@@ -103,9 +103,10 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     local hlGroups = highlight.hlGroups()
     local hlMarks = {}
 
+    local concealEabnled = concealLevel > 0
     for _, m in ipairs(extMarks) do
         local hlGroup, conceal = m[5], m[7]
-        if (concealLevel > 0 and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
+        if (concealEabnled and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
             if m[4] == -1 then
                 m[4] = len
             end
@@ -115,7 +116,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
 
     for _, m in ipairs(tsMarks) do
         local hlGroup, conceal = m[5], m[7]
-        if (concealLevel > 0 and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
+        if (concealEabnled and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
             if m[4] == -1 then
                 m[4] = len
             end
@@ -130,6 +131,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     end)
 
     local virtText = {{}}
+    local inlayMark = table.remove(inlayMarks)
     local newChunk = true
     local lastSynConceal
     for i = 1, len do
@@ -145,11 +147,11 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
             mark = {0, i, 0, i, -1, -1}
             -- already accounts for concealLevel
             local concealed = api.nvim_buf_call(bufnr, function() return fn.synconcealed(lnum, i) end)
-            if concealed[1] == 1  then
+            if concealed[1] == 1 then
                 mark[5] = 'conceal'
                 mark[7] = concealed[2]
                 if concealed[3] ~= lastSynConceal then
-                    mark[2] = i - 1  -- inserts coneal chunk
+                    mark[2] = i - 1 -- inserts coneal chunk
                     lastSynConceal = concealed[3]
                 end
             else
@@ -163,7 +165,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
         local startCol, hlGroup, conceal = mark[2], mark[5], mark[7]
 
         -- Process text
-        if conceal and startCol == i - 1 and concealLevel > 0 then
+        if conceal and startCol == i - 1 and concealEabnled then
             if concealLevel ~= 3 then
                 table.insert(virtText, {conceal, hlGroup})
             end
@@ -176,19 +178,21 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
         end
 
         -- insert inlay hints
-        while inlayMarks[1] and inlayMarks[1][2] == i do
-            local inlayText = table.remove(inlayMarks, 1)[3]
-            for _, chunk in ipairs(inlayText) do
+        while inlayMark and inlayMark[2] == i do
+            for _, chunk in ipairs(inlayMark[3]) do
                 table.insert(virtText, chunk)
             end
+            inlayMark = table.remove(inlayMarks)
             newChunk = true
         end
     end
 
     table.remove(virtText, 1)
-    for _, m in ipairs(virtText) do
-        if type(m[1]) == 'table' then
-            m[1] = text:sub(m[1][1], m[1][2])
+    for _, chunk in ipairs(virtText) do
+        local e1 = chunk[1]
+        if type(e1) == 'table' then
+            local sc, ec = e1[1], e1[2]
+            chunk[1] = text:sub(sc, ec)
         end
     end
     return virtText
