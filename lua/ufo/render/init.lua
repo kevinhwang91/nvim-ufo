@@ -9,6 +9,31 @@ local utils = require('ufo.utils')
 
 local M = {}
 
+local function selecthighestPriorityMark(marks, pos, initMark, concealEabnled)
+    local res = initMark
+    for _, m in ipairs(marks) do
+        local sc, ec, priority = m[2], m[4], m[6]
+        local oPriority = res[6]
+        if concealEabnled then
+            local conceal, oConceal = m[7], res[7]
+            if oConceal then
+                if conceal and sc < pos and pos <= ec and oPriority <= priority then
+                    res = m
+                end
+            else
+                if sc < pos and pos <= ec and (oPriority <= priority or conceal) then
+                    res = m
+                end
+            end
+        else
+            if sc < pos and pos <= ec and oPriority <= priority then
+                res = m
+            end
+        end
+    end
+    return res
+end
+
 -- 1-indexed
 local function syntaxToRowHighlightRange(res, lnum, startCol, endCol)
     local lastIndex = 1
@@ -135,14 +160,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     local newChunk = true
     local lastSynConceal
     for i = 1, len do
-        -- get the most relevant mark
-        local mark = default
-        for _, m in ipairs(hlMarks) do
-            if (m[2] < i and i <= m[4]) and ((mark[6] <= m[6]) or (m[7] and not mark[7])) then
-                mark = m
-            end
-        end
-
+        local mark = selecthighestPriorityMark(hlMarks, i, default, concealEabnled)
         if syntax and mark == default then
             mark = {0, i, 0, i, -1, -1}
             -- already accounts for concealLevel
