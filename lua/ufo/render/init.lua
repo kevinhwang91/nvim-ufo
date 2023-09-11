@@ -182,17 +182,20 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
         end
         local startCol, hlGroup, conceal = mark[2], mark[5], mark[7]
 
-        -- Process text
-        if conceal and startCol == i - 1 and concealEabnled then
-            if concealLevel ~= 3 then
+        -- process text
+        if concealEabnled and conceal then
+            if startCol == i - 1 and concealLevel < 3 then
                 table.insert(virtText, {conceal, hlGroup})
             end
             newChunk = true
-        elseif (not conceal or concealLevel == 0) and (newChunk or hlGroup ~= virtText[#virtText][2]) then
-            table.insert(virtText, {{i, i}, hlGroup})
-            newChunk = false
-        elseif (not conceal or concealLevel == 0) then
-            virtText[#virtText][1][2] = i
+        else
+            local lastChunk = virtText[#virtText]
+            if newChunk or hlGroup ~= lastChunk[2] then
+                table.insert(virtText, {{i, i}, hlGroup})
+                newChunk = false
+            else
+                lastChunk[1][2] = i
+            end
         end
 
         -- insert inlay hints
