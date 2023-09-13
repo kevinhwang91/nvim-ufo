@@ -24,6 +24,7 @@ local errorCodes = {
     UnknownErrorCode = -32001,
     -- Defined by the protocol.
     RequestCancelled = -32800,
+    RequestFailed = -32803,
     ContentModified = -32801,
 }
 
@@ -35,7 +36,7 @@ function NvimClient.request(client, method, params, bufnr)
                 log.error('Client:', client)
                 log.error('All clients:', vim.lsp.get_active_clients({bufnr = bufnr}))
                 local code = err.code
-                if code == errorCodes.RequestCancelled or code == errorCodes.ContentModified then
+                if code == errorCodes.RequestCancelled or code == errorCodes.ContentModified or code == errorCodes.RequestFailed then
                     reject('UfoFallbackException')
                 else
                     reject(err)
