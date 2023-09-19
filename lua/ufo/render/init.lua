@@ -9,29 +9,73 @@ local utils = require('ufo.utils')
 
 local M = {}
 
-local function selecthighestPriorityMark(marks, pos, initMark, concealEabnled)
-    local res = initMark
+local function fillSlots(marks, len, concealLevel)
+    local res = {}
+    local prioritySlots = {}
+    local hlGroups = highlight.hlGroups()
+    local concealEabnled = concealLevel > 0
     for _, m in ipairs(marks) do
-        local sc, ec, priority = m[2], m[4], m[6]
-        local oPriority = res[6]
-        if concealEabnled then
-            local conceal, oConceal = m[7], res[7]
-            if oConceal then
-                if conceal and sc < pos and pos <= ec and oPriority <= priority then
-                    res = m
-                end
-            else
-                if sc < pos and pos <= ec and (oPriority <= priority or conceal) then
-                    res = m
-                end
+        ---@type 'string'|'number'
+        local hlGroup = m[5]
+        local cchar = m[7]
+        local isConcealSlot = concealEabnled and cchar
+        if isConcealSlot or hlGroup and hlGroups[hlGroup].foreground then
+            local col, endCol, priority = m[2], m[4], m[6]
+            if endCol == -1 then
+                endCol = len
             end
-        else
-            if sc < pos and pos <= ec and oPriority <= priority then
-                res = m
+            if isConcealSlot and concealLevel == 3 then
+                cchar = ''
+            end
+            local e = isConcealSlot and {col + 1, cchar, hlGroup} or hlGroup
+            for i = col + 1, endCol do
+                local oPriority = prioritySlots[i]
+                local oType = type(res[i])
+                if oType == 'nil' then
+                    res[i], prioritySlots[i] = e, priority
+                elseif oType == 'string' or oType == 'number' then
+                    if isConcealSlot or oPriority <= priority then
+                        res[i], prioritySlots[i] = e, priority
+                    end
+                else
+                    if isConcealSlot and oPriority <= priority then
+                        res[i], prioritySlots[i] = e, priority
+                    end
+                end
             end
         end
     end
     return res
+end
+
+local function handleSyntaxSlot(slotData, slotLen, bufnr, lnum, syntax, concealEabnled)
+    if not syntax and not concealEabnled then
+        return
+    end
+    api.nvim_buf_call(bufnr, function()
+        local lastConcealId = -1
+        local lastConcealCol = 0
+        for i = 1, slotLen do
+            if concealEabnled then
+                local concealed = fn.synconcealed(lnum, i)
+                if concealed[1] == 1 then
+                    local cchar, concealId = concealed[2], concealed[3]
+                    if concealId ~= lastConcealId then
+                        if type(slotData[i]) ~= 'table' or slotData[i][1] ~= i then
+                            slotData[i] = {i, cchar, 'Conceal'}
+                        end
+                        lastConcealCol = i
+                        lastConcealId = concealId
+                    else
+                        slotData[i] = {lastConcealCol, cchar, 'Conceal'}
+                    end
+                end
+            end
+            if syntax and not slotData[i] then
+                slotData[i] = fn.synID(lnum, i, true)
+            end
+        end
+    end)
 end
 
 -- 1-indexed
@@ -125,77 +169,50 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     local extMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
     local tsMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
 
-    local hlGroups = highlight.hlGroups()
-    local hlMarks = {}
-
-    local concealEabnled = concealLevel > 0
+    local marks = {}
     for _, m in ipairs(extMarks) do
-        local hlGroup, conceal = m[5], m[7]
-        if (concealEabnled and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
-            if m[4] == -1 then
-                m[4] = len
-            end
-            table.insert(hlMarks, m)
-        end
+        table.insert(marks, m)
     end
-
     for _, m in ipairs(tsMarks) do
-        local hlGroup, conceal = m[5], m[7]
-        if (concealEabnled and conceal) or (hlGroup and hlGroups[hlGroup].foreground) then
-            if m[4] == -1 then
-                m[4] = len
-            end
-            table.insert(hlMarks, m)
-        end
+        table.insert(marks, m)
     end
 
-    local default = {0, 1, 0, len, 'UfoFoldedFg', 1}
     table.sort(inlayMarks, function(a, b)
         local aCol, bCol, aPriority, bPriority = a[2], b[2], a[4], b[4]
-        return aCol < bCol or (aCol == bCol and aPriority < bPriority)
+        return not (aCol < bCol or (aCol == bCol and aPriority < bPriority))
     end)
 
+    local sData = fillSlots(marks, len, concealLevel)
+    handleSyntaxSlot(sData, len, bufnr, lnum, syntax, concealLevel > 0)
+    for i = 1, len do
+        local hlGroup = sData[i]
+        if type(hlGroup) == 'number' then
+            hlGroup = fn.synIDattr(hlGroup, 'name')
+        end
+    end
     local virtText = {}
     local inlayMark = table.remove(inlayMarks)
-    local newChunk = true
-    local lastSynConceal
+    local shouldInsertChunk = true
     for i = 1, len do
-        local mark = selecthighestPriorityMark(hlMarks, i, default, concealEabnled)
-        if syntax and mark == default then
-            mark = {0, i, 0, i, -1, -1}
-            -- already accounts for concealLevel
-            local concealed = api.nvim_buf_call(bufnr, function() return fn.synconcealed(lnum, i) end)
-            if concealed[1] == 1 then
-                mark[5] = 'conceal'
-                mark[7] = concealed[2]
-                if concealed[3] ~= lastSynConceal then
-                    mark[2] = i - 1 -- inserts coneal chunk
-                    lastSynConceal = concealed[3]
-                end
-            else
-                mark[5] = api.nvim_buf_call(bufnr, function() return fn.synID(lnum, i, true) end)
+        local e = sData[i]
+        local eType = type(e)
+        if eType == 'table' then
+            local startCol, cchar, hlGroup = e[1], e[2], e[3]
+            if startCol == i then
+                table.insert(virtText, {cchar, hlGroup})
             end
-
-            if mark[5] == 'Normal' then
-                mark[5] = 'UfoFoldedFg'
-            end
-        end
-        local startCol, hlGroup, conceal = mark[2], mark[5], mark[7]
-
-        -- process text
-        if concealEabnled and conceal then
-            if startCol == i - 1 and concealLevel < 3 then
-                table.insert(virtText, {conceal, hlGroup})
-            end
-            newChunk = true
-        else
+            shouldInsertChunk = true
+        elseif eType == 'string' or eType == 'number' then
             local lastChunk = virtText[#virtText] or {}
-            if newChunk or hlGroup ~= lastChunk[2] then
-                table.insert(virtText, {{i, i}, hlGroup})
-                newChunk = false
+            if shouldInsertChunk or e ~= lastChunk[2] then
+                table.insert(virtText, {{i, i}, e})
+                shouldInsertChunk = false
             else
                 lastChunk[1][2] = i
             end
+        else
+            table.insert(virtText, {{i, i}, 'UfoFoldedFg'})
+            shouldInsertChunk = false
         end
 
         -- insert inlay hints
@@ -204,7 +221,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
                 table.insert(virtText, chunk)
             end
             inlayMark = table.remove(inlayMarks)
-            newChunk = true
+            shouldInsertChunk = true
         end
     end
 
