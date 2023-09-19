@@ -155,7 +155,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
         return aCol < bCol or (aCol == bCol and aPriority < bPriority)
     end)
 
-    local virtText = {{}}
+    local virtText = {}
     local inlayMark = table.remove(inlayMarks)
     local newChunk = true
     local lastSynConceal
@@ -189,7 +189,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
             end
             newChunk = true
         else
-            local lastChunk = virtText[#virtText]
+            local lastChunk = virtText[#virtText] or {}
             if newChunk or hlGroup ~= lastChunk[2] then
                 table.insert(virtText, {{i, i}, hlGroup})
                 newChunk = false
@@ -208,7 +208,6 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
         end
     end
 
-    table.remove(virtText, 1)
     for _, chunk in ipairs(virtText) do
         local e1 = chunk[1]
         if type(e1) == 'table' then
