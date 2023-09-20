@@ -9,47 +9,73 @@ local utils = require('ufo.utils')
 
 local M = {}
 
-local function fillSlots(mark, len, hlGroups, hlGroupSlots, prioritySlots)
-    local col, endCol, hlGroup, priority = mark[2], mark[4], mark[5], mark[6]
-    if not hlGroup or not hlGroups[hlGroup].foreground then
-        return
-    end
-    if endCol == -1 then
-        endCol = len
-    end
-    for i = col + 1, endCol do
-        local oldPriority = prioritySlots[i]
-        if not oldPriority or oldPriority <= priority then
-            prioritySlots[i] = priority
-            hlGroupSlots[i] = hlGroup
+local function fillSlots(marks, len, concealLevel)
+    local res = {}
+    local prioritySlots = {}
+    local hlGroups = highlight.hlGroups()
+    local concealEabnled = concealLevel > 0
+    for _, m in ipairs(marks) do
+        ---@type 'string'|'number'
+        local hlGroup = m[5]
+        local cchar = m[7]
+        local isConcealSlot = concealEabnled and cchar
+        if isConcealSlot or hlGroup and hlGroups[hlGroup].foreground then
+            local col, endCol, priority = m[2], m[4], m[6]
+            if endCol == -1 then
+                endCol = len
+            end
+            if isConcealSlot and concealLevel == 3 then
+                cchar = ''
+            end
+            local e = isConcealSlot and {col + 1, cchar, hlGroup} or hlGroup
+            for i = col + 1, endCol do
+                local oPriority = prioritySlots[i]
+                local oType = type(res[i])
+                if oType == 'nil' then
+                    res[i], prioritySlots[i] = e, priority
+                elseif oType == 'string' or oType == 'number' then
+                    if isConcealSlot or oPriority <= priority then
+                        res[i], prioritySlots[i] = e, priority
+                    end
+                else
+                    if isConcealSlot and oPriority <= priority then
+                        res[i], prioritySlots[i] = e, priority
+                    end
+                end
+            end
         end
     end
+    return res
 end
 
-local function insertInlay(marks, text, hlGroupSlots)
-    if #marks == 0 then
-        return text
+local function handleSyntaxSlot(slotData, slotLen, bufnr, lnum, syntax, concealEnabled)
+    if not syntax and not concealEnabled then
+        return
     end
-    table.sort(marks, function(a, b)
-        local aCol, bCol, aPriority, bPriority = a[2], b[2], a[4], b[4]
-        return aCol == bCol and aPriority < bPriority or aCol < bCol
-    end)
-    for i = #marks, 1, -1 do
-        local m = marks[i]
-        local col, chunks = m[2] + 1, m[3]
-        for _, chunk in ipairs(chunks) do
-            local t, hlGroup = chunk[1], chunk[2]
-            text = text:sub(1, col - 1) .. t .. text:sub(col)
-            if hlGroup == 'Normal' then
-                hlGroup = 'UfoFoldedFg'
+    api.nvim_buf_call(bufnr, function()
+        local lastConcealId = -1
+        local lastConcealCol = 0
+        for i = 1, slotLen do
+            if concealEnabled then
+                local concealed = fn.synconcealed(lnum, i)
+                if concealed[1] == 1 then
+                    local cchar, concealId = concealed[2], concealed[3]
+                    if concealId ~= lastConcealId then
+                        if type(slotData[i]) ~= 'table' or slotData[i][1] ~= i then
+                            slotData[i] = {i, cchar, 'Conceal'}
+                        end
+                        lastConcealCol = i
+                        lastConcealId = concealId
+                    else
+                        slotData[i] = {lastConcealCol, cchar, 'Conceal'}
+                    end
+                end
             end
-            for _ = 1, #t do
-                table.insert(hlGroupSlots, col, hlGroup)
-                col = col + 1
+            if syntax and not slotData[i] then
+                slotData[i] = fn.synID(lnum, i, true)
             end
         end
-    end
-    return text
+    end)
 end
 
 -- 1-indexed
@@ -134,50 +160,79 @@ function M.setVirtText(bufnr, ns, row, col, virtText, opts)
     return extmark.setVirtText(bufnr, ns, row, col, virtText, opts)
 end
 
-function M.captureVirtText(bufnr, text, lnum, syntax, namespaces)
+function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     local len = #text
     if len == 0 then
         return {{'', 'UfoFoldedFg'}}
     end
-    local prioritySlots = {}
-    local hlGroupSlots = {}
+
+    local extMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
+    local tsMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
+
+    local marks = {}
+    for _, m in ipairs(extMarks) do
+        table.insert(marks, m)
+    end
+    for _, m in ipairs(tsMarks) do
+        table.insert(marks, m)
+    end
+
+    table.sort(inlayMarks, function(a, b)
+        local aCol, bCol, aPriority, bPriority = a[2], b[2], a[4], b[4]
+        return not (aCol < bCol or (aCol == bCol and aPriority < bPriority))
+    end)
+
+    local sData = fillSlots(marks, len, concealLevel)
+    handleSyntaxSlot(sData, len, bufnr, lnum, syntax, concealLevel > 0)
     for i = 1, len do
-        hlGroupSlots[i] = 'UfoFoldedFg'
-    end
-    local hlMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len}, namespaces)
-    local hlGroups = highlight.hlGroups()
-    for _, m in ipairs(hlMarks) do
-        fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
-    end
-    hlMarks = treesitter.getHighlightsByRange(bufnr, {lnum - 1, 0}, {lnum - 1, len})
-    for _, m in ipairs(hlMarks) do
-        fillSlots(m, len, hlGroups, hlGroupSlots, prioritySlots)
-    end
-    if syntax then
-        api.nvim_buf_call(bufnr, function()
-            for i = 1, len do
-                if not prioritySlots[i] then
-                    local hlId = fn.synID(lnum, i, true)
-                    prioritySlots[i] = 1
-                    hlGroupSlots[i] = hlId
-                end
-            end
-        end)
-    end
-    text = insertInlay(inlayMarks, text, hlGroupSlots)
-    local res = {}
-    local lastHlGroup = hlGroupSlots[1]
-    local lastIndex = 1
-    for i = 2, #text do
-        local hlGroup = hlGroupSlots[i]
-        if lastHlGroup ~= hlGroup then
-            table.insert(res, {text:sub(lastIndex, i - 1), lastHlGroup})
-            lastIndex = i
-            lastHlGroup = hlGroup
+        local hlGroup = sData[i]
+        if type(hlGroup) == 'number' then
+            hlGroup = fn.synIDattr(hlGroup, 'name')
         end
     end
-    table.insert(res, {text:sub(lastIndex), lastHlGroup})
-    return res
+    local virtText = {}
+    local inlayMark = table.remove(inlayMarks)
+    local shouldInsertChunk = true
+    for i = 1, len do
+        local e = sData[i]
+        local eType = type(e)
+        if eType == 'table' then
+            local startCol, cchar, hlGroup = e[1], e[2], e[3]
+            if startCol == i then
+                table.insert(virtText, {cchar, hlGroup})
+            end
+            shouldInsertChunk = true
+        elseif eType == 'string' or eType == 'number' then
+            local lastChunk = virtText[#virtText] or {}
+            if shouldInsertChunk or e ~= lastChunk[2] then
+                table.insert(virtText, {{i, i}, e})
+                shouldInsertChunk = false
+            else
+                lastChunk[1][2] = i
+            end
+        else
+            table.insert(virtText, {{i, i}, 'UfoFoldedFg'})
+            shouldInsertChunk = false
+        end
+
+        -- insert inlay hints
+        while inlayMark and inlayMark[2] == i do
+            for _, chunk in ipairs(inlayMark[3]) do
+                table.insert(virtText, chunk)
+            end
+            inlayMark = table.remove(inlayMarks)
+            shouldInsertChunk = true
+        end
+    end
+
+    for _, chunk in ipairs(virtText) do
+        local e1 = chunk[1]
+        if type(e1) == 'table' then
+            local sc, ec = e1[1], e1[2]
+            chunk[1] = text:sub(sc, ec)
+        end
+    end
+    return virtText
 end
 
 ---Prefer use nvim_buf_set_extmark rather than matchaddpos, only use matchaddpos if buffer is shared

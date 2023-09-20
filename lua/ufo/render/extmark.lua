@@ -19,6 +19,7 @@ function M.getHighlightsAndInlayByRange(bufnr, startRange, endRange, namespaces)
             local ec = details.end_col or (sc + 1)
             local hlGroup = details.hl_group
             local priority = details.priority
+            local conceal = details.conceal
             local virtTextPos = details.virt_text_pos
             if hlGroup then
                 if er > endRow then
@@ -26,7 +27,7 @@ function M.getHighlightsAndInlayByRange(bufnr, startRange, endRange, namespaces)
                 elseif er == endRow and ec > endCol then
                     er = endCol
                 end
-                table.insert(hlRes, {sr, sc, er, ec, hlGroup, priority})
+                table.insert(hlRes, {sr, sc, er, ec, hlGroup, priority, conceal})
             end
             if virtTextPos == 'inline' then
                 table.insert(inlayRes, {sr, sc, details.virt_text, priority})

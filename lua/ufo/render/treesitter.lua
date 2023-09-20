@@ -39,6 +39,7 @@ function M.getHighlightsByRange(bufnr, startRange, endRange, hlGroups)
             end
             local hlId = query.hl_cache[capture]
             local priority = tonumber(metadata.priority) or 100
+            local conceal = metadata.conceal
             local sr, sc, er, ec = node:range()
             if row <= er and endRow >= sr then
                 if sr < row or sr == row and sc < col then
@@ -51,15 +52,15 @@ function M.getHighlightsByRange(bufnr, startRange, endRange, hlGroups)
                     -- Overlap highlighting if range is equal to last's
                     if lsr == sr and lsc == sc and ler == er and lec == ec then
                         if hlGroups[hlId].foreground and lpriority <= priority then
-                            last[5], last[6] = hlId, priority
+                            last[5], last[6], last[7] = hlId, priority, conceal
                         end
                     else
-                        last = {sr, sc, er, ec, hlId, priority}
+                        last = {sr, sc, er, ec, hlId, priority, conceal}
                         table.insert(res, last)
                     end
                     lsr, lsc, ler, lec, lpriority = sr, sc, er, ec, priority
                 else
-                    table.insert(res, {sr, sc, er, ec, hlId, priority})
+                    table.insert(res, {sr, sc, er, ec, hlId, priority, conceal})
                 end
             end
         end
