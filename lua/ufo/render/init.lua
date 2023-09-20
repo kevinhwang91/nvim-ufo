@@ -48,15 +48,15 @@ local function fillSlots(marks, len, concealLevel)
     return res
 end
 
-local function handleSyntaxSlot(slotData, slotLen, bufnr, lnum, syntax, concealEabnled)
-    if not syntax and not concealEabnled then
+local function handleSyntaxSlot(slotData, slotLen, bufnr, lnum, syntax, concealEnabled)
+    if not syntax and not concealEnabled then
         return
     end
     api.nvim_buf_call(bufnr, function()
         local lastConcealId = -1
         local lastConcealCol = 0
         for i = 1, slotLen do
-            if concealEabnled then
+            if concealEnabled then
                 local concealed = fn.synconcealed(lnum, i)
                 if concealed[1] == 1 then
                     local cchar, concealId = concealed[2], concealed[3]
