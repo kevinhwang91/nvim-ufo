@@ -72,7 +72,10 @@ local function handleSyntaxSlot(slotData, slotLen, bufnr, lnum, syntax, concealE
                 end
             end
             if syntax and not slotData[i] then
-                slotData[i] = fn.synID(lnum, i, true)
+                local hlGroupId = fn.synID(lnum, i, true)
+                if hlGroupId ~= 0 then
+                    slotData[i] = hlGroupId
+                end
             end
         end
     end)
