@@ -184,17 +184,11 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
 
     local sData = fillSlots(marks, len, concealLevel)
     handleSyntaxSlot(sData, len, bufnr, lnum, syntax, concealLevel > 0)
-    for i = 1, len do
-        local hlGroup = sData[i]
-        if type(hlGroup) == 'number' then
-            hlGroup = fn.synIDattr(hlGroup, 'name')
-        end
-    end
     local virtText = {}
     local inlayMark = table.remove(inlayMarks)
     local shouldInsertChunk = true
     for i = 1, len do
-        local e = sData[i]
+        local e = sData[i] or 'UfoFoldedFg'
         local eType = type(e)
         if eType == 'table' then
             local startCol, cchar, hlGroup = e[1], e[2], e[3]
@@ -202,7 +196,7 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
                 table.insert(virtText, {cchar, hlGroup})
             end
             shouldInsertChunk = true
-        elseif eType == 'string' or eType == 'number' then
+        else
             local lastChunk = virtText[#virtText] or {}
             if shouldInsertChunk or e ~= lastChunk[2] then
                 table.insert(virtText, {{i, i}, e})
@@ -210,9 +204,6 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
             else
                 lastChunk[1][2] = i
             end
-        else
-            table.insert(virtText, {{i, i}, 'UfoFoldedFg'})
-            shouldInsertChunk = false
         end
 
         -- insert inlay hints
