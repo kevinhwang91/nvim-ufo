@@ -69,7 +69,7 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         end
         for id, node in pairs(match) do
             local m = metadata[id]
-            if m.range then
+            if m and m.range then
                 node = MetaNode:new(m.range)
             end
             table.insert(matches, node)
