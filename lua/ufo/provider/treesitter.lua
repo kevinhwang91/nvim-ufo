@@ -10,6 +10,20 @@ local Treesitter = {
     hasProviders = {}
 }
 
+local MetaNode = {}
+MetaNode.__index = MetaNode
+
+function MetaNode:new(range)
+    local o = self == MetaNode and setmetatable({}, self) or self
+    o.value = range
+    return o
+end
+
+function MetaNode:range()
+    local range = self.value
+    return range[1], range[2], range[3], range[4]
+end
+
 local function prepareQuery(bufnr, parser, root, rootLang, queryName)
     if not root then
         local firstTree = parser:trees()[1]
@@ -48,12 +62,16 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
     ---@diagnostic disable-next-line: need-check-nil
     local iter = q:iter_matches(p.root, p.source, p.start, p.stop)
     return function()
-        local pattern, match = iter()
+        local pattern, match, metadata = iter()
         local matches = {}
         if pattern == nil then
             return pattern
         end
-        for _, node in pairs(match) do
+        for id, node in pairs(match) do
+            local m = metadata[id]
+            if m.range then
+                node = MetaNode:new(m.range)
+            end
             table.insert(matches, node)
         end
         local preds = q.info.patterns[pattern]
