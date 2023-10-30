@@ -37,7 +37,7 @@ end
 ---@param rowPairs table<number, number>
 function FoldDriverFFI:createFolds(winid, ranges, rowPairs)
     utils.winCall(winid, function()
-        local wo = vim.wo[winid]
+        local wo = vim.wo
         local level = wo.foldlevel
         self._wffi.clearFolds(winid)
         local foldRanges = convertToFoldRanges(ranges, rowPairs)

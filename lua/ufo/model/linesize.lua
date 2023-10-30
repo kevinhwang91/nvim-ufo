@@ -19,7 +19,7 @@ function LBase:new(winid, sizes)
     local o = setmetatable({}, self)
     self.__index = self
     o.winid = winid
-    o.foldenable = vim.wo.foldenable
+    o.foldenable = vim.wo[winid].foldenable
     o.foldClosePairs = {}
     o.sizes = sizes
     return o
