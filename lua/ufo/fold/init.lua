@@ -211,7 +211,7 @@ function Fold:initialize(ns)
     table.insert(self.disposables, disposable:create(function()
         self.initialized = false
     end))
-    event:on('BufEnter', function(bufnr)
+    event:on('BufWinEnter', function(bufnr)
         bufnr = bufnr or api.nvim_get_current_buf()
         local fb = manager:get(bufnr)
         if not fb then

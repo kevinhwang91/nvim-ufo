@@ -21,6 +21,7 @@ local function createEvents()
     cmd([[
         au!
         au BufEnter * lua require('ufo.lib.event'):emit('BufEnter', vim.api.nvim_get_current_buf())
+        au BufWinEnter * lua require('ufo.lib.event'):emit('BufWinEnter', vim.api.nvim_get_current_buf(), vim.api.nvim_get_current_win())
         au InsertLeave * lua require('ufo.lib.event'):emit('InsertLeave', vim.api.nvim_get_current_buf())
         au TextChanged * lua require('ufo.lib.event'):emit('TextChanged', vim.api.nvim_get_current_buf())
         au BufWritePost * lua require('ufo.lib.event'):emit('BufWritePost', vim.api.nvim_get_current_buf())
@@ -34,7 +35,7 @@ local function createEvents()
     cmd(([[
         au OptionSet buftype silent! lua require('ufo.lib.event'):emit('BufTypeChanged', %s)
         au OptionSet filetype silent! lua require('ufo.lib.event'):emit('FileTypeChanged', %s)
-    ]]):format(bufOptSetArgs, bufOptSetArgs))
+    ]]):format(bufOptSetArgs, bufOptSetArgs, bufOptSetArgs))
     cmd(([[
         au OptionSet diff silent! lua require('ufo.lib.event'):emit('DiffModeChanged', %s)
     ]]):format(winOptSetArgs))

@@ -38,7 +38,8 @@ function BufferManager:initialize()
         self.buffers = {}
         self.bufDetachSet = {}
     end))
-    event:on('BufEnter', function(bufnr)
+    ---@diagnostic disable-next-line: unused-local
+    event:on('BufWinEnter', function(bufnr, winid)
         attach(self, bufnr or api.nvim_get_current_buf())
     end, self.disposables)
     event:on('BufDetach', function(bufnr)
@@ -70,7 +71,7 @@ function BufferManager:initialize()
         if utils.isBufLoaded(bufnr) then
             attach(self, bufnr)
         else
-            -- the first buffer is unloaded while firing `BufEnter`
+            -- the first buffer is unloaded while firing `BufWinEnter`
             promise.resolve():thenCall(function()
                 if utils.isBufLoaded(bufnr) then
                     attach(self, bufnr)
