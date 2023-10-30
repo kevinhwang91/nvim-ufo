@@ -65,6 +65,12 @@ function BufferManager:initialize()
             b.ft = new
         end
     end, self.disposables)
+    event:on('SyntaxChanged', function(bufnr, new, old)
+        local b = self.buffers[bufnr]
+        if b and old ~= new then
+            b.syntax = new
+        end
+    end, self.disposables)
 
     for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do
         local bufnr = api.nvim_win_get_buf(winid)

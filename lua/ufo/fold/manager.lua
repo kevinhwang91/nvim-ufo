@@ -179,9 +179,6 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
         fb.scanned = true
     else
         local ok, res = pcall(function()
-            -- TODO
-            -- should sync extmarks with foldedLines in decorator
-            fb:syncFoldedLines(winid)
             for _, range in ipairs(fb:getRangesFromExtmarks()) do
                 local row, endRow = range[1], range[2]
                 rowPairs[row] = endRow

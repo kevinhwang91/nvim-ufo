@@ -35,6 +35,7 @@ local function createEvents()
     cmd(([[
         au OptionSet buftype silent! lua require('ufo.lib.event'):emit('BufTypeChanged', %s)
         au OptionSet filetype silent! lua require('ufo.lib.event'):emit('FileTypeChanged', %s)
+        au OptionSet syntax silent! lua require('ufo.lib.event'):emit('SyntaxChanged', %s)
     ]]):format(bufOptSetArgs, bufOptSetArgs, bufOptSetArgs))
     cmd(([[
         au OptionSet diff silent! lua require('ufo.lib.event'):emit('DiffModeChanged', %s)
@@ -146,11 +147,21 @@ function M.disableFold(bufnr)
 end
 
 function M.foldtext()
-    local fs = vim.v.foldstart
-    local curBufnr = api.nvim_get_current_buf()
-    local buf = bufmanager:get(curBufnr)
-    local text = buf and buf:lines(fs)[1] or api.nvim_buf_get_lines(curBufnr, fs - 1, fs, true)[1]
-    return utils.expandTab(text, vim.bo.ts)
+    local fs, fe = vim.v.foldstart, vim.v.foldend
+    local winid = api.nvim_get_current_win()
+    local virtText = decorator:getVirtTextAndCloseFold(winid, fs, fe, false)
+    if utils.has10() then
+        return virtText
+    end
+    local text
+    if next(virtText) then
+        text = ''
+        for _, chunk in ipairs(virtText) do
+            text = text .. chunk[1]
+        end
+        text = utils.expandTab(text, vim.bo.ts)
+    end
+    return text or utils.expandTab(api.nvim_buf_get_lines(0, fs - 1, fs, true)[1], vim.bo.ts)
 end
 
 return M

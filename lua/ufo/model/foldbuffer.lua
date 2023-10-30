@@ -50,6 +50,10 @@ function FoldBuffer:buftype()
     return self.buf:buftype()
 end
 
+function FoldBuffer:syntax()
+    return self.buf:syntax()
+end
+
 function FoldBuffer:lineCount()
     return self.buf:lineCount()
 end
@@ -150,15 +154,6 @@ function FoldBuffer:lineIsClosed(lnum)
 end
 
 ---
----@param lnum number
----@param width number
----@return boolean
-function FoldBuffer:lineNeedRender(lnum, width)
-    local fl = self:foldedLine(lnum)
-    return not fl or not fl:hasVirtText() or fl:widthChanged(width)
-end
-
----
 ---@param winid number
 function FoldBuffer:syncFoldedLines(winid)
     for lnum, fl in ipairs(self.foldedLines) do
@@ -193,7 +188,7 @@ function FoldBuffer:openFold(lnum)
     local fl = self.foldedLines[lnum]
     if fl then
         folded = self.foldedLines[lnum] ~= nil
-        fl:deleteVirtText()
+        fl:deleteExtmark()
         self.foldedLineCount = self.foldedLineCount - 1
         self.foldedLines[lnum] = false
     end
@@ -206,8 +201,9 @@ end
 ---@param text? string
 ---@param virtText? string
 ---@param width? number
+---@param doRender? boolean
 ---@return boolean
-function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
+function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width, doRender)
     local lineCount = self:lineCount()
     endLnum = math.min(endLnum, lineCount)
     if endLnum < lnum then
@@ -232,7 +228,7 @@ function FoldBuffer:closeFold(lnum, endLnum, text, virtText, width)
         self.foldedLineCount = self.foldedLineCount + 1
         self.foldedLines[lnum] = fl
     end
-    fl:updateVirtText(lnum, endLnum, virtText)
+    fl:updateVirtText(lnum, endLnum, virtText, doRender)
     return true
 end
 
