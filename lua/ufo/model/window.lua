@@ -81,7 +81,7 @@ function Window:setCursorFoldedLineHighlight()
     if not self.isCurFoldHighlighted then
         -- TODO
         -- Upstream bug: Error in decoration provider (UNKNOWN PLUGIN).end
-        utils.wait(0):thenCall(function()
+        require('promise').resolve():thenCall(function()
             utils.winCall(self.winid, function()
                 cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
             end)
@@ -94,7 +94,7 @@ end
 
 function Window:clearCursorFoldedLineHighlight()
     local res = false
-    if self.isCurFoldHighlighted then
+    if self.isCurFoldHighlighted or self.lastBufnr ~= self.bufnr then
         utils.winCall(self.winid, function()
             cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
         end)
