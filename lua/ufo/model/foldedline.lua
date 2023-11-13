@@ -54,10 +54,12 @@ function FoldedLine:updateVirtText(lnum, endLnum, virtText, doRender)
             priority = 10,
             hl_mode = 'combine'
         }
-        if not utils.has10() then
+        -- TODO
+        -- nvim-hlslens need virt_text to show lens
+        -- if not utils.has10() then
             opts.virt_text = virtText
             opts.virt_text_win_col = 0
-        end
+        -- end
         self.id = api.nvim_buf_set_extmark(self.bufnr, self.ns, lnum - 1, 0, opts)
     end
     self.rendered = doRender
