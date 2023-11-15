@@ -182,7 +182,11 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
 
     table.sort(inlayMarks, function(a, b)
         local aCol, bCol, aPriority, bPriority = a[2], b[2], a[4], b[4]
-        return not (aCol < bCol or (aCol == bCol and aPriority < bPriority))
+        if aCol == bCol then
+            return aPriority > bPriority
+        else
+            return aCol > bCol
+        end
     end)
 
     local sData = fillSlots(marks, len, concealLevel)
