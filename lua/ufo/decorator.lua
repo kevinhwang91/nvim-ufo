@@ -41,11 +41,6 @@ end
 
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
-    if api.nvim_get_current_buf() == bufnr then
-        if api.nvim_get_current_win() ~= winid then
-            return false
-        end
-    end
     local fb = fold.get(bufnr)
     if bufnrSet[bufnr] or not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable then
         collection[winid] = nil
@@ -97,7 +92,9 @@ local function onEnd(name, tick)
             local curFoldStart, curFoldEnd = 0, 0
             for fs, fe in pairs(foldedPairs) do
                 local _, didClose = self:getVirtTextAndCloseFold(winid, fs, fe)
-                needRedraw = needRedraw or didClose
+                if not utils.has10() and not bufnrSet[data.bufnr] then
+                    needRedraw = needRedraw or didClose
+                end
                 if curFoldStart == 0 and fs <= curLnum and curLnum <= fe then
                     curFoldStart, curFoldEnd = fs, fe
                 end
