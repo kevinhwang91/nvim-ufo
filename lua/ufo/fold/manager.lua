@@ -149,7 +149,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     if not fb then
         return false
     end
-    local winid = utils.getWinByBuf(bufnr)
+    local winid, windows = utils.getWinByBuf(bufnr)
     local changedtick = fb:changedtick()
     if ranges then
         local mode = utils.mode()
@@ -167,7 +167,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     end
     local rowPairs = {}
     local isFirstApply = not fb.scanned
-    if not fb.scanned then
+    if not fb.scanned or windows then
         rowPairs = self:getRowPairsByScanning(fb, winid)
         for _, range in ipairs(ranges or fb.foldRanges) do
             if range.kind and vim.tbl_contains(self.closeKinds, range.kind) then
