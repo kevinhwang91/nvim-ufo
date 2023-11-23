@@ -2,6 +2,7 @@ local M = {}
 local cmd = vim.cmd
 local api = vim.api
 
+local event = require('ufo.lib.event')
 local utils = require('ufo.utils')
 local provider = require('ufo.provider')
 local fold = require('ufo.fold')
@@ -17,36 +18,49 @@ local enabled
 local disposables = {}
 
 local function createEvents()
-    cmd('aug Ufo')
-    cmd([[
-        au!
-        au BufEnter * lua require('ufo.lib.event'):emit('BufEnter', vim.api.nvim_get_current_buf())
-        au BufWinEnter * lua require('ufo.lib.event'):emit('BufWinEnter', vim.api.nvim_get_current_buf(), vim.api.nvim_get_current_win())
-        au InsertLeave * lua require('ufo.lib.event'):emit('InsertLeave', vim.api.nvim_get_current_buf())
-        au TextChanged * lua require('ufo.lib.event'):emit('TextChanged', vim.api.nvim_get_current_buf())
-        au BufWritePost * lua require('ufo.lib.event'):emit('BufWritePost', vim.api.nvim_get_current_buf())
-        au WinClosed * lua require('ufo.lib.event'):emit('WinClosed', tonumber(vim.fn.expand('<afile>')))
-        au CmdlineLeave * lua require('ufo.lib.event'):emit('CmdlineLeave')
-        au ColorScheme * lua require('ufo.lib.event'):emit('ColorScheme')
-    ]])
-    local bufOptSetArgs = 'vim.api.nvim_get_current_buf(), vim.v.option_new, vim.v.option_old'
-    local winOptSetArgs = 'vim.api.nvim_get_current_win(), ' ..
-        'tonumber(vim.v.option_new), tonumber(vim.v.option_old)'
-    cmd(([[
-        au OptionSet buftype silent! lua require('ufo.lib.event'):emit('BufTypeChanged', %s)
-        au OptionSet filetype silent! lua require('ufo.lib.event'):emit('FileTypeChanged', %s)
-        au OptionSet syntax silent! lua require('ufo.lib.event'):emit('SyntaxChanged', %s)
-    ]]):format(bufOptSetArgs, bufOptSetArgs, bufOptSetArgs))
-    cmd(([[
-        au OptionSet diff silent! lua require('ufo.lib.event'):emit('DiffModeChanged', %s)
-    ]]):format(winOptSetArgs))
-    cmd('aug END')
-
+    local gid = api.nvim_create_augroup('Ufo', {})
+    api.nvim_create_autocmd({'BufWinEnter', 'InsertLeave', 'TextChanged', 'BufWritePost'}, {
+        group = gid,
+        callback = function(ev)
+            event:emit(ev.event, ev.buf)
+        end
+    })
+    api.nvim_create_autocmd('WinClosed', {
+        group = gid,
+        callback = function(ev)
+            event:emit(ev.event, tonumber(ev.file))
+        end
+    })
+    api.nvim_create_autocmd({'CmdlineLeave', 'ColorScheme'}, {
+        group = gid,
+        callback = function(ev)
+            event:emit(ev.event)
+        end
+    })
+    api.nvim_create_autocmd('OptionSet', {
+        group = gid,
+        pattern = {'buftype', 'filetype', 'syntax', 'diff'},
+        callback = function(ev)
+            local bufnr = api.nvim_get_current_buf()
+            local match = ev.match
+            local e
+            if match == 'buftype' then
+                e = 'BufTypeChanged'
+            elseif match == 'filetype' then
+                e = 'FileTypeChanged'
+            elseif match == 'syntax' then
+                e = 'SyntaxChanged'
+            elseif match == 'diff' then
+                event:emit('DiffModeChanged', api.nvim_get_current_win(), vim.v.option_new, vim.v.option_old)
+                return
+            else
+                error([[Didn't match any events!]])
+            end
+            event:emit(e, bufnr, vim.v.option_new, vim.v.option_old)
+        end
+    })
     return disposable:create(function()
-        cmd([[
-            au! Ufo
-            aug! Ufo
-        ]])
+        api.nvim_del_augroup_by_id(gid)
     end)
 end
 

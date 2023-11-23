@@ -42,7 +42,7 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 
 ### Requirements
 
-- [Neovim](https://github.com/neovim/neovim) 0.6.1 or later
+- [Neovim](https://github.com/neovim/neovim) 0.7.2 or later
 - [coc.nvim](https://github.com/neoclide/coc.nvim) (optional)
 - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) (optional)
 
