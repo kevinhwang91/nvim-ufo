@@ -230,7 +230,7 @@ function Decorator:getVirtTextAndCloseFold(winid, lnum, endLnum, doRender)
             doRender = true
         end
         if ok then
-            if not bufnrSet[bufnr] then
+            if bufnrSet[bufnr] == winid then
                 if doRender then
                     log.debug('Window:', winid, 'need add/update folded lnum:', lnum)
                     didClose = true
