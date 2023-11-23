@@ -92,7 +92,7 @@ local function onEnd(name, tick)
             local curFoldStart, curFoldEnd = 0, 0
             for fs, fe in pairs(foldedPairs) do
                 local _, didClose = self:getVirtTextAndCloseFold(winid, fs, fe)
-                if not utils.has10() and not bufnrSet[data.bufnr] then
+                if not utils.has10() then
                     needRedraw = needRedraw or didClose
                 end
                 if curFoldStart == 0 and fs <= curLnum and curLnum <= fe then
@@ -230,13 +230,15 @@ function Decorator:getVirtTextAndCloseFold(winid, lnum, endLnum, doRender)
             doRender = true
         end
         if ok then
-            if doRender then
-                log.debug('need add/update folded lnum:', lnum)
-                didClose = true
-            else
-                log.debug('will add/update folded lnum:', lnum)
+            if not bufnrSet[bufnr] then
+                if doRender then
+                    log.debug('Window:', winid, 'need add/update folded lnum:', lnum)
+                    didClose = true
+                else
+                    log.debug('Window:', winid, 'will add/update folded lnum:', lnum)
+                end
+                fb:closeFold(lnum, endLnum, text, res, width, doRender)
             end
-            fb:closeFold(lnum, endLnum, text, res, width, doRender)
         else
             fb:closeFold(lnum, endLnum, text, {{handlerErrorMsg, 'Error'}}, width, doRender)
             log.error(res)
