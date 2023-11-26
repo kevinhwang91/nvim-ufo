@@ -94,7 +94,7 @@ end
 
 function Window:clearCursorFoldedLineHighlight()
     local res = false
-    if self.isCurFoldHighlighted or self.lastBufnr ~= self.bufnr then
+    if self.isCurFoldHighlighted or self.lastBufnr ~= 0 and self.lastBufnr ~= self.bufnr then
         utils.winCall(self.winid, function()
             cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
         end)
