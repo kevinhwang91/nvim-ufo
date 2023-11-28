@@ -224,10 +224,13 @@ function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     end
 
     for _, chunk in ipairs(virtText) do
-        local e1 = chunk[1]
+        local e1, e2 = chunk[1], chunk[2]
         if type(e1) == 'table' then
             local sc, ec = e1[1], e1[2]
             chunk[1] = text:sub(sc, ec)
+        end
+        if e2 == 'Normal' then
+            chunk[2] = 'UfoFoldedFg'
         end
     end
     return virtText
