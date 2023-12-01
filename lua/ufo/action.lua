@@ -144,7 +144,13 @@ function M.closeFolds(level)
                     end
                 end
             else
-                lnum = endLnum
+                --TODO
+                -- (#184)
+                --`%foldclose!` doesn't close all folds for window
+                --endLnum may return -1, look like upstream issue.
+                if lnum < endLnum then
+                    lnum = endLnum
+                end
             end
         end
         lastLevel = l
