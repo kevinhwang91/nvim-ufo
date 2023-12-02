@@ -31,7 +31,16 @@ local function createEvents()
             event:emit(ev.event, tonumber(ev.file))
         end
     })
-    api.nvim_create_autocmd({'CmdlineLeave', 'ColorScheme'}, {
+    api.nvim_create_autocmd('ModeChanged', {
+        group = gid,
+        pattern = '*:n',
+        callback = function(ev)
+            -- local previousMode = ev.match:match('(%a):')
+            -- event:emit('ModeChangedToNormal', ev.buf, previousMode)
+            event:emit('ModeChangedToNormal', ev.buf)
+        end
+    })
+    api.nvim_create_autocmd('ColorScheme', {
         group = gid,
         callback = function(ev)
             event:emit(ev.event)

@@ -166,12 +166,6 @@ updateFoldDebounced = (function()
     end
 end)()
 
-local function updatePendingFold(bufnr)
-    promise.resolve():thenCall(function()
-        updateFoldDebounced(bufnr, true, true)
-    end)
-end
-
 local function handleDiffMode(winid, new, old)
     if old ~= new and new == 0 then
         local bufnr = api.nvim_win_get_buf(winid)
@@ -218,7 +212,7 @@ function Fold:initialize(ns)
             return
         end
         setFoldText(bufnr)
-        updatePendingFold(bufnr)
+        updateFoldDebounced(bufnr, true, true)
     end, self.disposables)
     event:on('InsertLeave', function(bufnr)
         updateFoldDebounced(bufnr, true)
@@ -227,7 +221,9 @@ function Fold:initialize(ns)
         updateFoldDebounced(bufnr, true)
     end, self.disposables)
     event:on('TextChanged', updateFoldDebounced, self.disposables)
-    event:on('CmdlineLeave', updatePendingFold, self.disposables)
+    event:on('ModeChangedToNormal', function(bufnr)
+        updateFoldDebounced(bufnr, true, true)
+    end, self.disposables)
     event:on('BufAttach', Fold.attach, self.disposables)
     event:on('DiffModeChanged', handleDiffMode, self.disposables)
     table.insert(self.disposables, manager:initialize(ns, config.provider_selector,
