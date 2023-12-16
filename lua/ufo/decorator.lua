@@ -77,11 +77,18 @@ local function onEnd(name, tick)
                     foldedPairs = self:computeFoldedPairs(data.rows)
                 end)
             end
+            local shared
             for _, row in ipairs(data.rows) do
                 local lnum = row + 1
                 if not foldedPairs[lnum] and fb:lineIsClosed(lnum) then
-                    self:highlightOpenFold(fb, winid, lnum)
-                    needRedraw = fb:openFold(lnum) or needRedraw
+                    if shared == nil then
+                        local _, winids = utils.getWinByBuf(fb.bufnr)
+                        shared = winids ~= nil
+                    end
+                    self:highlightOpenFold(fb, winid, lnum, shared)
+                    if not shared then
+                        needRedraw = fb:openFold(lnum) or needRedraw
+                    end
                 end
             end
             local cursor = wses:cursor()
@@ -141,15 +148,22 @@ function Decorator:resetCurosrFoldedLineHighlightByBuf(bufnr)
     end
 end
 
-function Decorator:highlightOpenFold(fb, winid, lnum)
+function Decorator:highlightOpenFold(fb, winid, lnum, shared)
     if self.openFoldHlEnabled and winid == self.lastWinid and api.nvim_get_mode().mode ~= 'c' then
-        local fl = fb:foldedLine(lnum)
-        local _, endLnum = fl:range()
-        if endLnum == 0 then
-            return
+        local endLnum
+        if not shared then
+            local fl = fb:foldedLine(lnum)
+            local _
+            _, endLnum = fl:range()
+            if endLnum == 0 then
+                return
+            end
+        else
+            endLnum = utils.foldClosedEnd(winid, lnum)
+            if endLnum < 0 then
+                return
+            end
         end
-        local _, winids = utils.getWinByBuf(fb.bufnr)
-        local shared = winids ~= nil
         render.highlightLinesWithTimeout(shared and winid or fb.bufnr, 'UfoFoldedBg', self.hlNs,
             lnum, endLnum, self.openFoldHlTimeout, shared)
     end
