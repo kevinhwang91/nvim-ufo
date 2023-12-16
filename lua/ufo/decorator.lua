@@ -86,8 +86,9 @@ local function onEnd(name, tick)
                         shared = winids ~= nil
                     end
                     self:highlightOpenFold(fb, winid, lnum, shared)
+                    local didOpen = fb:openFold(lnum)
                     if not shared then
-                        needRedraw = fb:openFold(lnum) or needRedraw
+                        needRedraw = didOpen or needRedraw
                     end
                 end
             end
