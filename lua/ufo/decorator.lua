@@ -110,7 +110,9 @@ local function onEnd(name, tick)
             if not needRedraw then
                 local lastCurLnum = wses.lastCurLnum
                 local lastCurFoldStart, lastCurFoldEnd = wses.lastCurFoldStart, wses.lastCurFoldEnd
-                if lastCurFoldStart ~= curFoldStart and lastCurFoldStart < lastCurLnum and lastCurLnum <= lastCurFoldEnd then
+                if lastCurFoldStart ~= curFoldStart and
+                    lastCurFoldStart < lastCurLnum and lastCurLnum <= lastCurFoldEnd and
+                    lastCurFoldStart < curLnum and curLnum <= lastCurFoldEnd then
                     log.debug('Curosr under the stale fold range, should open fold.')
                     needRedraw = fb:openFold(lastCurFoldStart) or needRedraw
                 end
