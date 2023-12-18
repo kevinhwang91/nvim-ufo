@@ -44,7 +44,6 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 
 - [Neovim](https://github.com/neovim/neovim) 0.7.2 or later
 - [coc.nvim](https://github.com/neoclide/coc.nvim) (optional)
-- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) (optional)
 
 ### Installation
 
@@ -92,9 +91,9 @@ require('ufo').setup()
 --
 
 -- Option 3: treesitter as a main provider instead
--- Only depend on `nvim-treesitter/queries/filetype/folds.scm`,
+-- (Note: the `nvim-treesitter` plugin is *not* needed.)
+-- ufo uses the same query files for folding (queries/<lang>/folds.scm)
 -- performance and stability are better than `foldmethod=nvim_treesitter#foldexpr()`
-use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'}
 require('ufo').setup({
     provider_selector = function(bufnr, filetype, buftype)
         return {'treesitter', 'indent'}

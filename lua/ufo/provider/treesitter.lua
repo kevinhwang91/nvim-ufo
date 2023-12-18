@@ -1,6 +1,3 @@
-local parsers = require('nvim-treesitter.parsers')
-local query = require('nvim-treesitter.query')
-local tsrange = require('nvim-treesitter.tsrange')
 local bufmanager = require('ufo.bufmanager')
 local foldingrange = require('ufo.model.foldingrange')
 
@@ -9,6 +6,26 @@ local foldingrange = require('ufo.model.foldingrange')
 local Treesitter = {
     hasProviders = {}
 }
+
+---@diagnostic disable: deprecated
+---@return vim.treesitter.LanguageTree|nil parser for the buffer, or nil if parser is not available
+local function getParser(bufnr, lang)
+    local ok, parser = pcall(vim.treesitter.get_parser, bufnr, lang)
+    if not ok then
+        return nil
+    end
+    return parser
+end
+local get_query = assert(vim.treesitter.query.get or vim.treesitter.query.get_query)
+local get_query_files = assert(vim.treesitter.query.get_files or vim.treesitter.query.get_query_files)
+---@diagnostic enable: deprecated
+
+
+-- Backward compatibility for the dummy directive (#make-range!),
+-- which no longer exists in nvim-treesitter v1.0+
+if not vim.tbl_contains(vim.treesitter.query.list_directives(), "make-range!") then
+    vim.treesitter.query.add_directive("make-range!", function() end, {})
+end
 
 local MetaNode = {}
 MetaNode.__index = MetaNode
@@ -22,6 +39,19 @@ end
 function MetaNode:range()
     local range = self.value
     return range[1], range[2], range[3], range[4]
+end
+
+--- Return a meta node that represents a range between two nodes, i.e., (#make-range!),
+--- that is similar to the legacy TSRange.from_node() from nvim-treesitter.
+function MetaNode.from_nodes(start_node, end_node)
+    local start_pos = { start_node:start() }
+    local end_pos = { end_node:end_() }
+    return MetaNode:new({
+        [1] = start_pos[1],
+        [2] = start_pos[2],
+        [3] = end_pos[1],
+        [4] = end_pos[2],
+    })
 end
 
 local function prepareQuery(bufnr, parser, root, rootLang, queryName)
@@ -45,7 +75,7 @@ local function prepareQuery(bufnr, parser, root, rootLang, queryName)
         end
     end
 
-    return query.get_query(rootLang, queryName), {
+    return get_query(rootLang, queryName), {
         root = root,
         source = bufnr,
         start = range[1],
@@ -67,6 +97,8 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         if pattern == nil then
             return pattern
         end
+
+        -- Extract capture names from each match
         for id, node in pairs(match) do
             local m = metadata[id]
             if m and m.range then
@@ -74,11 +106,13 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
             end
             table.insert(matches, node)
         end
+
+        -- Add some predicates for testing
         local preds = q.info.patterns[pattern]
         if preds then
             for _, pred in pairs(preds) do
                 if pred[1] == 'make-range!' and type(pred[2]) == 'string' and #pred == 4 then
-                    local node = tsrange.TSRange.from_nodes(bufnr, match[pred[3]], match[pred[4]])
+                    local node = MetaNode.from_nodes(match[pred[3]], match[pred[4]])
                     table.insert(matches, node)
                 end
             end
@@ -101,7 +135,8 @@ local function getCpatureMatchesRecursively(bufnr, parser)
     local res = {}
     parser:for_each_tree(function(tree, langTree)
         local lang = langTree:lang()
-        if query.has_folds(lang) then
+        local has_folds = #get_query_files(lang, 'folds', nil) > 0
+        if has_folds then
             noQuery = false
             getFoldMatches(res, bufnr, parser, tree:root(), lang)
         end
@@ -126,7 +161,7 @@ function Treesitter.getFolds(bufnr)
     if self.hasProviders[ft] == false then
         error('UfoFallbackException')
     end
-    local parser = parsers.get_parser(bufnr)
+    local parser = getParser(bufnr)
     if not parser then
         self.hasProviders[ft] = false
         error('UfoFallbackException')
