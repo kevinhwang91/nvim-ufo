@@ -37,7 +37,13 @@ function M.getHighlightsByRange(bufnr, startRange, endRange, hlGroups)
             if not capture then
                 break
             end
-            local hlId = query.hl_cache[capture]
+            local hlId = assert((function()
+                if query.get_hl_from_capture then -- nvim 0.10+ #26675
+                    return query:get_hl_from_capture(capture)
+                else
+                    return query.hl_cache[capture]
+                end
+            end)())
             local priority = tonumber(metadata.priority) or 100
             local conceal = metadata.conceal
             local sr, sc, er, ec = node:range()
