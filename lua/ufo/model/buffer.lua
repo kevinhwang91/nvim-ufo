@@ -7,7 +7,7 @@ local api = vim.api
 ---@field attached boolean
 ---@field bt string
 ---@field ft string
----@field syntax string
+---@field _syntax string
 ---@field _lines table<number, string|boolean> A list of string or boolean
 local Buffer = {}
 
@@ -205,9 +205,9 @@ end
 
 function Buffer:syntax()
     if self.attached and not self.syntax then
-        self.syntax = vim.bo[self.bufnr].syntax
+        self._syntax = vim.bo[self.bufnr].syntax
     end
-    return self.syntax
+    return self._syntax
 end
 
 ---

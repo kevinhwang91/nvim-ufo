@@ -68,7 +68,7 @@ function BufferManager:initialize()
     event:on('SyntaxChanged', function(bufnr, new, old)
         local b = self.buffers[bufnr]
         if b and old ~= new then
-            b.syntax = new
+            b._syntax = new
         end
     end, self.disposables)
 
