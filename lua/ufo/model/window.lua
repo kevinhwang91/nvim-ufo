@@ -83,7 +83,11 @@ function Window:setCursorFoldedLineHighlight()
         -- Upstream bug: Error in decoration provider (UNKNOWN PLUGIN).end
         require('promise').resolve():thenCall(function()
             utils.winCall(self.winid, function()
+                -- TODO
+                -- Upstream bug: `setl winhl` change curswant
+                local view = utils.saveView(0)
                 cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
+                utils.restView(0, view)
             end)
         end)
         self.isCurFoldHighlighted = true
