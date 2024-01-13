@@ -121,8 +121,8 @@ function Fold.buffers()
     return manager.buffers
 end
 
-function Fold.apply(bufnr, ranges)
-    return manager:applyFoldRanges(bufnr, ranges)
+function Fold.apply(bufnr, ranges, manual)
+    return manager:applyFoldRanges(bufnr, ranges, manual)
 end
 
 function Fold.attach(bufnr)

@@ -129,7 +129,7 @@ end
 ---@return boolean return the winid if successful, otherwise return nil
 function M.applyFolds(bufnr, ranges)
     vim.validate({bufnr = {bufnr, 'number', true}, ranges = {ranges, 'table'}})
-    return require('ufo.fold').apply(bufnr, ranges)
+    return require('ufo.fold').apply(bufnr, ranges, true)
 end
 
 ---Setup configuration and enable ufo

@@ -117,9 +117,11 @@ local function applyFoldsAndThenCloseAllFolds(providerName)
         require('ufo').attach(bufnr)
         -- getFolds return Promise if providerName == 'lsp'
         local ranges = await(require('ufo').getFolds(bufnr, providerName))
-        local ok = require('ufo').applyFolds(bufnr, ranges)
-        if ok then
-            require('ufo').closeAllFolds()
+        if not vim.tbl_isempty(ranges) then
+            local ok = require('ufo').applyFolds(bufnr, ranges)
+            if ok then
+                require('ufo').closeAllFolds()
+            end
         end
     end)
 end

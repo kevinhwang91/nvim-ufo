@@ -143,8 +143,9 @@ end
 ---
 ---@param bufnr number
 ---@param ranges? UfoFoldingRange[]
+---@param manual? boolean
 ---@return boolean
-function FoldBufferManager:applyFoldRanges(bufnr, ranges)
+function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
     local fb = self:get(bufnr)
     if not fb then
         return false
@@ -167,7 +168,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges)
     end
     local rowPairs = {}
     local isFirstApply = not fb.scanned
-    if not fb.scanned or windows then
+    if not manual and not fb.scanned or windows then
         rowPairs = self:getRowPairsByScanning(fb, winid)
         for _, range in ipairs(ranges or fb.foldRanges) do
             if range.kind and vim.tbl_contains(self.closeKinds, range.kind) then
