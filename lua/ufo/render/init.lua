@@ -96,7 +96,7 @@ local function syntaxToRowHighlightRange(res, lnum, startCol, endCol)
     table.insert(res, {lnum, lastIndex, endCol, lastHlId})
 end
 
-local function mapHightlightMarkers(bufnr, startRow, marks, hlGroups, ns)
+local function mapHighlightMarkers(bufnr, startRow, marks, hlGroups, ns)
     for _, m in ipairs(marks) do
         local hlGroup = m[5]
         if next(hlGroups[hlGroup]) then
@@ -128,9 +128,9 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
     end
     local hlGroups = highlight.hlGroups()
     local hlMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(srcBufnr, startRange, endRange, nss)
-    mapHightlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
+    mapHighlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
     hlMarks = treesitter.getHighlightsByRange(srcBufnr, startRange, endRange, hlGroups)
-    mapHightlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
+    mapHighlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
     if vim.bo[srcBufnr].syntax ~= '' then
         api.nvim_buf_call(srcBufnr, function()
             local res = {}
@@ -250,7 +250,7 @@ end
 function M.highlightLinesWithTimeout(handle, hlGroup, ns, start, finish, delay, shared)
     vim.validate({
         handle = {handle, 'number'},
-        hlGoup = {hlGroup, 'string'},
+        hlGroup = {hlGroup, 'string'},
         ns = {ns, 'number'},
         start = {start, 'number'},
         finish = {finish, 'number'},

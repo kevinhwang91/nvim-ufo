@@ -197,7 +197,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
     end
 
     local view, wrow
-    -- topline may changed after applying folds, resotre topline to save our eyes
+    -- topline may changed after applying folds, restore topline to save our eyes
     if isFirstApply and not vim.tbl_isempty(rowPairs) then
         view = utils.saveView(winid)
         wrow = utils.wrow(winid)
