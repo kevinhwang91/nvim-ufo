@@ -126,8 +126,10 @@ function FloatWin.getConfig()
     local config = api.nvim_win_get_config(FloatWin.winid)
     local row, col = config.row, config.col
     -- row and col are a table value converted from the floating-point
-    ---@diagnostic disable-next-line: need-check-nil
-    config.row, config.col = tonumber(row[vim.val_idx]), tonumber(col[vim.val_idx])
+    if type(row) == 'table' then
+        ---@diagnostic disable-next-line: need-check-nil, inject-field
+        config.row, config.col = tonumber(row[vim.val_idx]), tonumber(col[vim.val_idx])
+    end
     return config
 end
 
