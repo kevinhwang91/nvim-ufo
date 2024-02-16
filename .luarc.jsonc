@@ -4,14 +4,13 @@
 	"completion.displayContext": 50,
 	"completion.keywordSnippet": "Disable",
 	"completion.postfix": ".",
-    "diagnostics.libraryFiles": "Disable",
+	"diagnostics.libraryFiles": "Disable",
 	"diagnostics.disable": [
 		"different-requires",
 		"param-type-mismatch",
 		"assign-type-mismatch"
 	],
 	"diagnostics.globals": [
-		"vim",
 		"jit",
 		"it",
 		"describe",
@@ -24,7 +23,7 @@
 	"type.castNumberToInteger": true,
 	"type.weakUnionCheck": true,
 	"workspace.library": [
-		"$VIM/site/pack/packer/start/emmylua-nvim",
+		"$VIM/runtime/lua",
 		"$VIM/site/pack/packer/start/promise-async/typings"
 	]
 }

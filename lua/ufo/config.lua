@@ -2,7 +2,7 @@
 ---@field provider_selector? function
 ---@field open_fold_hl_timeout number
 ---@field close_fold_kinds UfoFoldingRangeKind[]
----@field fold_virt_text_handler? function A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
+---@field fold_virt_text_handler? UfoFoldVirtTextHandler A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
 ---@field enable_get_fold_virt_text boolean
 ---@field preview table
 local def = {
