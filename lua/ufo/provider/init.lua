@@ -13,7 +13,7 @@ local Provider = {
 }
 
 local function needFallback(reason)
-    return tostring(reason):match('UfoFallbackException') ~= nil
+    return type(reason) == 'string' and reason:match('UfoFallbackException')
 end
 
 function Provider:getFunction(m)
