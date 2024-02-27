@@ -35,7 +35,7 @@ local function selectProviderWithChainByDefault()
     ---@return Promise
     local function customizeSelector(bufnr)
         local function handleFallbackException(err, providerName)
-            if type(err) == 'string' and err:match('UfoFallbackException') then
+            if tostring(err):match('UfoFallbackException') then
                 return require('ufo').getFolds(bufnr, providerName)
             else
                 return require('promise').reject(err)
