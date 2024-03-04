@@ -127,8 +127,17 @@ function M.inspectBuf(bufnr)
         table.insert(msg, 'Fallback provider: ' .. fb.providers[2])
     end
     table.insert(msg, 'Selected provider: ' .. (fb.selectedProvider or 'nil'))
+    local winid = utils.getWinByBuf(bufnr)
+    local curKind
+    local curStartLine, curEndLine = 0, 0
     local kindSet = {}
+    local lnum = api.nvim_win_get_cursor(winid)[1]
     for _, range in ipairs(fb.foldRanges) do
+        local sl, el = range.startLine, range.endLine
+        if curStartLine < sl and sl < lnum and lnum <= el + 1 then
+            curStartLine, curEndLine = sl, el
+            curKind = range.kind
+        end
         if range.kind then
             kindSet[range.kind] = true
         end
@@ -138,6 +147,12 @@ function M.inspectBuf(bufnr)
         table.insert(kinds, kind)
     end
     table.insert(msg, 'Fold kinds: ' .. table.concat(kinds, ', '))
+    if curStartLine ~= 0 or curEndLine ~= 0 then
+        table.insert(msg, ('Cursor range: [%d, %d]'):format(curStartLine + 1, curEndLine + 1))
+    end
+    if curKind then
+        table.insert(msg, 'Cursor kind: ' .. curKind)
+    end
     return msg
 end
 
