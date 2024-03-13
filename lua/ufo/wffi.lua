@@ -37,7 +37,7 @@ end
 function M.clearFolds(winid)
     local wp = findWin(winid)
     C.clearFolding(wp)
-    C.changed_window_setting()
+    C.changed_window_setting(wp)
 end
 
 ---
@@ -81,7 +81,7 @@ local function init()
         } pos_T;
 
         void clearFolding(win_T *win);
-        void changed_window_setting(void);
+        void changed_window_setting(win_T *wp);
         void foldCreate(win_T *wp, pos_T start, pos_T end);
 
         int plines_win(win_T *wp, linenr_T lnum, bool winheight);
