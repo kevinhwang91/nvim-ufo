@@ -10,22 +10,22 @@ local log = require('ufo.lib.log')
 ---@field initialized boolean
 ---@field buffers UfoFoldBuffer[]
 ---@field providerSelector function
----@field closeKinds UfoFoldingRangeKind[]
+---@field closeKindsMap table<string,UfoFoldingRangeKind[]>
 ---@field disposables UfoDisposable[]
 local FoldBufferManager = {}
 
 ---
 ---@param namespace number
 ---@param selector function
----@param closeKinds UfoFoldingRangeKind[]
+---@param closeKindsMap <table, string,UfoFoldingRangeKind[]>
 ---@return UfoFoldBufferManager
-function FoldBufferManager:initialize(namespace, selector, closeKinds)
+function FoldBufferManager:initialize(namespace, selector, closeKindsMap)
     if self.initialized then
         return self
     end
     self.ns = namespace
     self.providerSelector = selector
-    self.closeKinds = closeKinds
+    self.closeKindsMap = closeKindsMap
     self.buffers = {}
     self.initialized = true
     self.disposables = {}
@@ -170,8 +170,9 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
     local isFirstApply = not fb.scanned
     if not manual and not fb.scanned or windows then
         rowPairs = self:getRowPairsByScanning(fb, winid)
+        local kinds = self.closeKindsMap[fb:filetype()] or self.closeKindsMap.default
         for _, range in ipairs(ranges or fb.foldRanges) do
-            if range.kind and vim.tbl_contains(self.closeKinds, range.kind) then
+            if range.kind and vim.tbl_contains(kinds, range.kind) then
                 local startLine, endLine = range.startLine, range.endLine
                 rowPairs[startLine] = endLine
                 fb:closeFold(startLine + 1, endLine + 1)

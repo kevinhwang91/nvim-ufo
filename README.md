@@ -151,12 +151,14 @@ For example, Changing the text in a buffer will request the providers for folds.
                     'lsp' and 'treesitter' as main provider, 'indent' as fallback provider]],
         default = nil
     },
-    close_fold_kinds = {
+    close_fold_kinds_for_ft = {
         description = [[After the buffer is displayed (opened for the first time), close the
                     folds whose range with `kind` field is included in this option. For now,
-                    'lsp' provider's standardized kinds are 'comment', 'imports' and 'region',
-                    run `UfoInspect` for details if your provider has extended the kinds.]],
-        default = {}
+                    'lsp' provider's standardized kinds are 'comment', 'imports' and 'region'.
+                    This option is a table with filetype as key and fold kinds as value. Use a
+                    default value if value of filetype is absent.
+                    Run `UfoInspect` for details if your provider has extended the kinds.]],
+        default = {default = {}}
     },
     fold_virt_text_handler = {
         description = [[A function customize fold virt text, see ### Customize fold text]],
@@ -284,7 +286,11 @@ local ftMap = {
 }
 require('ufo').setup({
     open_fold_hl_timeout = 150,
-    close_fold_kinds = {'imports', 'comment'},
+    close_fold_kinds_for_ft = {
+        default = {'imports', 'comment'},
+        json = {'array'},
+        c = {'comment', 'region'}
+    },
     preview = {
         win_config = {
             border = {'', '─', '', '', '', '─', '', ''},

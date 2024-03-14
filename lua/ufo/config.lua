@@ -1,14 +1,14 @@
 ---@class UfoConfig
 ---@field provider_selector? function
 ---@field open_fold_hl_timeout number
----@field close_fold_kinds UfoFoldingRangeKind[]
+---@field close_fold_kinds_for_ft table<string, UfoFoldingRangeKind[]>
 ---@field fold_virt_text_handler? UfoFoldVirtTextHandler A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
 ---@field enable_get_fold_virt_text boolean
 ---@field preview table
 local def = {
     open_fold_hl_timeout = 400,
     provider_selector = nil,
-    close_fold_kinds = {},
+    close_fold_kinds_for_ft = {default = {}},
     fold_virt_text_handler = nil,
     enable_get_fold_virt_text = false,
     preview = {
@@ -62,7 +62,7 @@ local function init()
     vim.validate({
         open_fold_hl_timeout = {Config.open_fold_hl_timeout, 'number'},
         provider_selector = {Config.provider_selector, 'function', true},
-        close_fold_kinds = {Config.close_fold_kinds, 'table'},
+        close_fold_kinds_for_ft = {Config.close_fold_kinds_for_ft, 'table'},
         fold_virt_text_handler = {Config.fold_virt_text_handler, 'function', true},
         preview_mappings = {Config.preview.mappings, 'table'}
     })
@@ -71,6 +71,13 @@ local function init()
     for msg, key in pairs(preview.mappings) do
         if key == '' then
             preview.mappings[msg] = nil
+        end
+    end
+    if Config.close_fold_kinds and not vim.tbl_isempty(Config.close_fold_kinds) then
+        vim.notify('Option `close_fold_kinds` in `nvim-ufo` is deprecated, use `close_fold_kinds_for_ft` instead.',
+            vim.log.levels.WARN)
+        if not Config.close_fold_kinds_for_ft.default then
+            Config.close_fold_kinds_for_ft.default = Config.close_fold_kinds
         end
     end
     ufo._config = nil
