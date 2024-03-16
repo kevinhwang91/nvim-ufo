@@ -135,6 +135,13 @@ local function onEnd(name, tick)
     self.lastWinid = self.curWinid
 end
 
+local function silentOnEnd(...)
+    local ok, msg = pcall(onEnd, ...)
+    if not ok and (type(msg) ~= 'string' or not msg:match('Keyboard interrupt\n')) then
+        error(msg, 0)
+    end
+end
+
 function Decorator:resetCurosrFoldedLineHighlightByBuf(bufnr)
     -- TODO
     -- exit cmd window will throw E315: ml_get: invalid lnum: 1
@@ -318,7 +325,7 @@ function Decorator:initialize(namespace)
         on_start = onStart,
         on_win = onWin,
         on_line = onLine,
-        on_end = onEnd
+        on_end = silentOnEnd
     })
     self.ns = namespace
     self.hlNs = self.hlNs or api.nvim_create_namespace('')
