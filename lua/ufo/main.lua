@@ -19,7 +19,7 @@ local disposables = {}
 
 local function createEvents()
     local gid = api.nvim_create_augroup('Ufo', {})
-    api.nvim_create_autocmd({'BufWinEnter', 'InsertLeave', 'TextChanged', 'BufWritePost'}, {
+    api.nvim_create_autocmd({'BufWinEnter', 'TextChanged', 'BufWritePost'}, {
         group = gid,
         callback = function(ev)
             event:emit(ev.event, ev.buf)
@@ -35,9 +35,8 @@ local function createEvents()
         group = gid,
         pattern = '*:n',
         callback = function(ev)
-            -- local previousMode = ev.match:match('(%a):')
-            -- event:emit('ModeChangedToNormal', ev.buf, previousMode)
-            event:emit('ModeChangedToNormal', ev.buf)
+            local previousMode = ev.match:match('(%a):')
+            event:emit('ModeChangedToNormal', ev.buf, previousMode)
         end
     })
     api.nvim_create_autocmd('ColorScheme', {
