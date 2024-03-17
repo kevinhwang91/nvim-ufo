@@ -211,10 +211,14 @@ function Decorator:getVirtTextAndCloseFold(winid, lnum, endLnum, doRender)
     local width = wses:textWidth()
     local ok, res = true, wses.foldedTextMaps[lnum]
     local fl = fb:foldedLine(lnum)
-    if not res and fl then
-        res = fl.virtText
+    local rendered = false
+    if fl then
+        if not res and not fl:widthChanged(width) then
+            res = fl.virtText
+        end
+        rendered = fl:hasRendered()
     end
-    if not res or not fl or not fl.virtText or fl:widthChanged(width) or not fl:hasRendered() then
+    if not res or not rendered then
         if not endLnum then
             endLnum = wses:foldEndLnum(lnum)
         end
