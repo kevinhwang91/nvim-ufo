@@ -144,34 +144,33 @@ end
 ---@param bufnr number
 ---@param ranges? UfoFoldingRange[]
 ---@param manual? boolean
----@return boolean
+---@return number
 function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
     local fb = self:get(bufnr)
     if not fb then
-        return false
+        return -1
     end
-    local winid, windows = utils.getWinByBuf(bufnr)
     local changedtick = fb:changedtick()
     if ranges then
-        local mode = utils.mode()
-        if not utils.isWinValid(winid) or utils.isDiffOrMarkerFold(winid) or
-            -- TODO
-            -- open a buffer through terminal will get a `t` mode
-            mode ~= 'n' and (mode ~= 't' or fb:buftype() == 'terminal') then
-            fb.version = changedtick
-            fb.foldRanges = ranges
-            fb.status = 'pending'
-            return false
-        end
-    elseif changedtick ~= fb.version or not utils.isWinValid(winid) then
-        return false
+        fb.foldRanges = ranges
+        fb.version = changedtick
+    elseif changedtick ~= fb.version then
+        return -1
+    end
+    local winid, windows = utils.getWinByBuf(bufnr)
+    if winid == -1 or not utils.isWinValid(winid) then
+        return -1
+    elseif not vim.wo[winid].foldenable or utils.isDiffOrMarkerFold(winid) then
+        return -1
+    elseif utils.mode() ~= 'n' then
+        return -1
     end
     local rowPairs = {}
     local isFirstApply = not fb.scanned
     if not manual and not fb.scanned or windows then
         rowPairs = self:getRowPairsByScanning(fb, winid)
         local kinds = self.closeKindsMap[fb:filetype()] or self.closeKindsMap.default
-        for _, range in ipairs(ranges or fb.foldRanges) do
+        for _, range in ipairs(fb.foldRanges) do
             if range.kind and vim.tbl_contains(kinds, range.kind) then
                 local startLine, endLine = range.startLine, range.endLine
                 rowPairs[startLine] = endLine
@@ -192,10 +191,6 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
             rowPairs = self:getRowPairsByScanning(fb, winid)
         end
     end
-    fb.version = changedtick
-    if ranges then
-        fb.foldRanges = ranges
-    end
 
     local view, wrow
     -- topline may changed after applying folds, restore topline to save our eyes
@@ -210,7 +205,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
         view.topline, view.topfill = utils.evaluateTopline(winid, view.lnum, wrow)
         utils.restView(winid, view)
     end
-    return true
+    return winid
 end
 
 return FoldBufferManager

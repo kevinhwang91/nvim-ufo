@@ -49,21 +49,13 @@ function Fold.update(bufnr)
     if not fb then
         return promise.resolve()
     end
-    fb.status = 'start'
     if manager:isFoldMethodsDisabled(fb) then
         if not pcall(fb.getRangesFromExtmarks, fb) then
             fb:resetFoldedLines(true)
         end
         return promise.resolve()
     end
-    local winid = utils.getWinByBuf(bufnr)
-    if winid == -1 then
-        fb.status = 'pending'
-        return promise.resolve()
-    elseif not vim.wo[winid].foldenable or utils.isDiffOrMarkerFold(winid) then
-        return promise.resolve()
-    end
-    if manager:applyFoldRanges(bufnr) then
+    if fb.status == 'pending' and manager:applyFoldRanges(bufnr) ~= -1 then
         return promise.resolve()
     end
 
@@ -102,7 +94,7 @@ function Fold.update(bufnr)
         if not ranges or #ranges == 0 or not utils.isBufLoaded(bufnr) then
             return
         end
-        manager:applyFoldRanges(bufnr, ranges)
+        fb.status = manager:applyFoldRanges(bufnr, ranges) == -1 and 'pending' or 'start'
     end, function(err)
         if not dispose(false) then
             return
@@ -219,7 +211,8 @@ function Fold:initialize(ns)
     end, self.disposables)
     event:on('TextChanged', updateFoldDebounced, self.disposables)
     event:on('ModeChangedToNormal', function(bufnr, oldMode)
-        updateFoldDebounced(bufnr, true, oldMode ~= 'i')
+        local onlyPending = oldMode ~= 'i' and oldMode ~= 't'
+        updateFoldDebounced(bufnr, true, onlyPending)
     end, self.disposables)
     event:on('BufAttach', Fold.attach, self.disposables)
     event:on('DiffModeChanged', handleDiffMode, self.disposables)

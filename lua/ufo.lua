@@ -133,7 +133,7 @@ end
 ---Note: Get ranges from 'lsp' provider is asynchronous.
 ---@param bufnr number
 ---@param ranges UfoFoldingRange[]
----@return boolean return the winid if successful, otherwise return nil
+---@return number winid return the winid if successful, otherwise return -1
 function M.applyFolds(bufnr, ranges)
     vim.validate({bufnr = {bufnr, 'number', true}, ranges = {ranges, 'table'}})
     return require('ufo.fold').apply(bufnr, ranges, true)
