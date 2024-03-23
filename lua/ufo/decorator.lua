@@ -239,7 +239,8 @@ function Decorator:getVirtTextAndCloseFold(winid, lnum, endLnum, doRender)
             local getFoldVirtText
             if self.enableGetFoldVirtText then
                 getFoldVirtText = function(l)
-                    assert(type(l) == 'number', 'expected a number, got ' .. type(l))
+                    local t = type(l)
+                    assert(t == 'number', 'expected a number, got ' .. t)
                     assert(lnum <= l and l <= endLnum,
                         ('expected lnum range from %d to %d, got %d'):format(lnum, endLnum, l))
                     local line = fb:lines(l)[1]
@@ -250,6 +251,12 @@ function Decorator:getVirtTextAndCloseFold(winid, lnum, endLnum, doRender)
                 bufnr = bufnr,
                 winid = winid,
                 text = text,
+                get_fold_kind = function(l)
+                    l = l == nil and lnum or l
+                    local t = type(l)
+                    assert(t == 'number', 'expected a number, got ' .. t)
+                    return fb:lineKind(winid, l)
+                end,
                 get_fold_virt_text = getFoldVirtText
             })
             wses.foldedTextMaps[lnum] = res
