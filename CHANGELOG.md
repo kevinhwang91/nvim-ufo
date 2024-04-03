@@ -1,5 +1,64 @@
 # Changelog
 
+## [1.4.0] - 2024-04-03
+
+### 🚀 Features
+
+- *(preview)* Add `jumpTop` and `jumpBot` keymap actions (#109)
+- *(highlight)* Add `UfoCursorFoldedLine` (#103)
+- *(render)* Support inlay (#155)
+- *(render)* Add support for concealed characters (#153) (#156)
+- *(api)* Add cursor range and kind information for `UfoInspect`
+- *(config)* [**breaking**] Use `close_fold_kinds_for_ft` instead `close_fold_kinds`
+- *(decorator)* Export fold kind in `fold_virt_text_handler` (#207)
+- *(build)* Luarocks support (#211)
+
+### 🐛 Bug Fixes
+
+- *(preview)* Respect `tabstop` and `shiftwidth` opts
+- *(provider)* Respect 'tabstop' and 'shiftwidth' for indent
+- *(decorator)* Reset winhl after detach
+- *(decorator)* Keep last winid field
+- *(driver)* Respect `foldminlines` (#108)
+- *(decorator)* Buffer may be changed in a window
+- *(decorator)* `setl winhl` erase hl of `nvim_win_set_hl_ns` (#111)
+- *(preview)* Dispose preview window even if buffer is wiped out
+- *(buffer)* Quickfix buftype can't detect line changed
+- *(decorator)* Open fold should redraw at once (#132)
+- *(treesitter)* Support `#make-range!` (#139)
+- *(preview)* Window height should more than zero
+- *(fold)* Refresh fb table in closure function
+- Throw UfoFallbackException on RequestFailed (#159)
+- *(render)* Join text for default hlgroup (#163)
+- *(render)* Skip error return by `synID`
+- *(fold)* Sync extmarks with foldedLines (#167)
+- *(treesitter)* Use metadata.range prefer (#169)
+- *(window)* Clear win highlight if buf changed
+- *(decorator)* Ignore redraw request for closing fold (#176)
+- *(decorator)* Ignore redundant redraw (#180,#181)
+- *(fold)* Scan win folds if one buffer in multiple window
+- *(decorator)* Correct bufnrSet logic
+- *(window)* Don't clear winhl during first render (#183)
+- *(render)* Replace `Normal` highlight with `UfoFoldedFg`
+- *(action)* Check endLnum to avoid infinite loop (#184)
+- *(decorator)* Highlight open fold for multiple windows correctly (#187)
+- *(decorator)* Erase extmark even in multiple windows
+- *(decorator)* Narrow the fold range for stale
+- *(treesitter)* Fix errors when getting hlId on nvim 0.10.x (#188)
+- *(model)* Use private field to avoid inherit (#186)
+- *(fold)* Don't make scan flag if manual invoke (#192)
+- *(window)* Upstream bug, `set winhl` change curswant (#194)
+- *(preview)* Nightly change `nvim_win_get_config` return val
+- *(wffi)* `changed_window_setting` signature changed
+- *(decorator)* Keep silent for `Keyboard interrupt` error (#202)
+- *(decorator)* Correct capture condition
+- *(fold)* Return correct winid
+
+### ⚡ Performance
+
+- *(decorator)* Skip rendering of horizontal movement
+- *(decorator)* `set winhl` will redraw all lines
+
 ## [1.3.0] - 2023-01-05
 
 ### Features
