@@ -82,6 +82,13 @@ capabilities.textDocument.foldingRange = {
 }
 local language_servers = require("lspconfig").util.available_servers() -- or list servers manually like {'gopls', 'clangd'}
 for _, ls in ipairs(language_servers) do
+    -- Set offsetEncoding for clangd to utf-16 not to cause
+    -- "warning: multiple different client offset_encodings detected for buffer, this is not supported yet" under certain conditions
+    -- see https://github.com/LazyVim/LazyVim/issues/3028 for background.
+    -- This may apply to other language servers as well.
+    -- if ls == "clangd" then
+    --   capabilities.offsetEncoding = { "utf-16" }
+    -- end
     require('lspconfig')[ls].setup({
         capabilities = capabilities
         -- you can add other fields for setting up lsp server in this table
