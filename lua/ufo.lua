@@ -139,6 +139,47 @@ function M.applyFolds(bufnr, ranges)
     return require('ufo.fold').apply(bufnr, ranges, true)
 end
 
+---Merge ufo providers in one
+---Pass all ufo providers in a list of strings or functions. If the element is a string, it will be
+---treated as a default ufo provider, and this method will query the folds from it. If it is a
+---function, it will be executed to get the folds.
+---This method will return a new function that gets the folds of all merged providers. The
+---returned function can be used to configure the `ufo.setup.provider_selector`. E.g.:
+---    require('ufo').setup({
+---        provider_selector = function(bufnr, filetype, buftype)
+---            return require('ufo').mergeProviders({ 'lsp', 'indent', funcThatReturnsFoldRanges })
+---        end,
+---    })
+---@alias ProviderToMerge string|fun(bufnr: number): UfoFoldingRange[]
+---@param providers ProviderToMerge[] Ufo providers names or functions that gets folds
+---@return function(bufnr): UfoFoldingRange[] A function that gets the folds of all merged providers
+function M.mergeProviders(providers)
+    local ufo = require('ufo')
+
+    return function(bufnr)
+        local allFolds = {}
+
+        -- Gets the folds from each provider and merge it before returning. Strings are
+        -- treated as default UFO providers and functions are executed to get the folds
+        for _, provider in ipairs(providers) do
+            local providerFolds = {}
+
+            if type(provider) == 'string' then
+                providerFolds = ufo.getFolds(bufnr, provider)
+
+            elseif type(provider) == 'function' then
+                providerFolds = provider(bufnr)
+            end
+
+            -- `providerFolds` can be nil if the `getFolds` method does not return anything,
+            -- so need to add a 'or {}' at the end
+            vim.list_extend(allFolds, providerFolds or {})
+        end
+
+        return allFolds
+    end
+end
+
 ---Setup configuration and enable ufo
 ---@param opts? UfoConfig
 function M.setup(opts)
