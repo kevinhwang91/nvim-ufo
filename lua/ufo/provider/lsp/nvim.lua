@@ -28,13 +28,15 @@ local errorCodes = {
     ContentModified = -32801,
 }
 
+local vimLspGetClients = vim.lsp.get_clients and vim.lsp.get_clients or vim.lsp.get_active_clients
+
 function NvimClient.request(client, method, params, bufnr)
     return promise(function(resolve, reject)
         client.request(method, params, function(err, res)
             if err then
                 log.error('Received error in callback', err)
                 log.error('Client:', client)
-                log.error('All clients:', vim.lsp.get_active_clients({bufnr = bufnr}))
+                log.error('All clients:', vimLspGetClients({bufnr = bufnr}))
                 local code = err.code
                 if code == errorCodes.RequestCancelled or code == errorCodes.ContentModified or code == errorCodes.RequestFailed then
                     reject('UfoFallbackException')
@@ -49,7 +51,7 @@ function NvimClient.request(client, method, params, bufnr)
 end
 
 local function getClients(bufnr)
-    local clients = vim.lsp.get_active_clients({bufnr = bufnr})
+    local clients = vimLspGetClients({bufnr = bufnr})
     return vim.tbl_filter(function(client)
         if vim.tbl_get(client.server_capabilities, 'foldingRangeProvider') then
             return true
