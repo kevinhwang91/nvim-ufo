@@ -72,10 +72,8 @@ local function onEnd(name, tick)
             local wses = self.winSessions[winid]
             local fb = wses.foldbuffer
             local foldedPairs = wses.foldedPairs
-            if not next(foldedPairs) then
-                utils.winCall(winid, function()
-                    foldedPairs = self:computeFoldedPairs(data.rows)
-                end)
+            if self.curWinid == winid and not next(foldedPairs) then
+                foldedPairs = self:computeFoldedPairs(data.rows)
             end
             local shared
             for _, row in ipairs(data.rows) do
