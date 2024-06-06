@@ -3,6 +3,7 @@ local cmd = vim.cmd
 local fn = vim.fn
 
 local promise = require('promise')
+local async = require('async')
 local render = require('ufo.render')
 local utils = require('ufo.utils')
 local floatwin = require('ufo.preview.floatwin')
@@ -288,9 +289,47 @@ function Preview:peekFoldedLinesUnderCursor(enter, nextLineIncluded)
         floatwin:refreshTopline()
     end)
     self:toggleCursor()
-    render.mapHighlightLimitByRange(bufnr, floatwin:getBufnr(),
-        {lnum - 1, 0}, {endLnum - 1, #text[endLnum - lnum + 1]}, text, self.ns)
-    render.mapMatchByLnum(winid, floatwin.winid, lnum, endLnum)
+
+    local floatBufnr = floatwin:getBufnr()
+
+    local function doHighlight(s, e)
+        render.mapHighlightLimitByRange(bufnr, floatBufnr, lnum - 1,
+            {s - 1, 0}, {e - 1, #text[e - lnum + 1]}, text, self.ns)
+        render.mapMatchByLnum(winid, floatwin.winid, s, e)
+    end
+
+    local span = 800
+    local lower = math.max(lnum, oLnum - span / 2)
+    local upper = math.min(endLnum, oLnum + span / 2)
+    doHighlight(lower, upper)
+    if lower > lnum or upper < endLnum then
+        -- TODO
+        -- use an event like `CursorMoved` to fire is better
+        async(function()
+            local function renderSpan(s, e)
+                local i = s + span
+                while i < endLnum do
+                    if not self.validate() then
+                        return
+                    end
+                    doHighlight(i - span + 1, i)
+                    await(utils.wait(30))
+                    i = i + span
+                end
+                if not self.validate() then
+                    return
+                end
+                doHighlight(i - span + 1, e)
+            end
+
+            if lower > lnum then
+                renderSpan(lnum, lower - 1)
+            end
+            if upper < endLnum then
+                renderSpan(upper + 1, endLnum)
+            end
+        end)
+    end
     vim.wo[floatwin.winid].listchars = vim.wo[winid].listchars
     return floatwin.winid
 end

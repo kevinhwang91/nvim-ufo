@@ -117,8 +117,8 @@ local function mapInlayMarkers(bufnr, startRow, marks, ns)
     end
 end
 
-function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, text, ns)
-    local startRow, startCol = startRange[1], startRange[1]
+function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, baseRow, startRange, endRange, text, ns)
+    local startRow, startCol = startRange[1], startRange[2]
     local endRow, endCol = endRange[1], endRange[2]
     local nss = {}
     for _, namespace in pairs(api.nvim_get_namespaces()) do
@@ -128,9 +128,9 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
     end
     local hlGroups = highlight.hlGroups()
     local hlMarks, inlayMarks = extmark.getHighlightsAndInlayByRange(srcBufnr, startRange, endRange, nss)
-    mapHighlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
+    mapHighlightMarkers(dstBufnr, baseRow, hlMarks, hlGroups, ns)
     hlMarks = treesitter.getHighlightsByRange(srcBufnr, startRange, endRange, hlGroups)
-    mapHighlightMarkers(dstBufnr, startRow, hlMarks, hlGroups, ns)
+    mapHighlightMarkers(dstBufnr, baseRow, hlMarks, hlGroups, ns)
     if vim.bo[srcBufnr].syntax ~= '' then
         api.nvim_buf_call(srcBufnr, function()
             local res = {}
@@ -139,17 +139,17 @@ function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, startRange, endRange, te
                 syntaxToRowHighlightRange(res, lnum, startCol + 1, endCol)
             else
                 for l = lnum, endLnum - 1 do
-                    syntaxToRowHighlightRange(res, l, 1, #text[l - lnum + 1])
+                    syntaxToRowHighlightRange(res, l, 1, #text[l - baseRow])
                 end
                 syntaxToRowHighlightRange(res, endLnum, 1, endCol)
             end
             for _, r in ipairs(res) do
-                local row = r[1] - lnum
+                local row = r[1] - baseRow - 1
                 extmark.setHighlight(dstBufnr, ns, row, r[2] - 1, row, r[3], r[4], 1)
             end
         end)
     end
-    mapInlayMarkers(dstBufnr, startRow, inlayMarks, ns)
+    mapInlayMarkers(dstBufnr, baseRow, inlayMarks, ns)
 end
 
 function M.mapMatchByLnum(srcWinid, dstWinid, lnum, endLnum)
