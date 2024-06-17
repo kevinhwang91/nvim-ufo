@@ -8,7 +8,10 @@ local bufmanager = require('ufo.bufmanager')
 -- marker of `markers[1]`, by example
 local markers = {
 	vim.fn.split(vim.wo.foldmarker, ','),  -- Configured Vim marker
-	{ '#region ', '#endregion' }           -- VS Code marker style
+	{
+        '#region ',   -- Start of VS code marker
+        '#endregion'  -- End of VS Code marker
+    }
 }
 
 
