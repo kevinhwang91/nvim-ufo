@@ -55,7 +55,7 @@ function Marker.getFolds(bufnr)
                     if relatedOpenMarkerLine then
                         table.insert(
                         folds,
-                        foldingrange.new(relatedOpenMarkerLine - 1, lineNum - 1, nil, nil, 'ufo_marker')
+                        foldingrange.new(relatedOpenMarkerLine - 1, lineNum - 1, nil, nil, 'marker')
                         )
                     end
                 end
@@ -64,7 +64,7 @@ function Marker.getFolds(bufnr)
 
         -- Closes all remaining open markers (they will be open to the end of the file)
         for _, markerStart in ipairs(openMarkerLines) do
-            table.insert(folds, foldingrange.new(markerStart - 1, #lines, nil, nil, 'ufo_marker'))
+            table.insert(folds, foldingrange.new(markerStart - 1, #lines, nil, nil, 'marker'))
         end
     end
 
