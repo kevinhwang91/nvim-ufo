@@ -1,18 +1,6 @@
 local foldingrange = require('ufo.model.foldingrange')
 local bufmanager = require('ufo.bufmanager')
-
-
--- Defines the 'start' and 'end' markers that the provider will search. Each element of the `markers` list is a pair of the 'start'
--- and 'end' marker. Example: `local markers = { { 'start marker', 'end marker' } }`
--- The search is done by marker pair. One marker pair does not affect the other. So the end marker of `markers[0]` will not close the start
--- marker of `markers[1]`, by example
-local markers = {
-	vim.fn.split(vim.wo.foldmarker, ','),  -- Configured Vim marker
-	{
-        '#region ',   -- Start of VS code marker
-        '#endregion'  -- End of VS Code marker
-    }
-}
+local utils = require('ufo.utils')
 
 
 -- Provider implementation
@@ -25,6 +13,19 @@ local Marker = {}
 -- @return UfoFoldingRange[] List of marker folds in the buffer
 function Marker.getFolds(bufnr)
     local buf = bufmanager:get(bufnr)
+    local winid = utils.getWinByBuf(bufnr)
+
+    -- Defines the 'start' and 'end' markers that the provider will search. Each element of the `markers` list is a pair of the 'start'
+    -- and 'end' marker. Example: `local markers = { { 'start marker', 'end marker' } }`
+    -- The search is done by marker pair. One marker pair does not affect the other. So the end marker of `markers[0]` will not close the start
+    -- marker of `markers[1]`, by example
+    local markers = {
+        vim.fn.split(vim.wo[winid].foldmarker, ','),  -- Configured Vim marker
+        {
+            '#region ',   -- Start of VS code marker
+            '#endregion'  -- End of VS Code marker
+        }
+    }
 
     -- Does not work with buffers that are not managed by UFO
     if not buf then
