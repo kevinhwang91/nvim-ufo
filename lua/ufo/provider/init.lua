@@ -9,7 +9,7 @@ local log = require('ufo.lib.log')
 ---@field modules table
 local Provider = {
     modulePathPrefix = 'ufo.provider.',
-    innerProviders = {'lsp', 'treesitter', 'indent'}
+    innerProviders = {'lsp', 'treesitter', 'indent', 'marker'}
 }
 
 local function needFallback(reason)
