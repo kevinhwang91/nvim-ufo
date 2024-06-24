@@ -23,7 +23,7 @@ function Marker.getFolds(bufnr)
     local markers = {
         vim.fn.split(vim.wo[winid].foldmarker .. ',marker', ','),  -- Configured Vim marker
         {
-            '#region ',    -- Start of VS code marker
+            '#region',     -- Start of VS code marker
             '#endregion',  -- End of VS Code marker
             'region',      -- Kind to be applied to a VS Code region folding
         }
