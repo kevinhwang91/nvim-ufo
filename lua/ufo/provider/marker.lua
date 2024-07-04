@@ -15,6 +15,11 @@ function Marker.getFolds(bufnr)
     local buf = bufmanager:get(bufnr)
     local winid = utils.getWinByBuf(bufnr)
 
+    -- Does not work with buffers or windows that are not managed by UFO
+    if not buf or winid < 0 then
+        return
+    end
+
     -- Defines the 'start' and 'end' markers that the provider will search, and the kind to apply
     -- to these markers. Each element of the `markers` list is a list of the 'start', 'end' markers
     -- and kind applied, in this order. Example: `local markers = { { 'start marker', 'end marker', 'marker kind' } }`
@@ -28,11 +33,6 @@ function Marker.getFolds(bufnr)
             'region',      -- Kind to be applied to a VS Code region folding
         }
     }
-
-    -- Does not work with buffers that are not managed by UFO
-    if not buf then
-        return
-    end
 
     local lines = buf:lines(1, -1)
 
