@@ -19,8 +19,8 @@ local Marker = {}
 local markers = nil
 
 --- Function that returns folds for the provided buffer based in the markers
--- @param bufnr number Vim buffer number
--- @return UfoFoldingRange[] List of marker folds in the buffer
+--- @param bufnr number Vim buffer number
+--- @return UfoFoldingRange[]|nil Folds List of marker folds in the buffer, or `nil` if they can not be queried
 function Marker.getFolds(bufnr)
     local buf = bufmanager:get(bufnr)
     local winid = utils.getWinByBuf(bufnr)
