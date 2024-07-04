@@ -8,6 +8,16 @@ local utils = require('ufo.utils')
 local Marker = {}
 
 
+-- Defines the 'start' and 'end' markers that the provider will search, and the kind to apply
+-- to these markers. Each element of the `markers` list is a list of the 'start', 'end' markers
+-- and kind applied, in this order. Example: `local markers = { { 'start marker', 'end marker', 'marker kind' } }`
+-- The search is done by marker pair. One marker pair does not affect the other. So the end marker of `markers[0]`
+-- will not close the start marker of `markers[1]`, by example.
+--
+-- This variable will be filled in the first call of the `Marker.getFolds()` function because it depends on the ID
+-- of the window consulted in this function. Because of this, it is `nil` for now
+local markers = nil
+
 --- Function that returns folds for the provided buffer based in the markers
 -- @param bufnr number Vim buffer number
 -- @return UfoFoldingRange[] List of marker folds in the buffer
@@ -20,22 +30,20 @@ function Marker.getFolds(bufnr)
         return
     end
 
-    -- Defines the 'start' and 'end' markers that the provider will search, and the kind to apply
-    -- to these markers. Each element of the `markers` list is a list of the 'start', 'end' markers
-    -- and kind applied, in this order. Example: `local markers = { { 'start marker', 'end marker', 'marker kind' } }`
-    -- The search is done by marker pair. One marker pair does not affect the other. So the end marker of `markers[0]`
-    -- will not close the start marker of `markers[1]`, by example
-    local markers = {
-        vim.fn.split(vim.wo[winid].foldmarker .. ',marker', ','),  -- Configured Vim marker
-        {
-            '#region',     -- Start of VS code marker
-            '#endregion',  -- End of VS Code marker
-            'region',      -- Kind to be applied to a VS Code region folding
+    -- Updates the `markers` variable (only once)
+    if markers == nil then
+        markers = {
+            vim.fn.split(vim.wo[winid].foldmarker .. ',marker', ','),  -- Configured Vim marker
+            {
+                '#region',     -- Start of VS code marker
+                '#endregion',  -- End of VS Code marker
+                'region',      -- Kind to be applied to a VS Code region folding
+            }
         }
-    }
+    end
 
+    -- Query the markers, generate the folding ranges and save in the `folds` variable
     local lines = buf:lines(1, -1)
-
     local folds = {}
 
     for _, marker in ipairs(markers) do
