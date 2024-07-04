@@ -43,24 +43,23 @@ function Marker.getFolds(bufnr)
 
         for lineNum, line in ipairs(lines) do
             -- Open marker
-            local markerColumns = line:find(marker[1], 1, true)
+            local start_column, end_column = line:find(marker[1], 1, true)
 
-            if markerColumns then
+            if start_column then
                 table.insert(openMarkerLines, lineNum)
+            end
 
             -- Close marker
-            else
-                markerColumns = line:find(marker[2], 1, true)
+            start_column = line:find(marker[2], end_column or 1, true)
 
-                if markerColumns then
-                    local relatedOpenMarkerLine = table.remove(openMarkerLines)
+            if start_column then
+                local relatedOpenMarkerLine = table.remove(openMarkerLines)
 
-                    if relatedOpenMarkerLine then
-                        table.insert(
-                        folds,
-                        foldingrange.new(relatedOpenMarkerLine - 1, lineNum - 1, nil, nil, marker[3])
-                        )
-                    end
+                if relatedOpenMarkerLine then
+                    table.insert(
+                    folds,
+                    foldingrange.new(relatedOpenMarkerLine - 1, lineNum - 1, nil, nil, marker[3])
+                    )
                 end
             end
         end
