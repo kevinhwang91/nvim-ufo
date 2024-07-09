@@ -1,7 +1,6 @@
 local utils = require('ufo.utils')
 
 local api = vim.api
-local cmd = vim.cmd
 
 ---@class UfoWindow
 ---@field winid number
@@ -11,7 +10,8 @@ local cmd = vim.cmd
 ---@field lastCurLnum number
 ---@field lastCurFoldStart number
 ---@field lastCurFoldEnd number
----@field isCurFoldHighlighted boolean
+---@field ns number
+---@field cursorLineHighlight vim.api.keyset.hl_info
 ---@field foldedPairs table<number,number>
 ---@field foldedTextMaps table<number, table>
 ---@field _cursor number[]
@@ -27,7 +27,7 @@ function Window:new(winid)
     o.lastCurLnum = -1
     o.lastCurFoldStart = 0
     o.lastCurFoldEnd = 0
-    o.isCurFoldHighlighted = false
+    o.ns = -1
     return o
 end
 
@@ -43,6 +43,29 @@ function Window:onWin(bufnr, fb)
     self._cursor = nil
     self._width = nil
     self._concealLevel = nil
+end
+
+function Window:removeListOption(optionName, val)
+    ---@type string
+    local o = vim.wo[self.winid][optionName]
+    local s, e = o:find(val, 1, true)
+    if not s then
+        return
+    end
+    local v = o:sub(1, s - 1) .. o:sub(e + 1)
+    vim.wo[self.winid][optionName] = v
+end
+
+function Window:appendListOption(optionName, val)
+    ---@type string
+    local o = vim.wo[self.winid][optionName]
+    if o:len() == 0 then
+        vim.wo[self.winid][optionName] = val
+        return
+    end
+    if not o:find(val, 1, true) then
+        vim.wo[self.winid][optionName] = o .. ',' .. val
+    end
 end
 
 function Window:cursor()
@@ -78,19 +101,34 @@ end
 
 function Window:setCursorFoldedLineHighlight()
     local res = false
-    if not self.isCurFoldHighlighted then
-        -- TODO
-        -- Upstream bug: Error in decoration provider (UNKNOWN PLUGIN).end
-        require('promise').resolve():thenCall(function()
-            utils.winCall(self.winid, function()
+    if not self.cursorLineHighlight then
+        if utils.has10() then
+            self.ns = api.nvim_get_hl_ns({winid = self.winid})
+        end
+        if self.ns > 0 then
+            local hi = vim.api.nvim_get_hl(self.ns, {name = 'CursorLine'})
+            if not next(hi) then
+                hi = vim.api.nvim_get_hl(0, {name = 'CursorLine'})
+            end
+            self.cursorLineHighlight = hi
+            api.nvim_set_hl(self.ns, 'CursorLine', {
+                link = 'UfoCursorFoldedLine',
+                force = true
+            })
+        else
+            if utils.has10() then
+                self:appendListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
+            else
                 -- TODO
                 -- Upstream bug: `setl winhl` change curswant
-                local view = utils.saveView(0)
-                cmd('setl winhl+=CursorLine:UfoCursorFoldedLine')
-                utils.restView(0, view)
-            end)
-        end)
-        self.isCurFoldHighlighted = true
+                utils.winCall(self.winid, function()
+                    local view = utils.saveView(0)
+                    self:appendListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
+                    utils.restView(0, view)
+                end)
+            end
+            self.cursorLineHighlight = {}
+        end
         res = true
     end
     return res
@@ -98,13 +136,17 @@ end
 
 function Window:clearCursorFoldedLineHighlight()
     local res = false
-    if self.isCurFoldHighlighted or self.lastBufnr ~= 0 and self.lastBufnr ~= self.bufnr then
-        utils.winCall(self.winid, function()
-            cmd('setl winhl-=CursorLine:UfoCursorFoldedLine')
-        end)
-        self.isCurFoldHighlighted = false
+    if self.ns > 0 then
+        if self.cursorLineHighlight then
+            api.nvim_set_hl(self.ns, 'CursorLine', self.cursorLineHighlight)
+            self:removeListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
+            res = true
+        end
+    elseif self.cursorLineHighlight or self.lastBufnr ~= 0 and self.lastBufnr ~= self.bufnr then
+        self:removeListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
         res = true
     end
+    self.cursorLineHighlight = nil
     return res
 end
 
