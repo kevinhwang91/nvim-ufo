@@ -2,6 +2,7 @@
 ---| 'comment'
 ---| 'imports'
 ---| 'region'
+---| 'marker'
 
 ---@class UfoFoldingRange
 ---@field startLine number
