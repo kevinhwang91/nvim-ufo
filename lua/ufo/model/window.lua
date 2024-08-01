@@ -105,7 +105,7 @@ function Window:setCursorFoldedLineHighlight()
         if utils.has10() then
             self.ns = api.nvim_get_hl_ns({winid = self.winid})
         end
-        if self.ns >= 0 then
+        if self.ns > 0 then
             local hl = vim.api.nvim_get_hl(self.ns, {name = 'CursorLine'})
             if not next(hl) then
                 hl = vim.api.nvim_get_hl(0, {name = 'CursorLine'})
