@@ -78,15 +78,16 @@ function Buffer:attach()
 end
 
 ---lower is less than or equal to lnum
+---@param lines table<number, any|boolean>
 ---@param lnum number
 ---@param endLnum number
 ---@return table[]
-function Buffer:buildMissingHunk(lnum, endLnum)
+function Buffer:buildMissingHunk(lines, lnum, endLnum)
     local hunks = {}
     local s, e
     local cnt = 0
     for i = lnum, endLnum do
-        if not self._lines[i] then
+        if not lines[i] then
             cnt = cnt + 1
             if not s then
                 s = i
@@ -107,7 +108,7 @@ function Buffer:buildMissingHunk(lnum, endLnum)
         if fhLnum == lnum then
             local i = lnum - 1
             while i > 0 do
-                if self._lines[i] then
+                if lines[i] then
                     break
                 end
                 i = i - 1
@@ -230,7 +231,7 @@ function Buffer:lines(lnum, endLnum)
     if endLnum < 0 then
         endLnum = lineCount + endLnum + 1
     end
-    for _, hunk in ipairs(self:buildMissingHunk(lnum, endLnum)) do
+    for _, hunk in ipairs(self:buildMissingHunk(self._lines, lnum, endLnum)) do
         local hs, he = hunk[1], hunk[2]
         local lines = api.nvim_buf_get_lines(self.bufnr, hs - 1, he, true)
         for i = hs, he do
