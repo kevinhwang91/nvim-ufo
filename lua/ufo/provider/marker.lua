@@ -22,6 +22,7 @@ local CLOSE = 1
 ---@field hrtime number
 ---@field version number
 ---@field markerLines number[]
+---@field foldmarker string
 local MarkerBuffer = {}
 MarkerBuffer.__index = MarkerBuffer
 
@@ -31,9 +32,6 @@ function MarkerBuffer:new(buf)
     o.hrtime = uv.hrtime()
     o.version = 0
     o.markerLines = {}
-    for _ = 1, buf:lineCount() do
-        table.insert(o.markerLines, false)
-    end
     return o
 end
 
@@ -61,12 +59,18 @@ function Marker.getFolds(bufnr)
     end
 
     local buf = mb.buf
-    local ranges = {}
-    local markerLines = mb.markerLines
-    local startPat, endPat = unpack(vim.split(
-        vim.wo[winid].foldmarker, ',', {plain = true}))
+    local foldmarker = vim.wo[winid].foldmarker
+    local hunks
     local cnt = buf:lineCount()
-    for _, hunk in ipairs(mb:getMissHunks(1, cnt)) do
+    if mb.foldmarker ~= foldmarker then
+        mb.foldmarker = foldmarker
+        hunks = {{1, cnt}}
+    else
+        hunks = mb:getMissHunks(1, cnt)
+    end
+    local markerLines = mb.markerLines
+    local startPat, endPat = unpack(vim.split(foldmarker, ',', {plain = true}))
+    for _, hunk in ipairs(hunks) do
         local startLnum, endLnum = hunk[1], hunk[2]
         local lines = buf:lines(startLnum, endLnum)
         for i, line in ipairs(lines) do
@@ -108,6 +112,7 @@ function Marker.getFolds(bufnr)
     mb.version = buf:changedtick()
     mb.hrtime = uv.hrtime()
 
+    local ranges = {}
     local stack = {}
     for lnum, lmarkers in ipairs(markerLines) do
         for _, v in ipairs(lmarkers) do
