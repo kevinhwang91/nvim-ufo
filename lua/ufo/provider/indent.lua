@@ -30,13 +30,6 @@ function IndentBuffer:new(buf)
     o.hrtime = uv.hrtime()
     o.version = 0
     o.levels = {}
-    for _ = 1, buf:lineCount() do
-        table.insert(o.levels, false)
-    end
-    local bufnr = buf.bufnr
-    local sw = vim.bo[bufnr].sw
-    o.tabstop = vim.bo[bufnr].ts
-    o.shiftWidth = sw == 0 and o.tabstop or sw
     return o
 end
 
@@ -54,10 +47,21 @@ function Indent.getFolds(bufnr)
     if not ib then
         return
     end
-    local buf, ts, sw = ib.buf, ib.tabstop, ib.shiftWidth
+    local buf = ib.buf
+    local ts, sw = vim.bo[bufnr].ts, vim.bo[bufnr].sw
+    local hunks
     local cnt = buf:lineCount()
+    if ts ~= ib.tabstop or sw ~= ib.shiftWidth then
+        ib.tabstop, ib.shiftWidth = ts, sw
+        hunks = {{1, cnt}}
+    else
+        hunks = ib:getMissHunks(1, cnt)
+    end
+    if sw == 0 then
+        sw = ts
+    end
     local levels = ib.levels
-    for _, hunk in ipairs(ib:getMissHunks(1, cnt)) do
+    for _, hunk in ipairs(hunks) do
         local startLnum, endLnum = hunk[1], hunk[2]
         local lines = buf:lines(startLnum, endLnum)
         for i, line in ipairs(lines) do
@@ -80,6 +84,7 @@ function Indent.getFolds(bufnr)
             levels[startLnum + i - 1] = level
         end
     end
+
     ib.version = buf:changedtick()
     ib.hrtime = uv.hrtime()
 
