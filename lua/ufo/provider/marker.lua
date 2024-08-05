@@ -1,81 +1,216 @@
+local uv = vim.loop
+
 local foldingrange = require('ufo.model.foldingrange')
 local bufmanager = require('ufo.bufmanager')
 local utils = require('ufo.utils')
-
+local event = require('ufo.lib.event')
+local disposable = require('ufo.lib.disposable')
 
 -- Provider implementation
 
+---@class UfoMarkerProvider
+---@field buffers table
+---@field bufNum number
+---@field disposables UfoDisposable[]
 local Marker = {}
 
+local OPEN = -1
+local CLOSE = 1
 
--- Data necessary to query folding ranges from VS Code region folding
-local vs_code_marker = {
-    '#region',     -- Start of marker
-    '#endregion',  -- End of marker
-    'region',      -- Kind to be applied to a VS Code region folding
-}
+---@class UfoMarkerBuffer
+---@field buf UfoBuffer
+---@field hrtime number
+---@field version number
+---@field markerLines number[]
+local MarkerBuffer = {}
+MarkerBuffer.__index = MarkerBuffer
 
+function MarkerBuffer:new(buf)
+    local o = self == MarkerBuffer and setmetatable({}, self) or self
+    o.buf = buf
+    o.hrtime = uv.hrtime()
+    o.version = 0
+    o.markerLines = {}
+    for _ = 1, buf:lineCount() do
+        table.insert(o.markerLines, false)
+    end
+    return o
+end
+
+function MarkerBuffer:getMissHunks(lnum, endLnum)
+    return self.buf:buildMissingHunk(self.markerLines, lnum, endLnum)
+end
+
+function MarkerBuffer:handleFoldedLinesChanged(first, last, lastUpdated)
+    self.markerLines = self.buf:handleLinesChanged(self.markerLines, first, last, lastUpdated)
+end
 
 --- Function that returns folds for the provided buffer based in the markers
 --- @param bufnr number Vim buffer number
 --- @return UfoFoldingRange[]|nil Folds List of marker folds in the buffer, or `nil` if they can not be queried
 function Marker.getFolds(bufnr)
-    local buf = bufmanager:get(bufnr)
     local winid = utils.getWinByBuf(bufnr)
-
-    -- Does not work with buffers or windows that are not managed by UFO
-    if not buf or winid < 0 then
+    if winid < 0 then
         return
     end
 
-    -- Defines the 'start' and 'end' markers that the provider will search, and the kind to apply
-    -- to these markers. Each element of the `markers` list is a list of the 'start', 'end' markers
-    -- and kind applied, in this order. Example: `local markers = { { 'start marker', 'end marker', 'marker kind' } }`
-    -- The search is done by marker pair. One marker pair does not affect the other. So the end marker of `markers[0]`
-    -- will not close the start marker of `markers[1]`, by example.
-    local markers = {
-        vim.fn.split(vim.wo[winid].foldmarker .. ',marker', ','),  -- Configured Vim marker
-        vs_code_marker
-    }
+    local self = Marker
+    local mb = self:getBuffer(bufnr) or self:addBuffer(bufnr)
+    if not mb then
+        return
+    end
 
-    -- Query the markers, generate the folding ranges and save in the `folds` variable
-    local lines = buf:lines(1, -1)
-    local folds = {}
-
-    for _, marker in ipairs(markers) do
-        local openMarkerLines = {}
-
-        for lineNum, line in ipairs(lines) do
-            -- Open marker
-            local start_column, end_column = line:find(marker[1], 1, true)
-
-            if start_column then
-                table.insert(openMarkerLines, lineNum)
+    local buf = mb.buf
+    local ranges = {}
+    local markerLines = mb.markerLines
+    local startPat, endPat = unpack(vim.split(
+        vim.wo[winid].foldmarker, ',', {plain = true}))
+    local cnt = buf:lineCount()
+    for _, hunk in ipairs(mb:getMissHunks(1, cnt)) do
+        local startLnum, endLnum = hunk[1], hunk[2]
+        local lines = buf:lines(startLnum, endLnum)
+        for i, line in ipairs(lines) do
+            -- open position start, close position start
+            local ops, cps = 0, 0
+            -- open position end, close position end
+            local ope, cpe
+            local j = 1
+            local res = {}
+            local len = #line
+            while true do
+                if ops <= len and j > ops then
+                    ops, ope = line:find(startPat, j, true)
+                    if not ops then
+                        ops = len + 1
+                    end
+                end
+                if cps <= len and j > cps then
+                    cps, cpe = line:find(endPat, j, true)
+                    if not cps then
+                        cps = len + 1
+                    end
+                end
+                if ops > len and cps > len then
+                    break
+                end
+                if ops <= cps then
+                    table.insert(res, OPEN)
+                    j = ope + 1
+                else
+                    table.insert(res, CLOSE)
+                    j = cpe + 1
+                end
             end
+            markerLines[startLnum + i - 1] = res
+        end
+    end
 
-            -- Close marker
-            start_column = line:find(marker[2], end_column or 1, true)
+    mb.version = buf:changedtick()
+    mb.hrtime = uv.hrtime()
 
-            if start_column then
-                local relatedOpenMarkerLine = table.remove(openMarkerLines)
-
-                if relatedOpenMarkerLine then
-                    table.insert(
-                    folds,
-                    foldingrange.new(relatedOpenMarkerLine - 1, lineNum - 1, nil, nil, marker[3])
+    local stack = {}
+    for lnum, lmarkers in ipairs(markerLines) do
+        for _, v in ipairs(lmarkers) do
+            if v == OPEN then
+                table.insert(stack, lnum)
+            else
+                local last = stack[#stack]
+                if last then
+                    table.remove(stack)
+                    table.insert(ranges, foldingrange.new(last - 1, lnum - 1,
+                        nil, nil, 'marker')
                     )
                 end
             end
         end
-
-        -- Closes all remaining open markers (they will be open to the end of the file)
-        for _, markerStart in ipairs(openMarkerLines) do
-            table.insert(folds, foldingrange.new(markerStart - 1, #lines, nil, nil, marker[3]))
-        end
     end
 
-    return folds
+    while #stack > 0 do
+        local last = table.remove(stack)
+        table.insert(ranges, foldingrange.new(last - 1, cnt - 1,
+            nil, nil, 'marker'))
+    end
+
+    return ranges
 end
 
+---
+---@param bufnr number
+---@return UfoMarkerBuffer
+function Marker:getBuffer(bufnr)
+    return self.buffers[bufnr]
+end
+
+function Marker:addBuffer(bufnr)
+    local buf = bufmanager:get(bufnr)
+    if not buf then
+        return
+    end
+    self.buffers[bufnr] = MarkerBuffer:new(buf)
+    if self.bufNum == 0 then
+        self.eventsDisposables = self:createEvents()
+    end
+    self.bufNum = self.bufNum + 1
+    return self.buffers[bufnr]
+end
+
+function Marker:removeBuffer(bufnr)
+    if self.bufNum == 0 then
+        return
+    end
+    local ib = self:getBuffer(bufnr)
+    if ib then
+        self.buffers[bufnr] = nil
+        self.bufNum = self.bufNum - 1
+        if self.bufNum == 0 then
+            self:destroyEvents()
+        end
+    end
+end
+
+function Marker:createEvents()
+    local disposables = {}
+    event:on('BufLinesChanged', function(bufnr, changedtick, firstLine, lastLine, lastLineUpdated)
+        local ib = self:getBuffer(bufnr)
+        if ib then
+            ib.markerLines = ib.buf:handleLinesChanged(ib.markerLines, firstLine, lastLine, lastLineUpdated)
+            -- May become fallback provider, compare the version with changedtick to remove
+            if changedtick > ib.version + 20 then
+                -- 20s interval
+                if uv.hrtime() - ib.hrtime > 20 * 1e9 then
+                    self:removeBuffer(bufnr)
+                end
+            end
+        end
+    end, disposables)
+    event:on('BufDetach', function(bufnr)
+        self:removeBuffer(bufnr)
+    end, disposables)
+    event:on('BufReload', function(bufnr)
+        self:removeBuffer(bufnr)
+    end, disposables)
+    return disposables
+end
+
+function Marker:destroyEvents()
+    disposable.disposeAll(self.eventsDisposables)
+end
+
+function Marker:dispose()
+    self:destroyEvents()
+    self:initialize()
+end
+
+function Marker:initialize()
+    self.bufNum = 0
+    self.buffers = {}
+    self.eventsDisposables = {}
+end
+
+local function init()
+    Marker:initialize()
+end
+
+init()
 
 return Marker
