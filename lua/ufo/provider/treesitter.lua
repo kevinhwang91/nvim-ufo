@@ -179,7 +179,7 @@ function Treesitter.getFolds(bufnr)
             stop = stop - 1
         end
         if stop > start then
-            table.insert(ranges, foldingrange.new(start, stop))
+            table.insert(ranges, foldingrange.new(start, stop, nil, nil, node:type()))
         end
     end
     foldingrange.sortRanges(ranges)
