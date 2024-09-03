@@ -90,7 +90,7 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         return function() end
     end
     ---@diagnostic disable-next-line: need-check-nil
-    local iter = q:iter_matches(p.root, p.source, p.start, p.stop)
+    local iter = q:iter_matches(p.root, p.source, p.start, p.stop, { all = false })
     return function()
         local pattern, match, metadata = iter()
         local matches = {}
