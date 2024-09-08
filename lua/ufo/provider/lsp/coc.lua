@@ -47,7 +47,7 @@ end
 ---@param kind? string|'comment'|'imports'|'region'
 ---@return Promise
 function CocClient.requestFoldingRange(bufnr, kind)
-    if not CocClient.initialized or not CocClient.enabled or vim.b[bufnr].coc_enabled == 0 then
+    if not CocClient.initialized or not CocClient.enabled then
         return promise.reject('UfoFallbackException')
     end
     return CocClient.runCommand('ufo.foldingRange', bufnr, kind)

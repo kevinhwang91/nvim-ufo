@@ -1,6 +1,5 @@
 const { languages, commands, workspace, wait, CancellationTokenSource, Disposable } = require('coc.nvim')
 
-
 exports.activate = async context => {
 	let { logger, subscriptions } = context
 	let nvim = workspace.nvim
@@ -9,7 +8,13 @@ exports.activate = async context => {
 		if (!doc || !doc.attached) {
 			await wait(50)
 			doc = workspace.getDocument(bufnr)
-			if (!doc || !doc.attached) {
+			if (!doc) {
+				return
+			}
+			if (!doc.attached) {
+				if (doc.notAttachReason.match('coc_enabled')) {
+					throw 'UfoFallbackException'
+				}
 				return
 			}
 		}
