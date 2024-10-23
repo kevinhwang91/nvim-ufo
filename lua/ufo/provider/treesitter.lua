@@ -174,13 +174,15 @@ function Treesitter.getFolds(bufnr)
         error('UfoFallbackException')
     end
     for _, node in ipairs(matches) do
-        local start, _, stop, stop_col = node:range()
-        if stop_col == 0 then
-            stop = stop - 1
-        end
-        if stop > start then
-            local type = node.type and node:type() or nil
-            table.insert(ranges, foldingrange.new(start, stop, nil, nil, type))
+        if node.range then
+            local start, _, stop, stop_col = node:range()
+            if stop_col == 0 then
+                stop = stop - 1
+            end
+            if stop > start then
+                local type = node.type and node:type() or nil
+                table.insert(ranges, foldingrange.new(start, stop, nil, nil, type))
+            end
         end
     end
     foldingrange.sortRanges(ranges)
