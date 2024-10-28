@@ -52,7 +52,10 @@ function Window:removeListOption(optionName, val)
     if not s then
         return
     end
-    local v = o:sub(1, s - 1) .. o:sub(e + 2)
+    local v = s == 1 and '' or o:sub(1, s - 2)
+    if e < o:len() then
+        v = v .. o:sub(e + 1)
+    end
     vim.wo[self.winid][optionName] = v
 end
 
