@@ -36,7 +36,11 @@ local function tryUpdateFold(bufnr)
 end
 
 local function setFoldText(bufnr)
-    api.nvim_buf_call(bufnr, function()
+    local winid = utils.getWinByBuf(bufnr)
+    if not utils.isWinValid(winid) then
+        return
+    end
+    utils.winCall(winid, function()
         cmd([[
             setl foldtext=v:lua.require'ufo.main'.foldtext()
             setl fillchars+=fold:\ ]])

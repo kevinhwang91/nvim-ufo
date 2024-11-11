@@ -72,17 +72,19 @@ function BufferManager:initialize()
         end
     end, self.disposables)
 
-    for _, winid in ipairs(api.nvim_tabpage_list_wins(0)) do
-        local bufnr = api.nvim_win_get_buf(winid)
-        if utils.isBufLoaded(bufnr) then
-            attach(self, bufnr)
-        else
-            -- the first buffer is unloaded while firing `BufWinEnter`
-            promise.resolve():thenCall(function()
-                if utils.isBufLoaded(bufnr) then
-                    attach(self, bufnr)
-                end
-            end)
+    for _, tp in ipairs(api.nvim_list_tabpages()) do
+        for _, winid in ipairs(api.nvim_tabpage_list_wins(tp)) do
+            local bufnr = api.nvim_win_get_buf(winid)
+            if utils.isBufLoaded(bufnr) then
+                attach(self, bufnr)
+            else
+                -- the first buffer is unloaded while firing `BufWinEnter`
+                promise.resolve():thenCall(function()
+                    if utils.isBufLoaded(bufnr) then
+                        attach(self, bufnr)
+                    end
+                end)
+            end
         end
     end
     return self
