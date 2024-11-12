@@ -49,7 +49,6 @@ local function createEvents()
         group = gid,
         pattern = {'buftype', 'filetype', 'syntax', 'diff'},
         callback = function(ev)
-            local bufnr = api.nvim_get_current_buf()
             local match = ev.match
             local e
             if match == 'buftype' then
@@ -64,7 +63,7 @@ local function createEvents()
             else
                 error([[Didn't match any events!]])
             end
-            event:emit(e, bufnr, vim.v.option_new, vim.v.option_old)
+            event:emit(e, ev.buf, vim.v.option_new, vim.v.option_old)
         end
     })
     return disposable:create(function()
