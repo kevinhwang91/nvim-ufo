@@ -198,7 +198,7 @@ function FloatWin:display(winid, targetHeight, enter, isAbove, postHandle)
         self.winblend = self.config.winblend
         local wo = vim.wo[self.winid]
         wo.wrap = false
-        wo.spell, wo.list = false, true
+        wo.spell = false
         wo.nu, wo.rnu = false, false
         wo.fen, wo.fdm, wo.fdc = false, 'manual', '0'
         wo.cursorline = enter == true
