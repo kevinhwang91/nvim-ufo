@@ -146,7 +146,7 @@ function Window:clearCursorFoldedLineHighlight()
             self:removeListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
             res = true
         end
-    elseif self.cursorLineHighlight or self.lastBufnr ~= 0 and self.lastBufnr ~= self.bufnr then
+    elseif self.cursorLineHighlight or self.lastBufnr ~= self.bufnr then
         self:removeListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
         res = true
     end
