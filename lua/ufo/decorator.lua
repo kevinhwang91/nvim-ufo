@@ -42,14 +42,14 @@ end
 
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
-    local self = Decorator
-    local wses = self.winSessions[winid]
     local fb = fold.get(bufnr)
-    wses:onWin(bufnr, fb, topRow, botRow)
     if bufnrSet[bufnr] or not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable then
         collection[winid] = nil
         return false
     end
+    local self = Decorator
+    local wses = self.winSessions[winid]
+    wses:onWin(bufnr, fb, topRow, botRow)
     collection[winid] = {{}, wses}
     bufnrSet[bufnr] = winid
 end
@@ -224,7 +224,7 @@ function Decorator:removeStaleVirtText()
     for _, winid in ipairs(wins) do
         ---@type UfoWindow
         local wses = rawget(self.winSessions, winid)
-        if wses then
+        if wses and wses.foldbuffer then
             local fb, s, e = wses.foldbuffer, wses.topRow + 1, wses.botRow + 1
             ok = fb:openStaleFoldsByRange(s, e, self:getOtherNamespaces()) or ok
         end
