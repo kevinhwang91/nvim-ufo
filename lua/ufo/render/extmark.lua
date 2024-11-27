@@ -2,6 +2,17 @@ local api = vim.api
 
 local M = {}
 
+function M.getIdsByRange(bufnr, startRange, endRange, namespaces)
+    local ids = {}
+    for _, ns in pairs(namespaces or {}) do
+        local marks = api.nvim_buf_get_extmarks(bufnr, ns, startRange, endRange, {})
+        for _, m in ipairs(marks) do
+            table.insert(ids, m[1])
+        end
+    end
+    return ids
+end
+
 ---
 ---@param bufnr number
 ---@param startRange number[]

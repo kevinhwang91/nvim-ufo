@@ -6,37 +6,45 @@ local api = vim.api
 ---@field bufnr number
 ---@field ns number
 ---@field rendered boolean
----@field text? string
----@field width? number
 ---@field virtText? UfoExtmarkVirtTextChunk[]
+---@field extIds? number[]
+---@field extHash? number
 local FoldedLine = {}
 
-function FoldedLine:new(bufnr, ns, text, width)
+function FoldedLine:new(bufnr, ns)
     local o = setmetatable({}, self)
     self.__index = self
     o.id = nil
     o.bufnr = bufnr
     o.ns = ns
-    o.text = text
-    o.width = width
     o.rendered = false
     o.virtText = nil
+    o.extIds = nil
     return o
-end
-
----
----@param width number
----@return boolean
-function FoldedLine:widthChanged(width)
-    return self.width ~= width
-end
-
-function FoldedLine:textChanged(text)
-    return self.text ~= text
 end
 
 function FoldedLine:hasRendered()
     return self.rendered == true
+end
+
+local function hashList(list)
+    local hash = 0
+    local prime = 31
+    local mod = 2 ^ 31
+    for _, num in ipairs(list) do
+        hash = (hash + num * prime) % mod
+    end
+    return hash
+end
+
+function FoldedLine:validExtIds(o)
+    -- if type(o) ~= 'table' then
+    --     return false
+    -- end
+    if not self.extIds or #self.extIds ~= #o then
+        return false
+    end
+    return self.extHash == hashList(o)
 end
 
 function FoldedLine:deleteExtmark()
@@ -45,8 +53,8 @@ function FoldedLine:deleteExtmark()
     end
 end
 
-function FoldedLine:updateVirtText(lnum, endLnum, virtText, doRender)
-    if doRender then
+function FoldedLine:updateVirtText(lnum, endLnum, virtText, extIds)
+    if extIds then
         local opts = {
             id = self.id,
             end_row = endLnum - 1,
@@ -59,9 +67,13 @@ function FoldedLine:updateVirtText(lnum, endLnum, virtText, doRender)
             opts.virt_text_win_col = 0
         end
         self.id = api.nvim_buf_set_extmark(self.bufnr, self.ns, lnum - 1, 0, opts)
+        self.extHash = hashList(extIds)
+        self.rendered = true
+    else
+        self.rendered = false
     end
-    self.rendered = doRender
     self.virtText = virtText
+    self.extIds = extIds
 end
 
 function FoldedLine:range()
@@ -70,6 +82,7 @@ function FoldedLine:range()
     end
     local mark = api.nvim_buf_get_extmark_by_id(self.bufnr, self.ns, self.id, {details = true})
     local row, details = mark[1], mark[3]
+    ---@diagnostic disable-next-line: need-check-nil
     local endRow = details.end_row
     return row + 1, endRow + 1
 end

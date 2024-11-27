@@ -5,6 +5,8 @@ local api = vim.api
 ---@class UfoWindow
 ---@field winid number
 ---@field bufnr number
+---@field topRow number
+---@field botRow number
 ---@field lastBufnr number
 ---@field foldbuffer UfoFoldBuffer
 ---@field lastCurLnum number
@@ -14,6 +16,7 @@ local api = vim.api
 ---@field cursorLineHighlight vim.api.keyset.hl_info
 ---@field foldedPairs table<number,number>
 ---@field foldedTextMaps table<number, table>
+---@field lastTextWidth number
 ---@field _cursor number[]
 ---@field _width number
 ---@field _concealLevel boolean
@@ -34,12 +37,17 @@ end
 --- Must invoke in on_win cycle
 ---@param bufnr number
 ---@param fb UfoFoldBuffer
-function Window:onWin(bufnr, fb)
+---@param topRow number
+---@param botRow number
+function Window:onWin(bufnr, fb, topRow, botRow)
     self.lastBufnr = self.bufnr
     self.bufnr = bufnr
     self.foldbuffer = fb
+    self.topRow = topRow
+    self.botRow = botRow
     self.foldedPairs = {}
     self.foldedTextMaps = {}
+    self.lastTextWidth = self:textWidth()
     self._cursor = nil
     self._width = nil
     self._concealLevel = nil
@@ -88,6 +96,10 @@ function Window:concealLevel()
         self._concealLevel = vim.wo[self.winid].conceallevel
     end
     return self._concealLevel
+end
+
+function Window:textWidthChanged()
+    return self.lastTextWidth ~= self:textWidth()
 end
 
 function Window:foldEndLnum(fs)

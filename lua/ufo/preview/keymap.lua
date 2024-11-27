@@ -14,7 +14,7 @@ local Keymap = {
 
 local function setKeymaps(bufnr, keyMessages)
     local opts = {noremap = true, nowait = true}
-    local rhsFmt = [[<Cmd>lua require('ufo.lib.event'):emit('onBufRemap', %d, %q)<CR>]]
+    local rhsFmt = [[<Cmd>lua require('ufo.lib.event'):emit('OnBufRemap', %d, %q)<CR>]]
     for msg, key in pairs(keyMessages) do
         local lhs = key
         local rhs = rhsFmt:format(bufnr, msg)
@@ -79,12 +79,12 @@ function Keymap:attach(bufnr, floatBufnr, namespace, keyMessages, floatKeyMessag
         -- 0x80, 0xfd, 0x4c <ScrollWheelDown>
         if b1 == 0x80 and b2 == 0xfd then
             if b3 == 0x4b then
-                event:emit('onBufRemap', bufnr, 'wheelUp')
+                event:emit('OnBufRemap', bufnr, 'wheelUp')
             elseif b3 == 0x4c then
-                event:emit('onBufRemap', bufnr, 'wheelDown')
+                event:emit('OnBufRemap', bufnr, 'wheelDown')
             end
         end
-        event:emit('onBufRemap', bufnr, 'onKey')
+        event:emit('OnBufRemap', bufnr, 'onKey')
     end, namespace)
     return self
 end

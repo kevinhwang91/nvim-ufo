@@ -182,10 +182,10 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
             end
         end)
     end, disposables)
-    event:on('onBufRemap', onBufRemap, disposables)
-    event:emit('setOpenFoldHl', false)
+    event:on('OnBufRemap', onBufRemap, disposables)
+    event:emit('SetOpenFoldHl', false)
     table.insert(disposables, disposable:create(function()
-        event:emit('setOpenFoldHl')
+        event:emit('SetOpenFoldHl')
     end))
 
     local view = utils.saveView(winid)

@@ -163,6 +163,10 @@ function M.setVirtText(bufnr, ns, row, col, virtText, opts)
     return extmark.setVirtText(bufnr, ns, row, col, virtText, opts)
 end
 
+function M.getLineExtMarkIds(bufnr, lnum, namespaces)
+    return extmark.getIdsByRange(bufnr, {lnum - 1, 0}, {lnum, 0}, namespaces)
+end
+
 function M.captureVirtText(bufnr, text, lnum, syntax, namespaces, concealLevel)
     local len = #text
     if len == 0 then
