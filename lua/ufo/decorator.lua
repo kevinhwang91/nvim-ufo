@@ -42,14 +42,14 @@ end
 
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
+    local self = Decorator
+    local wses = self.winSessions[winid]
     local fb = fold.get(bufnr)
+    wses:onWin(bufnr, fb, topRow, botRow)
     if bufnrSet[bufnr] or not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable then
         collection[winid] = nil
         return false
     end
-    local self = Decorator
-    local wses = self.winSessions[winid]
-    wses:onWin(bufnr, fb, topRow, botRow)
     collection[winid] = {{}, wses}
     bufnrSet[bufnr] = winid
 end
