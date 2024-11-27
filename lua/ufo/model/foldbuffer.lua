@@ -160,16 +160,19 @@ end
 ---@param namespaces number[]
 ---@return boolean
 function FoldBuffer:openStaleFoldsByRange(s, e, namespaces)
-    local ok = false
+    local res = false
     for lnum = s, e do
-        local ids = render.getLineExtMarkIds(self.bufnr, lnum, namespaces)
-        local fl = self.foldedLines[lnum]
-        if fl and not fl:validExtIds(ids) then
-            self:openFold(lnum)
-            ok = true
+        -- Async call, arguments may be invalid
+        local ok, ids = pcall(render.getLineExtMarkIds, self.bufnr, lnum, namespaces)
+        if ok then
+            local fl = self.foldedLines[lnum]
+            if fl and not fl:validExtIds(ids) then
+                self:openFold(lnum)
+                res = true
+            end
         end
     end
-    return ok
+    return res
 end
 
 ---
