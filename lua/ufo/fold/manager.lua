@@ -17,7 +17,7 @@ local FoldBufferManager = {}
 ---
 ---@param namespace number
 ---@param selector function
----@param closeKindsMap <table, string,UfoFoldingRangeKind[]>
+---@param closeKindsMap table<string,UfoFoldingRangeKind[]>
 ---@return UfoFoldBufferManager
 function FoldBufferManager:initialize(namespace, selector, closeKindsMap)
     if self.initialized then
@@ -174,8 +174,10 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
             if range.kind and vim.tbl_contains(kinds, range.kind) then
                 local startLine, endLine = range.startLine, range.endLine
                 rowPairs[startLine] = endLine
-                fb:closeFold(startLine + 1, endLine + 1)
             end
+        end
+        for startLine, endLine in pairs(rowPairs) do
+            fb:closeFold(startLine + 1, endLine + 1)
         end
         fb.scanned = true
     else
@@ -189,6 +191,9 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
             log.info(res)
             fb:resetFoldedLines(true)
             rowPairs = self:getRowPairsByScanning(fb, winid)
+            for startLine, endLine in pairs(rowPairs) do
+                fb:closeFold(startLine + 1, endLine + 1)
+            end
         end
     end
 

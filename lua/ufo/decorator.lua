@@ -287,29 +287,23 @@ function Decorator:getVirtTextAndCloseFold(winid, lnum, endLnum, doRender)
                 end,
                 get_fold_virt_text = getFoldVirtText
             })
+            if not ok then
+                log.error(res)
+                res = {{handlerErrorMsg, 'Error'}}
+            end
             wses.foldedTextMaps[lnum] = res
         end
-        if doRender == nil then
-            doRender = true
-        end
-        local nss
-        if ok then
-            if bufnrSet[bufnr] == winid then
-                if doRender then
+        if bufnrSet[bufnr] == winid then
+            if (doRender == nil or doRender == true) then
+                if ok then
                     log.debug('Window:', winid, 'need add/update folded lnum:', lnum)
                     didClose = true
-                    nss = self:getOtherNamespaces()
-                else
-                    log.debug('Window:', winid, 'will add/update folded lnum:', lnum)
                 end
+                local nss = self:getOtherNamespaces()
                 fb:closeFold(lnum, endLnum, res, nss)
+            elseif ok then
+                log.debug('Window:', winid, 'will add/update folded lnum:', lnum)
             end
-        else
-            if doRender then
-                nss = self:getOtherNamespaces()
-            end
-            fb:closeFold(lnum, endLnum, {{handlerErrorMsg, 'Error'}}, nss)
-            log.error(res)
         end
     end
     return res, didClose

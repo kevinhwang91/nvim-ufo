@@ -5,7 +5,6 @@ local api = vim.api
 ---@field id number
 ---@field bufnr number
 ---@field ns number
----@field rendered boolean
 ---@field virtText? UfoExtmarkVirtTextChunk[]
 ---@field extIds? number[]
 ---@field extHash? number
@@ -17,14 +16,13 @@ function FoldedLine:new(bufnr, ns)
     o.id = nil
     o.bufnr = bufnr
     o.ns = ns
-    o.rendered = false
     o.virtText = nil
     o.extIds = nil
     return o
 end
 
 function FoldedLine:hasRendered()
-    return self.rendered == true
+    return self.virtText ~= nil
 end
 
 local function hashList(list)
@@ -54,23 +52,20 @@ function FoldedLine:deleteExtmark()
 end
 
 function FoldedLine:updateVirtText(lnum, endLnum, virtText, extIds)
+    local opts = {
+        id = self.id,
+        end_row = endLnum - 1,
+        end_col = 0,
+        priority = 10,
+        hl_mode = 'combine'
+    }
+    if not utils.has10() then
+        opts.virt_text = virtText
+        opts.virt_text_win_col = 0
+    end
+    self.id = api.nvim_buf_set_extmark(self.bufnr, self.ns, lnum - 1, 0, opts)
     if extIds then
-        local opts = {
-            id = self.id,
-            end_row = endLnum - 1,
-            end_col = 0,
-            priority = 10,
-            hl_mode = 'combine'
-        }
-        if not utils.has10() then
-            opts.virt_text = virtText
-            opts.virt_text_win_col = 0
-        end
-        self.id = api.nvim_buf_set_extmark(self.bufnr, self.ns, lnum - 1, 0, opts)
         self.extHash = hashList(extIds)
-        self.rendered = true
-    else
-        self.rendered = false
     end
     self.virtText = virtText
     self.extIds = extIds
