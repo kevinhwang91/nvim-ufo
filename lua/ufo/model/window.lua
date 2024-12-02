@@ -13,7 +13,7 @@ local api = vim.api
 ---@field lastCurFoldStart number
 ---@field lastCurFoldEnd number
 ---@field ns number
----@field cursorLineHighlight vim.api.keyset.hl_info
+---@field cursorLineHighlight vim.api.keyset.get_hl_info
 ---@field foldedPairs table<number,number>
 ---@field foldedTextMaps table<number, table>
 ---@field lastTextWidth number
@@ -61,18 +61,18 @@ function Window:removeListOption(optionName, val)
         return
     end
     local v = s == 1 and o:sub(e + 2) or o:sub(1, s - 2) .. o:sub(e + 1)
-    vim.wo[self.winid][optionName] = v
+    api.nvim_set_option_value(optionName, v, {scope = 'local'})
 end
 
 function Window:appendListOption(optionName, val)
     ---@type string
     local o = vim.wo[self.winid][optionName]
     if o:len() == 0 then
-        vim.wo[self.winid][optionName] = val
+        api.nvim_set_option_value(optionName, val, {scope = 'local'})
         return
     end
     if not o:find(val, 1, true) then
-        vim.wo[self.winid][optionName] = o .. ',' .. val
+        api.nvim_set_option_value(optionName, o .. ',' .. val, {scope = 'local'})
     end
 end
 
