@@ -103,6 +103,9 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
             local m = metadata[id]
             if m and m.range then
                 node = MetaNode:new(m.range)
+            elseif type(nodes) ~= "table" then
+                -- old behaviou before 0.11
+                node = nodes
             elseif #nodes == 1 then
                 node = nodes[1]
             else
