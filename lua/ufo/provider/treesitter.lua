@@ -90,7 +90,7 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         return function() end
     end
     ---@diagnostic disable-next-line: need-check-nil
-    local iter = q:iter_matches(p.root, p.source, p.start, p.stop)
+    local iter = q:iter_matches(p.root, p.source, p.start, p.stop, { all = false })
     return function()
         local pattern, match, metadata = iter()
         local matches = {}
@@ -99,16 +99,11 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         end
 
         -- Extract capture names from each match
-        for id, nodes in pairs(match) do
+        for id, node in pairs(match) do
             local m = metadata[id]
             if m and m.range then
                 node = MetaNode:new(m.range)
-            elseif #nodes == 1 then
-                node = nodes[1]
-            else
-                node = MetaNode.from_nodes(nodes[1], nodes[#nodes])
             end
-
             table.insert(matches, node)
         end
 
