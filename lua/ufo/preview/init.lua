@@ -198,9 +198,12 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
     self.foldedEndLnum = foldedEndLnum
     self.isAbove = isAbove
     local floatBufnr = floatwin:getBufnr()
+    local winbarBufnr = winbar:getBufnr()
     vim.bo[floatBufnr].iskeyword = vim.bo[bufnr].iskeyword
     vim.bo[floatBufnr].tabstop = vim.bo[bufnr].tabstop
     vim.bo[floatBufnr].shiftwidth = vim.bo[bufnr].shiftwidth
+    vim.bo[winbarBufnr].tabstop = vim.bo[bufnr].tabstop
+    vim.bo[winbarBufnr].shiftwidth = vim.bo[bufnr].shiftwidth
     table.insert(disposables, disposable:create(function()
         self.winid = nil
         self.bufnr = nil
@@ -220,6 +223,10 @@ function Preview:attach(bufnr, winid, foldedLnum, foldedEndLnum, isAbove)
             end
             pcall(api.nvim_buf_call, floatBufnr, function()
                 cmd('setl iskeyword<')
+                cmd('setl topstop<')
+                cmd('setl shiftwidth<')
+            end)
+            pcall(api.nvim_buf_call, winbarBufnr, function()
                 cmd('setl topstop<')
                 cmd('setl shiftwidth<')
             end)
