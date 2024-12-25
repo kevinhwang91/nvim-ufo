@@ -163,7 +163,13 @@ updateFoldDebounced = (function()
 end)()
 
 local function handleDiffMode(winid, new, old)
-    if old ~= new and new == 0 then
+    if old == new then
+        return
+    end
+    if not utils.has10() then
+        new, old = new == '1', old == '1'
+    end
+    if not new then
         local bufnr = api.nvim_win_get_buf(winid)
         local fb = manager:get(bufnr)
 
