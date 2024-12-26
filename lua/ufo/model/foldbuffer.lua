@@ -246,29 +246,31 @@ function FoldBuffer:closeFold(lnum, endLnum, virtText, namespaces)
     return true
 end
 
-function FoldBuffer:scanFoldedRanges(winid, s, e)
-    local res = {}
-    local stack = {}
-    s, e = s or 1, e or self:lineCount()
-    utils.winCall(winid, function()
-        for i = s, e do
-            local skip = false
-            while #stack > 0 and i >= stack[#stack] do
-                local endLnum = table.remove(stack)
-                cmd(endLnum .. 'foldclose')
-                skip = true
-            end
-            if not skip then
-                local endLnum = utils.foldClosedEnd(winid, i)
-                if endLnum ~= -1 then
-                    table.insert(stack, endLnum)
-                    table.insert(res, {i - 1, endLnum - 1})
-                    cmd(i .. 'foldopen')
-                end
-            end
-        end
-    end)
-    return res
-end
+--#region
+-- function FoldBuffer:scanFoldedRanges(winid, s, e)
+--     local res = {}
+--     local stack = {}
+--     s, e = s or 1, e or self:lineCount()
+--     utils.winCall(winid, function()
+--         for i = s, e do
+--             local skip = false
+--             while #stack > 0 and i >= stack[#stack] do
+--                 local endLnum = table.remove(stack)
+--                 cmd(endLnum .. 'foldclose')
+--                 skip = true
+--             end
+--             if not skip then
+--                 local endLnum = utils.foldClosedEnd(winid, i)
+--                 if endLnum ~= -1 then
+--                     table.insert(stack, endLnum)
+--                     table.insert(res, {i - 1, endLnum - 1})
+--                     cmd(i .. 'foldopen')
+--                 end
+--             end
+--         end
+--     end)
+--     return res
+-- end
+--#endregion
 
 return FoldBuffer

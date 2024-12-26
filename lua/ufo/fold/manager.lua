@@ -131,11 +131,12 @@ function FoldBufferManager:isFoldMethodsDisabled(fb)
     return not fb.providers or fb.providers[1] == ''
 end
 
-function FoldBufferManager:getRowPairsByScanning(fb, winid)
+function FoldBufferManager:getRowPairs(winid)
     local rowPairs = {}
-    for _, range in ipairs(fb:scanFoldedRanges(winid)) do
-        local row, endRow = range[1], range[2]
-        rowPairs[row] = endRow
+    local pairs, closed = driver:getFoldsAndClosedInfo(winid)
+    for _, lnum in ipairs(closed) do
+        local endLnum = pairs[lnum]
+        rowPairs[lnum - 1] = endLnum - 1
     end
     return rowPairs
 end
@@ -168,7 +169,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
     local rowPairs = {}
     local isFirstApply = not fb.scanned
     if not manual and not fb.scanned or windows then
-        rowPairs = self:getRowPairsByScanning(fb, winid)
+        rowPairs = self:getRowPairs(winid)
         local kinds = self.closeKindsMap[fb:filetype()] or self.closeKindsMap.default
         for _, range in ipairs(fb.foldRanges) do
             if range.kind and vim.tbl_contains(kinds, range.kind) then
@@ -190,7 +191,7 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
         if not ok then
             log.info(res)
             fb:resetFoldedLines(true)
-            rowPairs = self:getRowPairsByScanning(fb, winid)
+            rowPairs = self:getRowPairs(winid)
             for startLine, endLine in pairs(rowPairs) do
                 fb:closeFold(startLine + 1, endLine + 1)
             end
