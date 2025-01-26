@@ -54,25 +54,28 @@ function Window:onWin(bufnr, fb, topRow, botRow)
 end
 
 function Window:removeListOption(optionName, val)
+    local winid = self.winid
     ---@type string
-    local o = vim.wo[self.winid][optionName]
+    local o = vim.wo[winid][optionName]
     local s, e = o:find(val, 1, true)
     if not s then
         return
     end
     local v = s == 1 and o:sub(e + 2) or o:sub(1, s - 2) .. o:sub(e + 1)
-    api.nvim_set_option_value(optionName, v, {scope = 'local'})
+    api.nvim_set_option_value(optionName, v, {scope = 'local', win = winid})
 end
 
 function Window:appendListOption(optionName, val)
+    local winid = self.winid
     ---@type string
-    local o = vim.wo[self.winid][optionName]
+    local o = vim.wo[winid][optionName]
     if o:len() == 0 then
-        api.nvim_set_option_value(optionName, val, {scope = 'local'})
+        api.nvim_set_option_value(optionName, val, {scope = 'local', win = winid})
         return
     end
     if not o:find(val, 1, true) then
-        api.nvim_set_option_value(optionName, o .. ',' .. val, {scope = 'local'})
+        api.nvim_set_option_value(optionName, o .. ',' .. val,
+            {scope = 'local', win = winid})
     end
 end
 
@@ -115,15 +118,16 @@ function Window:setCursorFoldedLineHighlight()
     local res = false
     if not self.cursorLineHighlight then
         if utils.has10() then
-            self.ns = api.nvim_get_hl_ns({winid = self.winid})
-        end
-        if self.ns > 0 then
-            local hl = vim.api.nvim_get_hl(self.ns, {name = 'CursorLine'})
-            if not next(hl) then
-                hl = vim.api.nvim_get_hl(0, {name = 'CursorLine'})
-                self.ns = 0
+            local ns = api.nvim_get_hl_ns({winid = self.winid})
+            if ns > 0 then
+                local hl = api.nvim_get_hl(ns, {name = 'CursorLine'})
+                if next(hl) then
+                    self.ns, self.cursorLineHighlight = ns, hl
+                end
             end
-            self.cursorLineHighlight = hl
+        end
+
+        if self.cursorLineHighlight then
             api.nvim_set_hl(self.ns, 'CursorLine', {
                 link = 'UfoCursorFoldedLine',
                 force = true
@@ -149,15 +153,14 @@ end
 
 function Window:clearCursorFoldedLineHighlight()
     local res = false
-    if self.ns >= 0 then
-        if self.cursorLineHighlight then
-            local hl = vim.api.nvim_get_hl(self.ns, {name = 'CursorLine'})
-            if next(hl) and hl.link == 'UfoCursorFoldedLine' then
-                api.nvim_set_hl(self.ns, 'CursorLine', self.cursorLineHighlight)
-            end
-            self:removeListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
-            res = true
+    if self.ns > 0 and self.cursorLineHighlight then
+        local hl = api.nvim_get_hl(self.ns, {name = 'CursorLine'})
+        if next(hl) and hl.link == 'UfoCursorFoldedLine' then
+            api.nvim_set_hl(self.ns, 'CursorLine', self.cursorLineHighlight)
         end
+        self:removeListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
+        res = true
+        self.ns = -1
     elseif self.cursorLineHighlight or self.lastBufnr ~= self.bufnr then
         self:removeListOption('winhl', 'CursorLine:UfoCursorFoldedLine')
         res = true

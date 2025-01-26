@@ -124,6 +124,7 @@ local function onEnd(name, tick)
             wses.lastCurLnum = curLnum
         end
     end
+    self.lastWinid = self.curWinid
     if needRedraw then
         log.debug('Need redraw.')
         if utils.has10() then
@@ -132,7 +133,6 @@ local function onEnd(name, tick)
             cmd('redraw')
         end
     end
-    self.lastWinid = self.curWinid
     debounced()
 end
 
