@@ -1,3 +1,5 @@
+local api = vim.api
+
 local buffer = require('ufo.model.foldbuffer')
 local event = require('ufo.lib.event')
 local disposable = require('ufo.lib.disposable')
@@ -171,10 +173,13 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
     if not manual and not fb.scanned or windows then
         rowPairs = self:getRowPairs(winid)
         local kinds = self.closeKindsMap[fb:filetype()] or self.closeKindsMap.default
+        local curRow = api.nvim_win_get_cursor(winid)[1] - 1
         for _, range in ipairs(fb.foldRanges) do
             if range.kind and vim.tbl_contains(kinds, range.kind) then
                 local startLine, endLine = range.startLine, range.endLine
-                rowPairs[startLine] = endLine
+                if curRow < startLine or curRow > endLine then
+                    rowPairs[startLine] = endLine
+                end
             end
         end
         for startLine, endLine in pairs(rowPairs) do
