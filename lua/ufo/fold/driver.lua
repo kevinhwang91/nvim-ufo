@@ -39,9 +39,17 @@ function FoldDriverBase:getTmpHandle()
 end
 
 function FoldDriverBase:getFoldsAndClosedInfo(winid)
+    local vop = vim.o.viewoptions
+    local foundFolds = vop:find('folds', 1, true) ~= nil
+    if not foundFolds then
+        cmd('noa set viewoptions+=folds')
+    end
     utils.winCall(winid, function()
         cmd('mkview! ' .. tmpname)
     end)
+    if not foundFolds then
+        cmd('noa set viewoptions=' .. vop)
+    end
     local fd = self:getTmpHandle()
     fd:seek('set')
     local pairs = {}
