@@ -49,14 +49,21 @@ end
 
 --- Return a meta node that represents a range between two nodes, i.e., (#make-range!),
 --- that is similar to the legacy TSRange.from_node() from nvim-treesitter.
-function MetaNode.from_nodes(start_node, end_node)
-    local start_pos = { start_node:start() }
-    local end_pos = { end_node:end_() }
+---@param start_node TSNode Node to be used as the beginning of the range
+---@param end_node TSNode Nodee to be used as the end of the range
+---@param start_metadata vim.treesitter.query.TSMetadata? `start_node` metadata
+---@param end_metadata vim.treesitter.query.TSMetadata? `end_node` metadata
+---@param bufnr integer? Buffer where metadata is from
+---@return TSNode
+function MetaNode.from_nodes(start_node, end_node, start_metadata, end_metadata, bufnr)
+    local start_pos = vim.treesitter.get_range(start_node, bufnr, start_metadata)
+    local end_pos = vim.treesitter.get_range(end_node, bufnr, end_metadata)
+
     return MetaNode:new({
         [1] = start_pos[1],
         [2] = start_pos[2],
-        [3] = end_pos[1],
-        [4] = end_pos[2],
+        [3] = end_pos[4],
+        [4] = end_pos[5],
     })
 end
 
@@ -132,7 +139,8 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         if preds then
             for _, pred in pairs(preds) do
                 if pred[1] == 'make-range!' and type(pred[2]) == 'string' and #pred == 4 then
-                    local node = MetaNode.from_nodes(match[pred[3]], match[pred[4]])
+                    local node =
+                        MetaNode.from_nodes(match[pred[3]], match[pred[4]], metadata[pred[3]], metadata[pred[4]], bufnr)
                     table.insert(matches, node)
                 end
             end
