@@ -32,17 +32,18 @@ MetaNode.__index = MetaNode
 
 function MetaNode:new(range, type)
     local o = self == MetaNode and setmetatable({}, self) or self
-    o.value = { range = range, type = type }
+    o._range = range
+    o._type = type
     return o
 end
 
 function MetaNode:range()
-    local range = self.value.range
+    local range = self._range
     return range[1], range[2], range[3], range[4]
 end
 
 function MetaNode:type()
-    return self.value.type
+    return self._type
 end
 
 --- Return a meta node that represents a range between two nodes, i.e., (#make-range!),
@@ -55,7 +56,7 @@ function MetaNode.from_nodes(start_node, end_node)
         [2] = start_pos[2],
         [3] = end_pos[1],
         [4] = end_pos[2],
-    }, nil)
+    })
 end
 
 local function prepareQuery(bufnr, parser, root, rootLang, queryName)
