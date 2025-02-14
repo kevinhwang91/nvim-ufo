@@ -30,15 +30,20 @@ end
 local MetaNode = {}
 MetaNode.__index = MetaNode
 
-function MetaNode:new(range)
+function MetaNode:new(range, type)
     local o = self == MetaNode and setmetatable({}, self) or self
-    o.value = range
+    o._range = range
+    o._type = type
     return o
 end
 
 function MetaNode:range()
-    local range = self.value
+    local range = self._range
     return range[1], range[2], range[3], range[4]
+end
+
+function MetaNode:type()
+    return self._type
 end
 
 --- Return a meta node that represents a range between two nodes, i.e., (#make-range!),
@@ -102,7 +107,8 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         for id, nodes in pairs(match) do
             local m = metadata[id]
             if m and m.range then
-                node = MetaNode:new(m.range)
+                local type = nodes.type and nodes:type() or nil
+                node = MetaNode:new(m.range, type)
             elseif type(nodes) ~= "table" then
                 -- old behaviou before 0.11
                 node = nodes
