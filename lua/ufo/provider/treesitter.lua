@@ -107,7 +107,8 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         for id, nodes in pairs(match) do
             local m = metadata[id]
             if m and m.range then
-                node = MetaNode:new(m.range, nodes:type())
+                local type = nodes.type and nodes:type() or nil
+                node = MetaNode:new(m.range, type)
             elseif type(nodes) ~= "table" then
                 -- old behaviou before 0.11
                 node = nodes
