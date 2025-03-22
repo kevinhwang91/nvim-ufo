@@ -2,6 +2,7 @@
 ---@field provider_selector? function
 ---@field open_fold_hl_timeout number
 ---@field close_fold_kinds_for_ft table<string, UfoFoldingRangeKind[]>
+---@field close_fold_current_line boolean
 ---@field fold_virt_text_handler? UfoFoldVirtTextHandler A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
 ---@field enable_get_fold_virt_text boolean
 ---@field preview table
@@ -9,6 +10,7 @@ local def = {
     open_fold_hl_timeout = 400,
     provider_selector = nil,
     close_fold_kinds_for_ft = {default = {}},
+    close_fold_current_line = false,
     fold_virt_text_handler = nil,
     enable_get_fold_virt_text = false,
     preview = {
