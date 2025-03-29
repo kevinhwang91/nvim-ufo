@@ -1,5 +1,6 @@
 local bufmanager = require('ufo.bufmanager')
 local foldingrange = require('ufo.model.foldingrange')
+local utils = require('ufo.utils')
 
 ---@class UfoTreesitterProvider
 ---@field hasProviders table<string, boolean>
@@ -107,7 +108,12 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         for id, nodes in pairs(match) do
             local m = metadata[id]
             if m and m.range then
-                local type = nodes.type and nodes:type() or nil
+                local type
+                if utils.has11() then
+                    type = nodes[1].type and nodes[1]:type() or nil
+                else
+                    type = nodes.type and nodes:type() or nil
+                end
                 node = MetaNode:new(m.range, type)
             elseif type(nodes) ~= "table" then
                 -- old behaviou before 0.11
@@ -179,6 +185,9 @@ function Treesitter.getFolds(bufnr)
     if not parser then
         self.hasProviders[ft] = false
         error('UfoFallbackException')
+    end
+    if utils.has11() then
+        parser:parse()
     end
 
     local ranges = {}
