@@ -8,7 +8,7 @@ local foldingrange = require('ufo.model.foldingrange')
 ---@class UfoLspNvimClient
 ---@field initialized boolean
 local NvimClient = {
-    initialized = true
+    initialized = true,
 }
 
 local errorCodes = {
@@ -34,9 +34,14 @@ function NvimClient.request(client, method, params, bufnr)
             if err then
                 log.error('Received error in callback', err)
                 log.error('Client:', client)
-                log.error('All clients:', vim.lsp.get_active_clients({bufnr = bufnr}))
+
+                log.error('All clients:', vim.lsp.get_clients({bufnr = bufnr}))
                 local code = err.code
-                if code == errorCodes.RequestCancelled or code == errorCodes.ContentModified or code == errorCodes.RequestFailed then
+                if
+                    code == errorCodes.RequestCancelled
+                    or code == errorCodes.ContentModified
+                    or code == errorCodes.RequestFailed
+                then
                     reject('UfoFallbackException')
                 else
                     reject(err)
@@ -49,7 +54,7 @@ function NvimClient.request(client, method, params, bufnr)
 end
 
 local function getClients(bufnr)
-    local clients = vim.lsp.get_active_clients({bufnr = bufnr})
+    local clients = vim.lsp.get_clients({bufnr = bufnr})
     return vim.tbl_filter(function(client)
         if vim.tbl_get(client.server_capabilities, 'foldingRangeProvider') then
             return true
@@ -76,17 +81,16 @@ function NvimClient.requestFoldingRange(bufnr, kind)
             error('UfoFallbackException')
         end
         local params = {textDocument = util.make_text_document_params(bufnr)}
-        return NvimClient.request(client, 'textDocument/foldingRange', params, bufnr)
-            :thenCall(function(ranges)
-                if not ranges then
-                    return {}
-                end
-                ranges = vim.tbl_filter(function(o)
-                    return (not kind or kind == o.kind) and o.startLine < o.endLine
-                end, ranges)
-                foldingrange.sortRanges(ranges)
-                return ranges
-            end)
+        return NvimClient.request(client, 'textDocument/foldingRange', params, bufnr):thenCall(function(ranges)
+            if not ranges then
+                return {}
+            end
+            ranges = vim.tbl_filter(function(o)
+                return (not kind or kind == o.kind) and o.startLine < o.endLine
+            end, ranges)
+            foldingrange.sortRanges(ranges)
+            return ranges
+        end)
     end)
 end
 
