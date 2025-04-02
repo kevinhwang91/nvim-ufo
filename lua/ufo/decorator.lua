@@ -43,7 +43,9 @@ end
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
     local fb = fold.get(bufnr)
-    if bufnrSet[bufnr] or not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable then
+    if bufnrSet[bufnr] or not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable or
+        render.rendering(bufnr) then
+        -- vim.treesitter.highlighter._on_win will fire next redraw if parser done
         collection[winid] = nil
         return false
     end

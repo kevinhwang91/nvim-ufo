@@ -7,6 +7,18 @@ local uv = vim.loop
 
 ---
 ---@return fun(): boolean
+M.has11 = (function()
+    local has11
+    return function()
+        if has11 == nil then
+            has11 = fn.has('nvim-0.11') == 1
+        end
+        return has11
+    end
+end)()
+
+---
+---@return fun(): boolean
 M.has10 = (function()
     local has10
     return function()
