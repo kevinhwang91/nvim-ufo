@@ -32,7 +32,7 @@ local vimLspGetClients = vim.lsp.get_clients and vim.lsp.get_clients or vim.lsp.
 
 function NvimClient.request(client, method, params, bufnr)
     return promise(function(resolve, reject)
-        client.request(method, params, function(err, res)
+        local handler = function(err, res)
             if err then
                 log.error('Received error in callback', err)
                 log.error('Client:', client)
@@ -46,7 +46,13 @@ function NvimClient.request(client, method, params, bufnr)
             else
                 resolve(res)
             end
-        end, bufnr)
+        end
+
+        if vim.version.ge(vim.version(), "0.11.0") then
+            client:request(method, params, handler, bufnr)
+        else
+            client.request(method, params, handler, bufnr)
+        end
     end)
 end
 
