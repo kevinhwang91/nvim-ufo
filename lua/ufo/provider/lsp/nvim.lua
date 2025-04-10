@@ -48,7 +48,7 @@ function NvimClient.request(client, method, params, bufnr)
             end
         end
 
-        if vim.version.ge(vim.version(), "0.11.0") then
+        if utils.has11() then
             client:request(method, params, handler, bufnr)
         else
             client.request(method, params, handler, bufnr)
