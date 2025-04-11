@@ -189,7 +189,7 @@ end
 ---@param handler UfoFoldVirtTextHandler
 function M.setFoldVirtTextHandler(bufnr, handler)
     utils.validate('bufnr', bufnr, 'number', true)
-    utils.validate('handler',handler, 'function')
+    utils.validate('handler', handler, 'function')
     require('ufo.decorator'):setVirtTextHandler(bufnr, handler)
 end
 

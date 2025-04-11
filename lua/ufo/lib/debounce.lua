@@ -18,7 +18,7 @@ local Debounce = {}
 function Debounce:new(fn, wait, leading)
     utils.validate('fn', fn, 'function')
     utils.validate('wait', wait, 'number')
-    utils.validate('leading' , leading, 'boolean', true)
+    utils.validate('leading', leading, 'boolean', true)
 
     local o = setmetatable({}, self)
     o.timer = nil

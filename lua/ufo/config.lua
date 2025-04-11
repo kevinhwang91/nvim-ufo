@@ -62,10 +62,10 @@ local function init()
     ---@type UfoConfig
     Config = vim.tbl_deep_extend('keep', ufo._config or {}, def)
     utils.validate("open_fold_hl_timeout", Config.open_fold_hl_timeout, 'number')
-    utils.validate('provider_selector' ,Config.provider_selector, 'function', true)
+    utils.validate('provider_selector' , Config.provider_selector, 'function', true)
     utils.validate('close_fold_kinds_for_ft', Config.close_fold_kinds_for_ft, 'table')
-    utils.validate('fold_virt_text_handler',Config.fold_virt_text_handler, 'function', true)
-    utils.validate('preview_mappings',Config.preview.mappings, 'table')
+    utils.validate('fold_virt_text_handler', Config.fold_virt_text_handler, 'function', true)
+    utils.validate('preview_mappings', Config.preview.mappings, 'table')
 
     local preview = Config.preview
     for msg, key in pairs(preview.mappings) do
