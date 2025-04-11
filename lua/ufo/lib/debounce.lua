@@ -1,4 +1,5 @@
 local uv = vim.loop
+local utils = require('ufo.utils')
 
 ---@class UfoDebounce
 ---@field timer userdata
@@ -15,11 +16,10 @@ local Debounce = {}
 ---@param leading? boolean
 ---@return UfoDebounce
 function Debounce:new(fn, wait, leading)
-    vim.validate({
-        fn = {fn, 'function'},
-        wait = {wait, 'number'},
-        leading = {leading, 'boolean', true}
-    })
+    utils.validate('fn', fn, 'function')
+    utils.validate('wait', wait, 'number')
+    utils.validate('leading' , leading, 'boolean', true)
+
     local o = setmetatable({}, self)
     o.timer = nil
     o.fn = vim.schedule_wrap(fn)
