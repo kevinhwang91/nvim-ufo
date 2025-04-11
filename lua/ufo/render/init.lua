@@ -261,15 +261,13 @@ end
 ---@param shared? boolean
 ---@return Promise
 function M.highlightLinesWithTimeout(handle, hlGroup, ns, start, finish, delay, shared)
-    vim.validate({
-        handle = {handle, 'number'},
-        hlGroup = {hlGroup, 'string'},
-        ns = {ns, 'number'},
-        start = {start, 'number'},
-        finish = {finish, 'number'},
-        delay = {delay, 'number', true},
-        shared = {shared, 'boolean', true},
-    })
+    utils.validate('handle',  handle, 'number')
+    utils.validate('hlGroup',  hlGroup, 'string')
+    utils.validate('ns',  ns, 'number')
+    utils.validate('start',  start, 'number')
+    utils.validate('finish',  finish, 'number')
+    utils.validate('delay',  delay, 'number', true)
+    utils.validate('shared',  shared, 'boolean', true)
     local ids = {}
     local onFulfilled
     if shared then
