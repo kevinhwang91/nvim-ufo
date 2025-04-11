@@ -353,4 +353,19 @@ function M.wrow(winid)
     return M.winCall(winid, fn.winline) - 1
 end
 
+---
+--- @param name string Argument name
+--- @param value any Argument value
+--- @param validator vim.validate.Validator
+--- @param optional? boolean Argument is optional (may be omitted)
+function M.validate(name, value, validator, optional)
+    if M.has11() then
+        vim.validate(name, value, validator, optional)
+    else
+        local spec = {}
+        spec[name] = {value, validator, optional}
+        vim.validate(spec)
+    end
+end
+
 return M
