@@ -196,18 +196,49 @@ function Treesitter.getFolds(bufnr)
         self.hasProviders[ft] = false
         error('UfoFallbackException')
     end
+
+    -- save previous 'comment' type node in order to concatenate
+    -- multiple adjacent nodes into one
+    local prev_node = nil
+
     for _, node in ipairs(matches) do
         if node.range then
             local start, _, stop, stop_col = node:range()
+            local type = node.type and node:type() or nil
+
             if stop_col == 0 then
                 stop = stop - 1
             end
+
             if stop > start then
-                local type = node.type and node:type() or nil
+                if prev_node ~= nil then
+                    table.insert(ranges, foldingrange.new(prev_node.start, prev_node.stop, nil, nil, prev_node.type))
+                    prev_node = nil
+                end
+
                 table.insert(ranges, foldingrange.new(start, stop, nil, nil, type))
+            else
+                if type == "comment" then
+                    if prev_node == nil then
+                        prev_node = { start = start, stop = stop, type = type }
+                    else
+                        if prev_node.stop == (start - 1) then
+                            prev_node.stop = stop
+                        else
+                            table.insert(ranges, foldingrange.new(prev_node.start, prev_node.stop, nil, nil, prev_node.type))
+                            prev_node = { start = start, stop = stop, type = type }
+                        end
+                    end
+                end
             end
         end
     end
+
+    if prev_node ~= nil then
+        table.insert(ranges, foldingrange.new(prev_node.start, prev_node.stop, nil, nil, prev_node.type))
+        prev_node = nil
+    end
+
     foldingrange.sortRanges(ranges)
     return ranges
 end
