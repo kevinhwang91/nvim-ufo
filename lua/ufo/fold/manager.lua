@@ -165,6 +165,8 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
         return -1
     elseif not vim.wo[winid].foldenable or utils.isDiffOrMarkerFold(winid) then
         return -1
+    elseif vim.fn.getcmdwintype() ~= "" then
+        return -1
     elseif utils.mode() ~= 'n' then
         return -1
     end
