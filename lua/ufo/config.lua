@@ -1,11 +1,13 @@
+local utils = require('ufo.utils')
+
 ---@class UfoConfig
 ---@field provider_selector? function
----@field open_fold_hl_timeout number
----@field close_fold_kinds_for_ft table<string, UfoFoldingRangeKind[]>
+---@field open_fold_hl_timeout? number
+---@field close_fold_kinds_for_ft? table<string, UfoFoldingRangeKind[]>
 ---@field close_fold_current_line boolean
 ---@field fold_virt_text_handler? UfoFoldVirtTextHandler A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
----@field enable_get_fold_virt_text boolean
----@field preview table
+---@field enable_get_fold_virt_text? boolean
+---@field preview? table
 local def = {
     open_fold_hl_timeout = 400,
     provider_selector = nil,
@@ -61,13 +63,11 @@ local function init()
     local ufo = require('ufo')
     ---@type UfoConfig
     Config = vim.tbl_deep_extend('keep', ufo._config or {}, def)
-    vim.validate({
-        open_fold_hl_timeout = {Config.open_fold_hl_timeout, 'number'},
-        provider_selector = {Config.provider_selector, 'function', true},
-        close_fold_kinds_for_ft = {Config.close_fold_kinds_for_ft, 'table'},
-        fold_virt_text_handler = {Config.fold_virt_text_handler, 'function', true},
-        preview_mappings = {Config.preview.mappings, 'table'}
-    })
+    utils.validate("open_fold_hl_timeout", Config.open_fold_hl_timeout, 'number')
+    utils.validate('provider_selector' , Config.provider_selector, 'function', true)
+    utils.validate('close_fold_kinds_for_ft', Config.close_fold_kinds_for_ft, 'table')
+    utils.validate('fold_virt_text_handler', Config.fold_virt_text_handler, 'function', true)
+    utils.validate('preview_mappings', Config.preview.mappings, 'table')
 
     local preview = Config.preview
     for msg, key in pairs(preview.mappings) do

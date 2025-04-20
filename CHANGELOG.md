@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.5.0] - 2025-04-07
+
+### 🚀 Features
+
+- Support new api vim.lsp.get_clients (#222)
+- *(provider)* Add marker provider (#218)
+- *(provider)* Allow using tree-sitter node types as kinds (#243)
+- *(decorator)* Redraw folded line with debounce
+- *(fold)* Don't auto fold range under cursor for close_fold_kinds_for_ft (#271)
+
+### 🐛 Bug Fixes
+
+- *(decorator)* Only compute folded pairs for current window (#223)
+- *(window)* Handle window namespace (#230)
+- *(window)* Check cursorline hl before resetting hl (#242)
+- *(window)* Record namespace for cursorline (#242)
+- *(window)* Skip ns == 0
+- *(treesitter)* Attempt to call method 'type' (a nil value) (#254)
+- *(window)* Remove comma for list options (#257)
+- *(main)* Hint foldmethod for diff or marker
+- *(preview)* Don't set `list` option (#258)
+- *(decorator)* Suppress error in async function (#260)
+- *(decorator)* Always init window model in onWin (#261)
+- *(treesitter)* Use new behavior for treesitter iter_matches (#247,#262,#264)
+- *(preview)* Attach buffer options for winbar
+- *(fold)* Options type changed since v0.10 (#265)
+- *(window)* Cursorline under multiple windows (#269)
+- *(fold)* Make sure viewoptions contain 'folds' (#274)
+- *(treesitter)* Put node type value in MetaNode (#278)
+- *(wffi)* Turn jit off for ffi wrapper (#283)
+- *(render)* Skip current render cycle if treesitter parsing (#288)
+- *(treesitter)* Compatibility with Neovim 0.11 (#286)
+- *(coc)* Prevent folds request if coc is disabled for the buffer (#251)
+
+### ⚡ Performance
+
+- *(preview)* Capture highlight asynchronously
+- *(provider)* Get fold incremental for indent
+- *(provider)* Get fold incremental for marker
+
 ## [1.4.0] - 2024-04-03
 
 ### 🚀 Features

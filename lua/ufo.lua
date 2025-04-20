@@ -1,4 +1,5 @@
 local api = vim.api
+local utils = require("ufo.utils")
 
 ---Export methods to the users, `require('ufo').method(...)`
 ---@class Ufo
@@ -135,7 +136,8 @@ end
 ---@param ranges UfoFoldingRange[]
 ---@return number winid return the winid if successful, otherwise return -1
 function M.applyFolds(bufnr, ranges)
-    vim.validate({bufnr = {bufnr, 'number', true}, ranges = {ranges, 'table'}})
+    utils.validate('bufnr', bufnr, 'number', true)
+    utils.validate('ranges', ranges, 'table')
     return require('ufo.fold').apply(bufnr, ranges, true)
 end
 
@@ -186,7 +188,8 @@ end
 ---@param bufnr number
 ---@param handler UfoFoldVirtTextHandler
 function M.setFoldVirtTextHandler(bufnr, handler)
-    vim.validate({bufnr = {bufnr, 'number', true}, handler = {handler, 'function'}})
+    utils.validate('bufnr', bufnr, 'number', true)
+    utils.validate('handler', handler, 'function')
     require('ufo.decorator'):setVirtTextHandler(bufnr, handler)
 end
 

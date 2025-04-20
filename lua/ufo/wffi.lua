@@ -88,6 +88,11 @@ local function init()
         int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight);
     ]])
     CPos_T = ffi.typeof('pos_T')
+
+    jit.off(M.plinesWin, true)
+    jit.off(M.plinesWinNofill, true)
+    jit.off(M.clearFolds, true)
+    jit.off(M.createFolds, true)
 end
 
 init()

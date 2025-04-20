@@ -2,6 +2,18 @@ local highlighter = require('vim.treesitter.highlighter')
 
 local M = {}
 
+function M.parserFinished(bufnr)
+    local data = highlighter.active[bufnr]
+    if not data then
+        return true
+    end
+    if data.parsing then
+        return false
+    else
+        return true
+    end
+end
+
 ---
 ---@param bufnr number
 ---@param startRange number

@@ -7,6 +7,18 @@ local uv = vim.loop
 
 ---
 ---@return fun(): boolean
+M.has11 = (function()
+    local has11
+    return function()
+        if has11 == nil then
+            has11 = fn.has('nvim-0.11') == 1
+        end
+        return has11
+    end
+end)()
+
+---
+---@return fun(): boolean
 M.has10 = (function()
     local has10
     return function()
@@ -339,6 +351,21 @@ end
 ---@return number
 function M.wrow(winid)
     return M.winCall(winid, fn.winline) - 1
+end
+
+---
+--- @param name string Argument name
+--- @param value any Argument value
+--- @param validator vim.validate.Validator
+--- @param optional? boolean Argument is optional (may be omitted)
+function M.validate(name, value, validator, optional)
+    if M.has11() then
+        vim.validate(name, value, validator, optional)
+    else
+        local spec = {}
+        spec[name] = {value, validator, optional}
+        vim.validate(spec)
+    end
 end
 
 return M
