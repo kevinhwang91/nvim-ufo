@@ -131,7 +131,7 @@ function M.inspectBuf(bufnr)
     end
     table.insert(msg, 'Selected provider: ' .. (fb.selectedProvider or 'nil'))
     local curKind
-    local curStartLine, curEndLine = 0, 0
+    local curStartLine, curEndLine = -1, -1
     local kindSet = {}
     local lnum = api.nvim_win_get_cursor(winid)[1]
     for _, range in ipairs(fb.foldRanges) do
@@ -149,7 +149,7 @@ function M.inspectBuf(bufnr)
         table.insert(kinds, kind)
     end
     table.insert(msg, 'Fold kinds: ' .. table.concat(kinds, ', '))
-    if curStartLine ~= 0 or curEndLine ~= 0 then
+    if curStartLine >= 0 or curEndLine >= 0 then
         table.insert(msg, ('Cursor range: [%d, %d]'):format(curStartLine + 1, curEndLine + 1))
     end
     if curKind then
