@@ -43,7 +43,7 @@ end
 ---@diagnostic disable-next-line: unused-local
 local function onWin(name, winid, bufnr, topRow, botRow)
     local fb = fold.get(bufnr)
-    if bufnrSet[bufnr] or not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable or
+    if not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable or
         render.rendering(bufnr) then
         -- vim.treesitter.highlighter._on_win will fire next redraw if parser done
         collection[winid] = nil
@@ -52,13 +52,18 @@ local function onWin(name, winid, bufnr, topRow, botRow)
     local self = Decorator
     local wses = self.winSessions[winid]
     wses:onWin(bufnr, fb, topRow, botRow)
-    collection[winid] = {{}, wses}
+    if bufnrSet[bufnr] == nil then
+        collection[winid] = {}
+    end
     bufnrSet[bufnr] = winid
 end
 
 ---@diagnostic disable-next-line: unused-local
 local function onLine(name, winid, bufnr, row)
-    table.insert(collection[winid][1], row)
+    local rows = collection[winid]
+    if rows then
+        table.insert(rows, row)
+    end
 end
 
 ---@diagnostic disable-next-line: unused-local
@@ -66,11 +71,10 @@ local function onEnd(name, tick)
     local needRedraw = false
     local self = Decorator
     self.curWinid = api.nvim_get_current_win()
-    for winid, data in pairs(collection or {}) do
-        local rows, wses = data[1], data[2]
+    for winid, rows in pairs(collection or {}) do
         if #rows > 0 then
-            local fb = wses.foldbuffer
-            local foldedPairs = wses.foldedPairs
+            local wses = self.winSessions[winid]
+            local fb, foldedPairs = wses.foldbuffer, wses.foldedPairs
             if self.curWinid == winid and not next(foldedPairs) then
                 foldedPairs = self:computeFoldedPairs(rows)
             end
