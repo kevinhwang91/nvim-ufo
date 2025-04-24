@@ -234,6 +234,21 @@ function Decorator:removeStaleVirtText()
     return ok
 end
 
+function Decorator:getVirtText(winid, lnum)
+    local wses = self.winSessions[winid]
+    if not wses then
+        return {}
+    end
+    local bufnr, fb = wses.bufnr, wses.foldbuffer
+    local text = fb:lines(lnum)[1]
+    local handler = self:getVirtTextHandler(bufnr)
+    local virtText
+    local syntax = fb:syntax() ~= ''
+    local concealLevel = wses:concealLevel()
+    local nss = self:getOtherNamespaces()
+    return render.captureVirtText(bufnr, text, lnum, syntax, nss, concealLevel)
+end
+
 function Decorator:getVirtTextAndCloseFold(winid, lnum, endLnum, doRender)
     local didClose = false
     local wses = self.winSessions[winid]

@@ -204,4 +204,21 @@ function M.foldtext()
     return text or utils.expandTab(api.nvim_buf_get_lines(0, fs - 1, fs, true)[1], vim.bo.ts)
 end
 
+function M.getVirtTextForLine(lnum)
+    local winid = api.nvim_get_current_win()
+    local virtText = decorator:getVirtText(winid, lnum)
+    if utils.has10() then
+        return virtText
+    end
+    local text
+    if next(virtText) then
+        text = ''
+        for _, chunk in ipairs(virtText) do
+            text = text .. chunk[1]
+        end
+        text = utils.expandTab(text, vim.bo.ts)
+    end
+    return text or utils.expandTab(api.nvim_buf_get_lines(0, fs - 1, fs, true)[1], vim.bo.ts)
+end
+
 return M
