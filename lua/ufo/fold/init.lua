@@ -227,7 +227,7 @@ function Fold:initialize(ns)
     event:on('BufAttach', Fold.attach, self.disposables)
     event:on('DiffModeChanged', handleDiffMode, self.disposables)
     table.insert(self.disposables, manager:initialize(ns, config.provider_selector,
-        config.close_fold_kinds_for_ft))
+        config.close_fold_kinds_for_ft, config.close_fold_current_line))
     return self
 end
 
