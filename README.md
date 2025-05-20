@@ -160,10 +160,13 @@ For example, Changing the text in a buffer will request the providers for folds.
                     Run `UfoInspect` for details if your provider has extended the kinds.]],
         default = {default = {}}
     },
-    close_fold_current_line = {
+    close_fold_current_line_for_ft = {
         description = [[Whether to close folds on the current line when the buffer is first
-                    displayed.]],
-        default = false
+                    displayed.
+                    This option is a table with filetype as key and boolean as value. Use a
+                    default value if value of filetype is absent.
+                    ]],
+        default = {default = false}
     },
     fold_virt_text_handler = {
         description = [[A function customize fold virt text, see ### Customize fold text]],
@@ -296,7 +299,10 @@ require('ufo').setup({
         json = {'array'},
         c = {'comment', 'region'}
     },
-    close_fold_current_line = false,
+    close_fold_current_line_for_ft = {
+        default = true,
+        c = false
+    },
     preview = {
         win_config = {
             border = {'', '─', '', '', '', '─', '', ''},
