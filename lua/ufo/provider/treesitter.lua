@@ -24,8 +24,8 @@ local get_query_files = assert(vim.treesitter.query.get_files or vim.treesitter.
 
 -- Backward compatibility for the dummy directive (#make-range!),
 -- which no longer exists in nvim-treesitter v1.0+
-if not vim.tbl_contains(vim.treesitter.query.list_directives(), "make-range!") then
-    vim.treesitter.query.add_directive("make-range!", function() end, {})
+if not vim.tbl_contains(vim.treesitter.query.list_directives(), 'make-range!') then
+    vim.treesitter.query.add_directive('make-range!', function() end, {})
 end
 
 local MetaNode = {}
@@ -49,15 +49,15 @@ end
 
 --- Return a meta node that represents a range between two nodes, i.e., (#make-range!),
 --- that is similar to the legacy TSRange.from_node() from nvim-treesitter.
-function MetaNode.from_nodes(start_node, end_node)
-    local start_pos = { start_node:start() }
-    local end_pos = { end_node:end_() }
+function MetaNode.from_nodes(startNode, endNode, nodeType)
+    local start_pos = {startNode:start()}
+    local end_pos = {endNode:end_()}
     return MetaNode:new({
         [1] = start_pos[1],
         [2] = start_pos[2],
         [3] = end_pos[1],
         [4] = end_pos[2],
-    })
+    }, nodeType)
 end
 
 local function prepareQuery(bufnr, parser, root, rootLang, queryName)
@@ -90,6 +90,11 @@ local function prepareQuery(bufnr, parser, root, rootLang, queryName)
     }
 end
 
+local function getNodesType(nodes)
+    local node = utils.has11() and nodes[1] or nodes
+    return node.type and node:type() or nil
+end
+
 local function iterFoldMatches(bufnr, parser, root, rootLang)
     local q, p = prepareQuery(bufnr, parser, root, rootLang, 'folds')
     if not q then
@@ -107,21 +112,18 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         -- Extract capture names from each match
         for id, nodes in pairs(match) do
             local m = metadata[id]
+            local node, nType
             if m and m.range then
-                local type
-                if utils.has11() then
-                    type = nodes[1].type and nodes[1]:type() or nil
-                else
-                    type = nodes.type and nodes:type() or nil
-                end
-                node = MetaNode:new(m.range, type)
-            elseif type(nodes) ~= "table" then
+                nType = getNodesType(nodes)
+                node = MetaNode:new(m.range, nType)
+            elseif type(nodes) ~= 'table' then
                 -- old behaviou before 0.11
                 node = nodes
             elseif #nodes == 1 then
                 node = nodes[1]
             else
-                node = MetaNode.from_nodes(nodes[1], nodes[#nodes])
+                nType = getNodesType(nodes)
+                node = MetaNode.from_nodes(nodes[1], nodes[#nodes], nType)
             end
 
             table.insert(matches, node)

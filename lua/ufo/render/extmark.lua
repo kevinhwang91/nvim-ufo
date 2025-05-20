@@ -29,9 +29,11 @@ function M.getHighlightsAndInlayByRange(bufnr, startRange, endRange, namespaces)
             local er = details.end_row or sr
             local ec = details.end_col or (sc + 1)
             local hlGroup = details.hl_group
-            local priority = details.priority
+            local priority = details.priority or 4096
             local conceal = details.conceal
-            local virtTextPos = details.virt_text_pos
+            if conceal then
+                hlGroup = hlGroup or 'Normal'
+            end
             if hlGroup then
                 if er > endRow then
                     er, ec = endRow, endCol

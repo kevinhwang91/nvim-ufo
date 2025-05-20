@@ -382,6 +382,10 @@ require('ufo').setup({
 -- require('ufo').setFoldVirtTextHandler(bufnr, handler)
 ```
 
+## Sponsors
+
+A special thanks to [vtexs](https://vtexs.com) for sponsoring nvim-ufo! Their support is greatly appreciated and helps drive the project forward.
+
 ## Feedback
 
 - If you get an issue or come up with an awesome idea, don't hesitate to open an issue in github.

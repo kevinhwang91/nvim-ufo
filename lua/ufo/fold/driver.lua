@@ -58,23 +58,23 @@ function FoldDriverBase:getFoldsAndClosedInfo(winid)
     local flag = 0
     for line in fd:lines() do
         if flag == 1 then
-            local s, e = line:match('^(%d+),(%d+)fold$')
+            local s, e = line:match('(%d+),(%d+)fold$')
             if s then
                 s, e = tonumber(s), tonumber(e)
                 ---@diagnostic disable-next-line: need-check-nil
                 pairs[s] = e
-            elseif line == 'let &fdl = &fdl' then
+            else
                 flag = 2
             end
         elseif flag == 2 then
-            if line == 'normal! zc' then
+            if line:match('! zc$') then
                 local s = tonumber(lastLine)
                 if s then
                     table.insert(closed, s)
                 end
             end
         else
-            if flag == 0 and line == 'silent! normal! zE' then
+            if flag == 0 and line:match('! zE$') then
                 flag = 1
             end
         end
