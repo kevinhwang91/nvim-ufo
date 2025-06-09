@@ -44,7 +44,7 @@ end
 local function onWin(name, winid, bufnr, topRow, botRow)
     local fb = fold.get(bufnr)
     if not fb or fb.foldedLineCount == 0 and not vim.wo[winid].foldenable or
-        render.rendering(bufnr) then
+        render.rendering(bufnr, winid) then
         -- vim.treesitter.highlighter._on_win will fire next redraw if parser done
         collection[winid] = nil
         return false
