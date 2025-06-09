@@ -118,12 +118,12 @@ local function mapInlayMarkers(bufnr, startRow, marks, ns)
 end
 
 if utils.has11() then
-    function M.rendering(bufnr)
-        return not treesitter.parserFinished(bufnr)
+    function M.rendering(bufnr, winid)
+        return not treesitter.parserFinished(bufnr, winid)
     end
 else
     ---@diagnostic disable-next-line: unused-local
-    function M.rendering(bufnr) return false end
+    function M.rendering(bufnr, winid) return false end
 end
 
 function M.mapHighlightLimitByRange(srcBufnr, dstBufnr, baseRow, startRange, endRange, text, ns)

@@ -2,11 +2,22 @@ local highlighter = require('vim.treesitter.highlighter')
 
 local M = {}
 
-function M.parserFinished(bufnr)
+function M.parserFinished(bufnr, winid)
     local data = highlighter.active[bufnr]
     if not data then
         return true
     end
+
+    -- After https://github.com/neovim/neovim/commit/faae1e72a27b31017be639f24e3a9b374b4be255
+    if type(data.parsing) == "table" then
+        if data.parsing[winid] then
+            return false
+        else
+            return true
+        end
+    end
+
+    -- Before https://github.com/neovim/neovim/commit/faae1e72a27b31017be639f24e3a9b374b4be255
     if data.parsing then
         return false
     else
