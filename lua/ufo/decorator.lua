@@ -380,6 +380,7 @@ function Decorator:initialize(namespace)
         for bufnr in ipairs(fold.buffers()) do
             self:resetCurosrFoldedLineHighlightByBuf(bufnr)
         end
+        self.winSessions = {}
     end))
     self.enableGetFoldVirtText = config.enable_get_fold_virt_text
     self.openFoldHlTimeout = config.open_fold_hl_timeout
