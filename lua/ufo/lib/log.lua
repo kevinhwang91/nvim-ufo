@@ -69,7 +69,7 @@ local function pathSep()
 end
 
 local function init()
-    local logDir = fn.stdpath('cache')
+    local logDir = fn.stdpath('log')
     Log.path = table.concat({logDir, 'ufo.log'}, pathSep())
     local logDateFmt = '%y-%m-%d %T'
 
