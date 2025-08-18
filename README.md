@@ -58,7 +58,7 @@ use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 ```lua
 use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 
-vim.o.foldcolumn = '1' -- '0' is not bad
+vim.o.foldcolumn = 'auto:9' -- this will auto resize the column width and also remove the random number
 vim.o.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
 vim.o.foldlevelstart = 99
 vim.o.foldenable = true
