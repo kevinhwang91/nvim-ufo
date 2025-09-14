@@ -130,6 +130,8 @@ function M.inspectBuf(bufnr)
         table.insert(msg, 'Fallback provider: ' .. fb.providers[2])
     end
     table.insert(msg, 'Selected provider: ' .. (fb.selectedProvider or 'nil'))
+    -- TODO: Should we print a table of all nodes that share the same {start, stop}?
+    -- This way, we can display both the standard node type and the custom kind.
     local curKind
     local curStartLine, curEndLine = -1, -1
     local kindSet = {}
