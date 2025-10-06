@@ -4,7 +4,12 @@ The goal of nvim-ufo is to make Neovim's fold look modern and keep high performa
 
 <https://user-images.githubusercontent.com/17562139/173796287-9842fb3a-37c2-47fb-8968-6e7600c0fcef.mp4>
 
-> [setup foldcolumn like demo](https://github.com/kevinhwang91/nvim-ufo/issues/4)
+> setup foldcolumn like demo
+
+```lua
+-- use Neovim nightly branch
+vim.o.fillchars = 'eob: ,fold: ,foldopen:,foldsep: ,foldinner: ,foldclose:'
+```
 
 ---
 
@@ -390,7 +395,7 @@ require('ufo').setup({
 
 ## Sponsors
 
-A special thanks to [vtexs](https://vtexs.com) for sponsoring nvim-ufo! Their support is greatly appreciated and helps drive the project forward.
+A special thanks to [zmto](https://zmto.com) for sponsoring nvim-ufo! Their support is greatly appreciated and helps drive the project forward.
 
 ## Feedback
 
