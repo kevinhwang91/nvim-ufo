@@ -112,18 +112,20 @@ local function iterFoldMatches(bufnr, parser, root, rootLang)
         -- Extract capture names from each match
         for id, nodes in pairs(match) do
             local m = metadata[id]
+            local nKind = metadata['kind']
+
             local node, nType
             if m and m.range then
                 nType = getNodesType(nodes)
-                node = MetaNode:new(m.range, nType)
+                node = MetaNode:new(m.range, nKind or nType)
             elseif type(nodes) ~= 'table' then
+                -- TODO: support custom kinds
+
                 -- old behaviou before 0.11
                 node = nodes
-            elseif #nodes == 1 then
-                node = nodes[1]
             else
                 nType = getNodesType(nodes)
-                node = MetaNode.from_nodes(nodes[1], nodes[#nodes], nType)
+                node = MetaNode.from_nodes(nodes[1], nodes[#nodes], nKind or nType)
             end
 
             table.insert(matches, node)
