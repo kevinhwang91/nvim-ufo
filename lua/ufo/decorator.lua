@@ -133,13 +133,13 @@ local function onEnd(name, tick)
     self.lastWinid = self.curWinid
     if needRedraw then
         log.debug('Need redraw.')
-            vim.schedule(function()
-                if utils.has10() then
-                    api.nvim__redraw({valid = true, flush = true})
-                else
-                    cmd('redraw')
-                end
-            end)
+        vim.schedule(function()
+            if utils.has10() then
+                api.nvim__redraw({valid = true, flush = true})
+            else
+                cmd('redraw')
+            end
+        end)
     end
     debounced()
 end
