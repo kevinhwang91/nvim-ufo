@@ -109,11 +109,18 @@ function FoldDriverFFI:createFolds(winid, ranges, rowPairs)
         wo.foldmethod = 'manual'
         wo.foldenable = true
         wo.foldlevel = level
-        foldRanges = {}
-        for row, endRow in pairs(rowPairs) do
-            table.insert(foldRanges, {row + 1, endRow + 1})
+        -- When foldlevel=0, explicitly open folds that should stay open.
+        -- This preserves manually opened folds after text changes.
+        if level == 0 and #foldRanges > 0 then
+            for _, r in ipairs(foldRanges) do
+                cmd(('%dfoldopen'):format(r[1]))
+            end
         end
-        self._wffi.createFolds(winid, foldRanges)
+        local closedRanges = {}
+        for row, endRow in pairs(rowPairs) do
+            table.insert(closedRanges, {row + 1, endRow + 1})
+        end
+        self._wffi.createFolds(winid, closedRanges)
     end)
 end
 
@@ -145,14 +152,21 @@ function FoldDriverNonFFI:createFolds(winid, ranges, rowPairs)
         table.insert(cmds, 'setl foldmethod=manual')
         table.insert(cmds, 'setl foldenable')
         table.insert(cmds, 'setl foldlevel=' .. level)
-        foldRanges = {}
-        for row, endRow in pairs(rowPairs) do
-            table.insert(foldRanges, {row + 1, endRow + 1})
+        -- When foldlevel=0, explicitly open folds that should stay open.
+        -- This preserves manually opened folds after text changes.
+        if level == 0 then
+            for _, r in ipairs(foldRanges) do
+                table.insert(cmds, ('%dfoldopen'):format(r[1]))
+            end
         end
-        table.sort(foldRanges, function(a, b)
+        local closedRanges = {}
+        for row, endRow in pairs(rowPairs) do
+            table.insert(closedRanges, {row + 1, endRow + 1})
+        end
+        table.sort(closedRanges, function(a, b)
             return a[1] == b[1] and a[2] < b[2] or a[1] > b[1]
         end)
-        for _, r in ipairs(foldRanges) do
+        for _, r in ipairs(closedRanges) do
             table.insert(cmds, ('%d,%dfold'):format(r[1], r[2]))
         end
         cmd(table.concat(cmds, '|'))

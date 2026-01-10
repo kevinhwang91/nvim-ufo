@@ -191,6 +191,9 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
         end
         fb.scanned = true
     else
+        -- Sync internal state with vim's actual fold state before getting extmarks.
+        -- This ensures manually opened folds (via zo) are not re-closed.
+        fb:syncFoldedLines(winid)
         local ok, res = pcall(function()
             for _, range in ipairs(fb:getRangesFromExtmarks()) do
                 local row, endRow = range[1], range[2]
