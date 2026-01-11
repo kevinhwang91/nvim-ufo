@@ -183,6 +183,10 @@ For example, Changing the text in a buffer will request the providers for folds.
                     ctx table as 6th parameter in `fold_virt_text_handler`]],
         default = false
     },
+    override_foldtext = {
+        description = [[Override foldtext with (custom) virt text handler]],
+        default = true
+    },
     preview = {
         description = [[Configure the options for preview window and remap the keys for current
                     buffer and preview buffer if the preview window is displayed.

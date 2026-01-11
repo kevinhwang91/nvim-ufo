@@ -36,6 +36,9 @@ local function tryUpdateFold(bufnr)
 end
 
 local function setFoldText(bufnr)
+    if not config.override_foldtext then
+        return
+    end
     local winid = utils.getWinByBuf(bufnr)
     if not utils.isWinValid(winid) then
         return

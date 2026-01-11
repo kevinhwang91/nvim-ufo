@@ -7,6 +7,7 @@ local utils = require('ufo.utils')
 ---@field close_fold_current_line_for_ft? table<string, boolean>
 ---@field fold_virt_text_handler? UfoFoldVirtTextHandler A global virtual text handler, reference to `ufo.setFoldVirtTextHandler`
 ---@field enable_get_fold_virt_text? boolean
+---@field override_foldtext? boolean
 ---@field preview? table
 local def = {
     open_fold_hl_timeout = 400,
@@ -15,6 +16,7 @@ local def = {
     close_fold_current_line_for_ft = {default = false},
     fold_virt_text_handler = nil,
     enable_get_fold_virt_text = false,
+    override_foldtext = true,
     preview = {
         win_config = {
             border = 'rounded',
