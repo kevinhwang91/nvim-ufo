@@ -52,11 +52,45 @@ vim.o.fillchars = 'eob: ,fold: ,foldopen:,foldsep: ,foldinner: ,foldclose:
 
 ### Installation
 
-Install with [Packer.nvim](https://github.com/wbthomason/packer.nvim):
+<details><summary>With lazy.nvim</summary>
+
+See [lazy.nvim’s documentation](https://lazy.folke.io/) for details.
 
 ```lua
-use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
+{
+  "kevinhwang91/nvim-ufo",
+  dependencies = { "kevinhwang91/promise-async" },
+  event = "VeryLazy", -- You can make it lazy-loaded via VeryLazy, but comment out if anything doesn’t work
+  init = function()
+    vim.o.foldlevel = 99
+    vim.o.foldlevelstart = 99
+  end,
+  config = function()
+    require("ufo").setup({
+      -- your config goes here
+      -- open_fold_hl_timeout = ...,
+      -- provider_selector = function(bufnr, filetype)
+      --  ...
+      -- end,
+    })
+  end,
+}
 ```
+
+</details>
+
+<details><summary>With packer.nvim</summary>
+
+[packer.nvim](https://github.com/wbthomason/packer.nvim) is unmaintained. See the [readme](https://github.com/wbthomason/packer.nvim/blob/master/README.md) file for suggested alternatives, such as [lazy.nvim](https://lazy.folke.io/).
+
+```lua
+use {
+  'kevinhwang91/nvim-ufo',
+  requires = 'kevinhwang91/promise-async'
+}
+```
+
+</details>
 
 ### Minimal configuration
 
@@ -280,13 +314,13 @@ hi default link UfoCursorFoldedLine CursorLine
 - `UfoFoldedFg`: Foreground for raw text of folded line.
 - `UfoFoldedBg`: Background of folded line.
 - `UfoPreviewSbar`: Scroll bar of preview window, only take effect if the border is missing right
-  horizontal line, like `border = 'none'`.
+    horizontal line, like `border = 'none'`.
 - `UfoPreviewCursorLine`: Highlight current line in preview window if it isn't the start of folded
-  lines.
+    lines.
 - `UfoPreviewWinBar`: Virtual winBar of preview window.
 - `UfoPreviewThumb`: Thumb of preview window.
 - `UfoFoldedEllipsis`: Ellipsis at the end of folded line, invalid if `fold_virt_text_handler` is
-  set.
+    set.
 - `UfoCursorFoldedLine`: Highlight the folded line under the cursor
 
 ## Advanced configuration
