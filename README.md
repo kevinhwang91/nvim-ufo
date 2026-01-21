@@ -347,6 +347,32 @@ vim.keymap.set('n', 'K', function()
 end)
 ```
 
+### Fold specific Treesitter patterns
+
+The default folds provided by treesitter are usually too generic to be useful
+for automatically closing everything (except perhaps import_declaration).
+
+Instead, you can define more specialized patterns using treesitter queries and
+target them explicitly.
+
+To assign a special kind to a query you use `#set!` directive inside the query:
+
+`nvim/after/queries/<lang>/folds.scm`:
+
+```scheme
+(#set! kind "<name>")
+```
+
+Then you can use this pattern in a list of kinds that must be automatically closed:
+
+```lua
+opts = {
+  close_fold_kinds_for_ft = {
+    ["<lang>"] = { "<name>" }
+  },
+}
+```
+
 ### Customize fold text
 
 Adding number suffix of folded lines instead of the default ellipsis, here is the example:
