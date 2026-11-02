@@ -173,16 +173,21 @@ function FoldBufferManager:applyFoldRanges(bufnr, ranges, manual)
     end
     local rowPairs = {}
     local isFirstApply = not fb.scanned
-    if not manual and not fb.scanned or windows then
+    local shouldCloseKinds = not manual and isFirstApply
+    if shouldCloseKinds or windows then
         rowPairs = self:getRowPairs(winid)
-        local kinds = self.closeKindsMap[fb:filetype()] or self.closeKindsMap.default
-        local closeCurrentLineFolds = self.closeCurrentLineFoldsMap[fb:filetype()] or self.closeCurrentLineFoldsMap.default
-        local curRow = api.nvim_win_get_cursor(winid)[1] - 1
-        for _, range in ipairs(fb.foldRanges) do
-            if range.kind and vim.tbl_contains(kinds, range.kind) then
-                local startLine, endLine = range.startLine, range.endLine
-                if closeCurrentLineFolds or curRow <= startLine or curRow > endLine then
-                    rowPairs[startLine] = endLine
+        -- only close folds by kinds for the first time, otherwise the folds opened by user will be
+        -- closed again while updating folds for a buffer displayed in multiple windows
+        if shouldCloseKinds then
+            local kinds = self.closeKindsMap[fb:filetype()] or self.closeKindsMap.default
+            local closeCurrentLineFolds = self.closeCurrentLineFoldsMap[fb:filetype()] or self.closeCurrentLineFoldsMap.default
+            local curRow = api.nvim_win_get_cursor(winid)[1] - 1
+            for _, range in ipairs(fb.foldRanges) do
+                if range.kind and vim.tbl_contains(kinds, range.kind) then
+                    local startLine, endLine = range.startLine, range.endLine
+                    if closeCurrentLineFolds or curRow <= startLine or curRow > endLine then
+                        rowPairs[startLine] = endLine
+                    end
                 end
             end
         end
