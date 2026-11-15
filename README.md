@@ -195,8 +195,9 @@ For example, Changing the text in a buffer will request the providers for folds.
         win_config = {
             border = {
                 description = [[The border for preview window,
-                    `:h nvim_open_win() | call search('border:')`]],
-                default = 'rounded',
+                    `:h nvim_open_win() | call search('border:')`.
+                    If nil, use the value of 'winborder' (Neovim 0.11+), fallback to 'rounded']],
+                default = nil,
             },
             winblend = {
                 description = [[The winblend for preview window, `:h winblend`]],
