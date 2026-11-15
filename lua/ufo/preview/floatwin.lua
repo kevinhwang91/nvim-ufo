@@ -15,7 +15,7 @@ local utils = require('ufo.utils')
 ---@field height number
 ---@field anchor string|'SW'|'NW'
 ---@field winblend number
----@field border string|'none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[]
+---@field border string|'none'|'single'|'double'|'rounded'|'bold'|'solid'|'shadow'|string[]
 ---@field lineCount number
 ---@field showScrollBar boolean
 ---@field topline number
@@ -27,10 +27,36 @@ local defaultBorder = {
     single  = {'┌', '─', '┐', '│', '┘', '─', '└', '│'},
     double  = {'╔', '═', '╗', '║', '╝', '═', '╚', '║'},
     rounded = {'╭', '─', '╮', '│', '╯', '─', '╰', '│'},
+    bold    = {'┏', '━', '┓', '┃', '┛', '━', '┗', '┃'},
     solid   = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
     shadow  = {'', '', {' ', 'FloatShadowThrough'}, {' ', 'FloatShadow'},
         {' ', 'FloatShadow'}, {' ', 'FloatShadow'}, {' ', 'FloatShadowThrough'}, ''},
 }
+
+---Resolve the border config, falling back to 'winborder' option if border is nil
+---@param border? string|string[]
+---@return string[]|table
+local function resolveBorder(border)
+    if border == nil then
+        local ok, wb = pcall(function() return vim.o.winborder end)
+        border = (ok and type(wb) == 'string' and wb ~= '') and wb or 'rounded'
+    end
+    if type(border) == 'string' then
+        if defaultBorder[border] then
+            return defaultBorder[border]
+        end
+        local chars = vim.split(border, ',', {plain = true})
+        if #chars == 8 then
+            return chars
+        end
+        error(([[border string must be one of {%s} or 8 comma-separated chars]])
+            :format(table.concat(vim.tbl_keys(defaultBorder), ',')))
+    elseif type(border) == 'table' then
+        assert(#border == 8, 'only support 8 chars for the border')
+        return border
+    end
+    error('error border config')
+end
 
 local function borderHasLine(border, index)
     local s = border[index]
@@ -61,8 +87,7 @@ function FloatWin:build(winid, height, border, isAbove)
     local winfo = utils.getWinInfo(winid)
     local aboveLine = utils.winCall(winid, fn.winline) - 1
     local belowLine = winfo.height - aboveLine
-    border = type(border) == 'string' and defaultBorder[border] or border
-    self.border = vim.deepcopy(border)
+    self.border = vim.deepcopy(resolveBorder(border))
     if fn.screencol() == 1 then
         self.border[1], self.border[7], self.border[8] = '', '', ''
     end
@@ -221,18 +246,7 @@ end
 
 function FloatWin:initialize(ns, config)
     self.ns = ns
-    local border = config.border
-    local tBorder = type(border)
-    if tBorder == 'string' then
-        if not defaultBorder[border] then
-            error(([[border string must be one of {%s}]])
-                :format(table.concat(vim.tbl_keys(defaultBorder), ',')))
-        end
-    elseif tBorder == 'table' then
-        assert(#border == 8, 'only support 8 chars for the border')
-    else
-        error('error border config')
-    end
+    resolveBorder(config.border)
     self.bufferName = 'UfoPreviewFloatWin'
     self.config = config
     return self
